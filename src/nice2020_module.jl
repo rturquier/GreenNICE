@@ -71,6 +71,8 @@ function create_nice2020()
 	add_shared_param!(m, :η, 	1.5)
 	add_shared_param!(m, :σ, 	Matrix(emissionsrate), dims=[:time, :country])
 	add_shared_param!(m,  :s, Matrix(srate), dims=[:time, :country])
+	add_shared_param!(m, :α, 0.5)
+	add_shared_param!(m, :θ, 0.5)
 
 	# --------------------------------
 	# FAIR Initial (2020) Conditions
@@ -130,7 +132,8 @@ function create_nice2020()
 	connect_param!(m, :abatement, :l, :l)
 	connect_param!(m, :abatement, :η, :η)
 	connect_param!(m, :abatement, :σ, :σ)
-
+	connect_param!(m, :abatement, :α, :α)
+	connect_param!(m, :abatement, :θ, :θ)
 	# --------------------------------
 	# CO2 Emissions
 	# --------------------------------
@@ -198,6 +201,8 @@ function create_nice2020()
 	connect_param!(m, :welfare, :nb_quantile, :nb_quantile)
 	connect_param!(m, :welfare, :l, :l)
 	connect_param!(m, :welfare, :mapcrwpp,  :mapcrwpp) 
+	connect_param!(m, :welfare, :α, :α)
+	connect_param!(m, :welfare, :θ, :θ)
 
 	# --------------------------------
 	# Create Component Connections

@@ -10,6 +10,8 @@
     s       = Parameter(index=[time, country])  # Savings rate
     l       = Parameter(index=[time, country])  #Labor - population (thousands)
     η       = Parameter()                       # Inequality aversion
+    α       = Parameter()                       # Environmental good weight in utility function
+    θ       = Parameter()                       # Elasticity of substitution between consumption and environmental goods
 
     θ2                      = Parameter()                       # Exponent of abatement cost function (DICE-2023 value)
     pbacktime               = Parameter(index=[time])           # Backstop price from DICE 2023 (2017USD per tCO2)

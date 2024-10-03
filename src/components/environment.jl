@@ -6,7 +6,7 @@
 @defcomp environmentdynamic begin
     
     country = Index()                           #Note that a regional index is defined here
-    E0      = Parameter(index=[country])        # Initial level of environmental good (1e6 USD2017)
+    #E0      = Parameter(index=[country])        # Initial level of environmental good (1e6 USD2017)
    
     E       = Variable(index=[time, country])   # Environmental good (1e6 USD2017)
 
@@ -16,7 +16,7 @@
         # Define an equation for K
         for c in d.country
             if is_first(t)
-                v.E[t,c] = p.E0[c]
+                v.E[t,c] = 1.0
             else
                 
                 v.E[t,c] = v.E[t-1,c] 

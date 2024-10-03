@@ -23,9 +23,12 @@ include(joinpath("components", "damages.jl"))
 include(joinpath("components", "net_economy.jl"))
 include(joinpath("components", "revenue_recycle.jl"))
 include(joinpath("components", "quantile_recycle.jl"))
-include(joinpath("components", "welfare.jl"))
 
 include(joinpath("components", "environment.jl"))
+
+include(joinpath("components", "welfare.jl"))
+
+
 
 
 # Create a function that couples FAIRv2.0 to the economic model components

@@ -21,14 +21,16 @@
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     E                       = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**)
+    E_bar                   = Parameter(index=[time, country, quantile])              # Fixed environmental good consumption per country (**Unit to be defined**)
 
     function run_timestep(p, v, d, t)
 
         if !(p.η==1)
             for c in d.country
-            v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
-            #I am not sure if this a correct update of the EDE:
-            #v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(((1-α)*p.qcpc_post_recycle[t,c,:].^θ + (α*p.E).^θ).^((1-p.η)/θ) ) ) ^(1/(1-p.η))
+            #v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
+            
+            #Unsure if it is .^ or ^ in the following one.
+            v.cons_EDE_country[t,c] = (1-p.α) ^(-1/p.θ) * ((1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.E[t,c,:].^p.θ) .^((1-p.η)/p.θ)))^ (p.θ/(1-p.η)) - p.α*p.E_bar[t,c,:]^p.θ)^(1/p.θ) 
            
             #v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ./(1-p.η))
             v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.E[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))

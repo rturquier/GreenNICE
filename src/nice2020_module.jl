@@ -18,13 +18,15 @@ include(joinpath("components", "gross_economy.jl"))
 include(joinpath("components", "abatement.jl"))
 include(joinpath("components", "emissions.jl"))
 
+include(joinpath("components", "env_component.jl"))
+
 include(joinpath("components", "pattern_scale.jl"))
 include(joinpath("components", "damages.jl"))
 include(joinpath("components", "net_economy.jl"))
 include(joinpath("components", "revenue_recycle.jl"))
 include(joinpath("components", "quantile_recycle.jl"))
 
-include(joinpath("components", "environment.jl"))
+
 
 include(joinpath("components", "welfare.jl"))
 
@@ -83,9 +85,9 @@ function create_nice2020()
 	# FAIR Initial (2020) Conditions
 	# --------------------------------
 
-	update_param!(m, :aerosol_plus_cycles, :aerosol_plus_0, init_aerosol[!,:concentration])
-	update_param!(m, :aerosol_plus_cycles, :R0_aerosol_plus, Matrix(init_aerosol[!, [:R1, :R2, :R3, :R4]]))
-	update_param!(m, :aerosol_plus_cycles, :GU_aerosol_plus_0, init_aerosol[!,:GU])
+	update_param!(m, :aerosol_plus_cycles, :aerosol_plus_0, init_aerosol[:, :concentration])
+	update_param!(m, :aerosol_plus_cycles, :R0_aerosol_plus, Matrix(init_aerosol[:, [:R1, :R2, :R3, :R4]]))
+	update_param!(m, :aerosol_plus_cycles, :GU_aerosol_plus_0, init_aerosol[:, :GU])
 
 	update_param!(m, :ch4_cycle, :ch4_0, init_ch4[1,:concentration])
 	update_param!(m, :ch4_cycle, :R0_ch4, vec(Matrix(init_ch4[!, [:R1, :R2, :R3, :R4]])))
@@ -120,6 +122,12 @@ function create_nice2020()
 	update_param!(m, :grosseconomy, :depk, Matrix(depreciation))
 	update_param!(m, :grosseconomy, :k0, k0)
 	update_param!(m, :grosseconomy, :share, 0.3)
+
+	# --------------------------------
+	# Environment
+	# --------------------------------
+
+
 
 	# --------------------------------
 	# Abatement
@@ -237,6 +245,7 @@ function create_nice2020()
 	connect_param!(m, :quantile_recycle => :Y_pc,				:neteconomy 		=> :Y_pc)
 	connect_param!(m, :quantile_recycle => :country_pc_dividend,:revenue_recycle	=> :country_pc_dividend)
 	connect_param!(m, :quantile_recycle => :tax_pc_revenue,		:revenue_recycle	=> :tax_pc_revenue)
+	connect_param!(m, :welfare 			=> :Env, 				:quantile_recycle	=> :qcpc_post_recycle)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 
 	# Return model.

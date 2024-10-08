@@ -55,6 +55,9 @@ initial_capital = sort(init_capital_raw, :countrycode)
 # Extract vector of initial capital
 k0 = initial_capital[:, :k0]
 
+# Create an array called Env0 that has zeroes and is as long as k0
+length_k0 = length(k0)
+Env0 = zeros(length_k0)
 ## Total factor productivity
 
 productivity_raw = DataFrame(nice_inputs["economy"]["tfp"]["x"])

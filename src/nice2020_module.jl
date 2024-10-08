@@ -17,17 +17,12 @@ include("helper_functions.jl")
 include(joinpath("components", "gross_economy.jl"))
 include(joinpath("components", "abatement.jl"))
 include(joinpath("components", "emissions.jl"))
-
 include(joinpath("components", "env_component.jl"))
-
 include(joinpath("components", "pattern_scale.jl"))
 include(joinpath("components", "damages.jl"))
 include(joinpath("components", "net_economy.jl"))
 include(joinpath("components", "revenue_recycle.jl"))
 include(joinpath("components", "quantile_recycle.jl"))
-
-
-
 include(joinpath("components", "welfare.jl"))
 
 
@@ -62,8 +57,10 @@ function create_nice2020()
 	add_comp!(m, damages, after = :pattern_scale)
 	add_comp!(m, neteconomy, after = :damages)
 	add_comp!(m, revenue_recycle, after = :neteconomy)
+	add_comp!(m, environment, after = :neteconomy)
 	add_comp!(m, quantile_recycle, after = :revenue_recycle)
 	add_comp!(m, welfare, after = :quantile_recycle)
+
 
 	# Set parameters
 
@@ -245,7 +242,7 @@ function create_nice2020()
 	connect_param!(m, :quantile_recycle => :Y_pc,				:neteconomy 		=> :Y_pc)
 	connect_param!(m, :quantile_recycle => :country_pc_dividend,:revenue_recycle	=> :country_pc_dividend)
 	connect_param!(m, :quantile_recycle => :tax_pc_revenue,		:revenue_recycle	=> :tax_pc_revenue)
-	connect_param!(m, :welfare 			=> :Env, 				:quantile_recycle	=> :qcpc_post_recycle)
+	connect_param!(m, :welfare 			=> :Env, 				:environment	=> :Env)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 
 	# Return model.

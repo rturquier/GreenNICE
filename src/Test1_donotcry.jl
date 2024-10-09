@@ -113,15 +113,37 @@ MimiNICE2020.save_nice2020_results(V3_2, output_directory_3_2, revenue_recycling
 ### FIRE 
 ### TEST 
 
-V4 = MimiNICE2020.create_nice2020()
-update_param!(V4, :α, 0.0)
-#θ should cancel output
-
-run(V4)
-
-output_directory_4 = joinpath(@__DIR__, "..", "results", "fire_test")   
-mkpath(output_directory_4)
-
-MimiNICE2020.save_nice2020_results(V4, output_directory_4, revenue_recycling=false)
-
 #RUN ORIGINAL NICE
+#(update welfare function)
+
+include("nice2020_module.jl")
+
+
+V4_original = MimiNICE2020.create_nice2020()
+run(V4_original)
+
+output_directory_4_original = joinpath(@__DIR__, "..", "results", "original_model")
+mkpath(output_directory_4_original)
+
+MimiNICE2020.save_nice2020_results(V4_original, output_directory_4_original, revenue_recycling=false)
+
+#Test 5: Chack that old Nice switch works
+include("nice2020_module.jl")
+
+V5 = MimiNICE2020.create_nice2020()
+
+run(V5)
+
+output_directory_5 = joinpath(@__DIR__, "..", "results", "SWITCH_TEST")
+mkpath(output_directory_5)
+
+MimiNICE2020.save_nice2020_results(V5, output_directory_5, revenue_recycling=false)
+
+V6 = MimiNICE2020.create_nice2020()
+update_param!(V6, :GreenNice, 0.0)
+run(V6)
+
+output_directory_6 = joinpath(@__DIR__, "..", "results", "SWITCH_TEST_GreenNice=0")
+mkpath(output_directory_6)
+
+MimiNICE2020.save_nice2020_results(V6, output_directory_6, revenue_recycling=false)

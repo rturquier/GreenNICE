@@ -77,6 +77,7 @@ function create_nice2020()
 	add_shared_param!(m,  :s, Matrix(srate), dims=[:time, :country])
 	add_shared_param!(m, :α, 0.5)
 	add_shared_param!(m, :θ, 0.5)
+	add_shared_param!(m, :GreenNice, 1.0) #Green Nice ON = 1. Original NICE = 0. 
 
 	# --------------------------------
 	# FAIR Initial (2020) Conditions
@@ -213,6 +214,7 @@ function create_nice2020()
 	connect_param!(m, :welfare, :mapcrwpp,  :mapcrwpp) 
 	connect_param!(m, :welfare, :α, :α)
 	connect_param!(m, :welfare, :θ, :θ)
+	connect_param!(m, :welfare, :GreenNice, :GreenNice)
 
 	# --------------------------------
 	# Create Component Connections

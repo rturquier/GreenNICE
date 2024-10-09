@@ -23,6 +23,7 @@
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     Env                     = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**). Does not vary by quantile
     #E_bar                   = Parameter(index=[time, country, quantile])              # Fixed environmental good consumption per country (**Unit to be defined**)
+    GreenNice               = Parameter()                                   # GreenNice switch (1 = ON)
 
 
 
@@ -30,13 +31,20 @@
 
         if !(p.η==1)
             for c in d.country
-            v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
-            
-            #Unsure if it is .^ or ^ in the following one.
-            #v.cons_EDE_country[t,c] = (1-p.α) ^(-1/p.θ) * ((1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.E[t,c].^p.θ) .^((1-p.η)/p.θ)))^ (p.θ/(1-p.η)) - p.α*p.E_bar[t,c,:]^p.θ)^(1/p.θ) 
-           
-            #v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ./(1-p.η))
-            v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))
+
+                if(p.GreenNice==1.0)
+                    #Old EDE, need to update
+                    v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
+
+                    #Unsure if it is .^ or ^ in the following one.
+                    #v.cons_EDE_country[t,c] = (1-p.α) ^(-1/p.θ) * ((1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.E[t,c].^p.θ) .^((1-p.η)/p.θ)))^ (p.θ/(1-p.η)) - p.α*p.E_bar[t,c,:]^p.θ)^(1/p.θ) 
+                   
+                    v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))
+                    
+                elseif !(p.GreenNice==1.0)
+                    v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
+                    v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ./(1-p.η))
+                end
 
             end # country loop
 
@@ -54,11 +62,17 @@
         elseif p.η==1
 
             for c in d.country
-            v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
-            #Not sure if this is the correct update of the EDE:
-            #v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(((1-α)*p.qcpc_post_recycle[t,c,:].^θ + α*p.environmental_good[t,c,:].^θ)).^(1/θ) ))
-            #v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(p.qcpc_post_recycle[t,c,:]))
-            v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ)^(1/p.θ)))
+                if (p.GreenNice==1)
+                    v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
+                    #Not sure if this is the correct update of the EDE:
+                    #v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(((1-α)*p.qcpc_post_recycle[t,c,:].^θ + α*p.environmental_good[t,c,:].^θ)).^(1/θ) ))
+                    v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ)^(1/p.θ)))
+
+                elseif !(p.GreenNice==1)
+
+                    v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
+                    v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(p.qcpc_post_recycle[t,c,:]))
+                end 
 
             end # country loop
 

@@ -16,7 +16,7 @@
         # Define an equation for Env
         for c in d.country
             for q in d.quantile
-                v.Env[t,c,q] = 1.0
+                v.Env[t,c,q] = 0.0
             end
 
 

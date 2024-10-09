@@ -144,14 +144,14 @@ function save_nice2020_results(m::Model, output_directory::String; revenue_recyc
     # Save Global Output.
     #save(joinpath(global_path, "global_co2_mitigation.csv"), DataFrame(get_global_mitigation(m_policy, m_bau), :auto))
     save(joinpath(global_path, "temperature.csv"),                              getdataframe(m, :temperature => :T))
-    save(joinpath(global_path, "global_gross_output.csv"),    			       getdataframe(m, :grosseconomy => :YGROSS_global))
+    save(joinpath(global_path, "global_gross_output.csv"),    			        getdataframe(m, :grosseconomy => :YGROSS_global))
     save(joinpath(global_path, "global_gtco2_emissions.csv"),                   getdataframe(m, :emissions =>:E_Global_gtco2))
     save(joinpath(global_path, "global_consumption_gini.csv"),                  getdataframe(m, :quantile_recycle =>:gini_cons_global))
     save(joinpath(global_path, "global_consumption_EDE.csv"),                   getdataframe(m, :welfare => :cons_EDE_global))
     save(joinpath(global_path, "total_tax_revenue.csv"),                        getdataframe(m, :revenue_recycle => :total_tax_revenue))
     save(joinpath(global_path, "globally_recycled_tax_revenue.csv"),            getdataframe(m, :revenue_recycle => :global_revenue))
     save(joinpath(global_path, "global_CPC_post_recycle.csv"),                  getdataframe(m, :quantile_recycle => :CPC_post_global))
-
+    save(joinpath(global_path, "global_welfare.csv"),                            getdataframe(m, :welfare => :welfare_global))
 
     # Save Regional Output
     save(joinpath(regional_path, "regional_gtco2_emissions.csv"),               getdataframe(m, :emissions =>:E_gtco2_rwpp))
@@ -160,6 +160,7 @@ function save_nice2020_results(m::Model, output_directory::String; revenue_recyc
     save(joinpath(regional_path, "regional_consumption_per_capita_post_recycle.csv"), getdataframe(m, :quantile_recycle => :CPC_post_rwpp))
     save(joinpath(regional_path, "regional_consumption_gini.csv"),              getdataframe(m, :quantile_recycle =>:gini_cons_rwpp))
     save(joinpath(regional_path, "regional_consumption_EDE.csv"),               getdataframe(m, :welfare => :cons_EDE_rwpp))
+    save(joinpath(regional_path, "regional_welfare.csv"),                       getdataframe(m, :welfare => :welfare_rwpp))
 
     # Save Country Output.
     save(joinpath(country_path, "gross_output.csv"),                    getdataframe(m, :grosseconomy =>:YGROSS))
@@ -181,6 +182,7 @@ function save_nice2020_results(m::Model, output_directory::String; revenue_recyc
     save(joinpath(country_path, "consumption_per_capita_post_recycle.csv"), getdataframe(m, :quantile_recycle => :CPC_post))
     save(joinpath(country_path, "consumption_gini.csv"),                getdataframe(m, :quantile_recycle =>:gini_cons))
     save(joinpath(country_path, "consumption_EDE.csv"),                 getdataframe(m, :welfare => :cons_EDE_country))
+    save(joinpath(country_path, "country_welfare.csv"),                 getdataframe(m, :welfare => :welfare_country))
 
     # Save Quantile Output.
     save(joinpath(quantile_path, "co2_tax_distribution.csv"), filter!(:time => x -> x<2121, getdataframe(m, :quantile_recycle => :carbon_tax_dist)))

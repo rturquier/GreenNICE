@@ -125,7 +125,7 @@ function create_nice2020()
 	# Environment
 	# --------------------------------
 
-
+	update_param!(m, :environment, :Env0, Env0)
 
 	# --------------------------------
 	# Abatement

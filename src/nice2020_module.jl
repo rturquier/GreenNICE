@@ -79,6 +79,8 @@ function create_nice2020()
 	add_shared_param!(m, :θ, 0.5)
 	add_shared_param!(m, :GreenNice, 1.0) #Green Nice ON = 1. Original NICE = 0. 
 
+
+
 	# --------------------------------
 	# FAIR Initial (2020) Conditions
 	# --------------------------------
@@ -244,7 +246,8 @@ function create_nice2020()
 	connect_param!(m, :quantile_recycle => :Y_pc,				:neteconomy 		=> :Y_pc)
 	connect_param!(m, :quantile_recycle => :country_pc_dividend,:revenue_recycle	=> :country_pc_dividend)
 	connect_param!(m, :quantile_recycle => :tax_pc_revenue,		:revenue_recycle	=> :tax_pc_revenue)
-	connect_param!(m, :welfare 			=> :Env, 				:environment	=> :Env)
+	connect_param!(m, :welfare 			=> :Env, 				:environment		=> :Env)
+	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 
 	# Return model.

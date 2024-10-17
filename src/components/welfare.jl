@@ -22,9 +22,8 @@
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     Env                     = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**). Does not vary by quantile
-    #E_bar                   = Parameter(index=[time, country, quantile])              # Fixed environmental good consumption per country (**Unit to be defined**)
     GreenNice               = Parameter()                                   # GreenNice switch (1 = ON)
-
+   E_bar                   = Parameter()              # Average level of environment at time 0
 
 
     function run_timestep(p, v, d, t)
@@ -33,12 +32,8 @@
             for c in d.country
 
                 if(p.GreenNice==1.0)
-                    #Old EDE, need to update
-                    v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
-
-                    #Unsure if it is .^ or ^ in the following one.
-                    #v.cons_EDE_country[t,c] = (1-p.α) ^(-1/p.θ) * ((1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.E[t,c].^p.θ) .^((1-p.η)/p.θ)))^ (p.θ/(1-p.η)) - p.α*p.E_bar[t,c,:]^p.θ)^(1/p.θ) 
-                   
+                    #New EDE
+                    v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ))*( (1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^p.θ+p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ)))^(p.θ/(1-p.η))-p.α*p.E_bar^p.θ)^(1/p.θ)
                     v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))
                     
                 elseif !(p.GreenNice==1.0)

@@ -58,10 +58,9 @@
 
             for c in d.country
                 if (p.GreenNice==1)
-                    v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
-                    #Not sure if this is the correct update of the EDE:
-                    #v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(((1-α)*p.qcpc_post_recycle[t,c,:].^θ + α*p.environmental_good[t,c,:].^θ)).^(1/θ) ))
-                    v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ)^(1/p.θ)))
+                    
+                    v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ)) * ( exp(1/p.nb_quantile*sum(log.((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ)+p.α*p.Env[t,c,:].^(p.θ)))) - p.α*p.E_bar^p.θ)^(1/p.θ) 
+                    v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^(1/p.θ)))
 
                 elseif !(p.GreenNice==1)
 

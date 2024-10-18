@@ -25,7 +25,7 @@
         for c in d.country
             for q in d.quantile
                     if is_first(t)
-                    v.Env[t,c,q] = p.Env0[c]/10000
+                    v.Env[t,c,q] = p.Env0[c]/100
                     else
                     v.Env[t,c,q] = v.Env[t-1,c,q]*1
                     end #end if

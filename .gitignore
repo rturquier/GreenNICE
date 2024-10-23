@@ -1,5 +1,4 @@
-# Tells git to ignore given files
-
+# LaTeX
 *.toc
 *.aux
 *.log

@@ -9,6 +9,33 @@ function utility(consumption, η)
 end
 
 
+function inverse_utility(utility, η)
+    if η == 1
+        consumption = exp(utility)
+    else
+        consumption = (utility * (1 - η))^(1 / (1 - η))
+    end
+
+    return consumption
+end
+
+
+function EDE(consumption, η, nb_quantile)
+    average_utility = (1 / nb_quantile) * sum(utility.(consumption, η))
+    EDE = inverse_utility(average_utility, η)
+    return EDE
+end
+
+
+function EDE_aggregated(country_level_EDE, population, η)
+    total_utility = sum(population .* utility.(country_level_EDE, η))
+    total_population = sum(population)
+    average_utility = total_utility / total_population
+    aggregated_EDE = inverse_utility(average_utility, η)
+    return aggregated_EDE
+end
+
+
 @defcomp welfare begin
 
     country         = Index()
@@ -33,7 +60,7 @@ end
 
         if !(p.η==1)
             for c in d.country
-                v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
+                v.cons_EDE_country[t,c] = EDE(p.qcpc_post_recycle[t,c,:], p.η, p.nb_quantile)
                 v.welfare_country[t,c] = (
                     (p.l[t,c] / p.nb_quantile) * sum(
                         utility.(p.qcpc_post_recycle[t,c,:], p.η)
@@ -44,18 +71,20 @@ end
             for rwpp in d.regionwpp
                 country_indices = findall(x->x==rwpp , p.mapcrwpp) #Country indices for the region
 
-                v.cons_EDE_rwpp[t,rwpp] =  ( sum(p.l[t,country_indices] .*  v.cons_EDE_country[t,country_indices].^(1-p.η) ) / sum(p.l[t,country_indices]) )^(1/(1-p.η))
+                v.cons_EDE_rwpp[t,rwpp] = EDE_aggregated(
+                    v.cons_EDE_country[t,country_indices], p.l[t,country_indices], p.η
+                )
                 v.welfare_rwpp[t,rwpp] = sum( v.welfare_country[t,country_indices]  )
 
             end # region loop
 
-            v.cons_EDE_global[t] = ( sum(p.l[t,:]  .*  v.cons_EDE_country[t,:].^(1-p.η) ) / sum(p.l[t,:]) )^(1/(1-p.η))
+            v.cons_EDE_global[t] = EDE_aggregated(v.cons_EDE_country[t,:], p.l[t,:], p.η)
             v.welfare_global[t] = sum( v.welfare_country[t,:]  )
 
         elseif p.η==1
 
             for c in d.country
-            v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
+            v.cons_EDE_country[t,c] = EDE(p.qcpc_post_recycle[t,c,:], p.η, p.nb_quantile)
             v.welfare_country[t,c] = (
                 (p.l[t,c] / p.nb_quantile) * sum(utility.(p.qcpc_post_recycle[t,c,:], p.η))
             )
@@ -65,12 +94,14 @@ end
             for rwpp in d.regionwpp
                 country_indices = findall(x->x==rwpp , p.mapcrwpp) #Country indices for the region
 
-                v.cons_EDE_rwpp[t,rwpp] = exp( sum(p.l[t,country_indices]  .*  log.(v.cons_EDE_country[t,country_indices]) )  / sum(p.l[t,country_indices]) )
+                v.cons_EDE_rwpp[t,rwpp] = EDE_aggregated(
+                    v.cons_EDE_country[t,country_indices], p.l[t,country_indices], p.η
+                )
                 v.welfare_rwpp[t,rwpp] = sum( v.welfare_country[t,country_indices]  )
 
             end # region loop
 
-            v.cons_EDE_global[t] = exp( sum(p.l[t,:]  .*  log.(v.cons_EDE_country[t,:]) )  / sum(p.l[t,:]) )
+            v.cons_EDE_global[t] = EDE_aggregated(v.cons_EDE_country[t,:], p.l[t,:], p.η)
             v.welfare_global[t] = sum( v.welfare_country[t,:]  )
         end
 

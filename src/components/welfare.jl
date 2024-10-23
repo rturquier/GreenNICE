@@ -1,3 +1,14 @@
+function utility(consumption, η)
+    if η == 1
+        utility = log(consumption)
+    else
+        utility = consumption^(1 - η) / (1 - η)
+    end
+
+    return utility
+end
+
+
 @defcomp welfare begin
 
     country         = Index()
@@ -22,9 +33,12 @@
 
         if !(p.η==1)
             for c in d.country
-            v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
-            v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ./(1-p.η))
-
+                v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
+                v.welfare_country[t,c] = (
+                    (p.l[t,c] / p.nb_quantile) * sum(
+                        utility.(p.qcpc_post_recycle[t,c,:], p.η)
+                    )
+                )
             end # country loop
 
             for rwpp in d.regionwpp
@@ -42,7 +56,9 @@
 
             for c in d.country
             v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
-            v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(p.qcpc_post_recycle[t,c,:]))
+            v.welfare_country[t,c] = (
+                (p.l[t,c] / p.nb_quantile) * sum(utility.(p.qcpc_post_recycle[t,c,:], p.η))
+            )
 
             end # country loop
 

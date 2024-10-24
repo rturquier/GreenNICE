@@ -17,7 +17,7 @@ println("Load NICE2020 source code.")
 include("nice2020_module.jl")
 
 # ------------------------------------------------------------------------------------------------
-# RETRIEVE NECESSARY PARAMETERS FROM THE BASE MODEL 
+# RETRIEVE NECESSARY PARAMETERS FROM THE BASE MODEL
 # ------------------------------------------------------------------------------------------------
 
 println("Creating an instance of the NICE2020 model and retrieving some necessary parameters.")
@@ -64,6 +64,8 @@ update_param!(bau_model, :abatement, :μ_input, zeros(nb_steps, nb_country))
 
 println("Running the updated model and saving the output in the directory: ", output_directory_bau,)
 
+update_param!(bau_model, :η, 1)
+
 run(bau_model)
 
 # Save the bau (see helper functions for saving function details)
@@ -72,7 +74,7 @@ MimiNICE2020.save_nice2020_results(bau_model, output_directory_bau, revenue_recy
 
 # ----------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------
-#1- Uniform global carbon tax (non-optimized), with revenues not recycled (returned to households) 
+#1- Uniform global carbon tax (non-optimized), with revenues not recycled (returned to households)
 # ----------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------
 
@@ -144,7 +146,7 @@ switch_scope_recycle            = 1 # ON     Carbon tax revenues recycled global
 switch_global_pc_recycle        = 1 # ON    Carbon tax revenues recycled on an equal per capita basis
 
 # Rule for share of global tax revenues recycled at global level (switch_recycle and switch_scope_recycle must be ON)
-global_recycle_share            = 1 # 100%   Share of tax revenues recycled globally 
+global_recycle_share            = 1 # 100%   Share of tax revenues recycled globally
 
 
 # Set uniform taxes, revenue recycling switches and run the model
@@ -154,7 +156,7 @@ update_param!(nice2020_uniform_tax, :abatement, :global_carbon_tax, global_co2_t
 update_param!(nice2020_uniform_tax, :switch_recycle, switch_recycle)
 update_param!(nice2020_uniform_tax, :revenue_recycle, :switch_scope_recycle, switch_scope_recycle)
 update_param!(nice2020_uniform_tax, :revenue_recycle, :switch_global_pc_recycle, switch_global_pc_recycle)
-update_param!(nice2020_uniform_tax, :revenue_recycle, :global_recycle_share,  ones(nb_country) * global_recycle_share ) 
+update_param!(nice2020_uniform_tax, :revenue_recycle, :global_recycle_share,  ones(nb_country) * global_recycle_share )
 
 println("Running the updated model and saving the output in the directory: ", output_directory_uniform,)
 
@@ -178,7 +180,7 @@ switch_scope_recycle            = 1 # ON     Carbon tax revenues recycled global
 switch_global_pc_recycle        = 1 # ON    Carbon tax revenues recycled on an equal per capita basis
 
 # Rule for share of global tax revenues recycled at global level (switch_recycle and switch_scope_recycle must be ON)
-global_recycle_share            = 1 # 100%   Share of tax revenues recycled globally 
+global_recycle_share            = 1 # 100%   Share of tax revenues recycled globally
 
 # Set inform taxes, revenue recycling switches and run the model
 update_param!(nice2020_uniform_tax, :abatement, :control_regime, 1) # Switch for emissions control regime  1:"global_carbon_tax", 2:"country_carbon_tax", 3:"country_abatement_rate"
@@ -197,7 +199,7 @@ println("In the welfare component η=", nice2020_uniform_tax[:welfare, :η], ", 
 println("Updating the η parameter in all connected components (welfare and abatement) and running the model.")
 
 # Update the η parameter in all components it is used in
-update_param!(nice2020_uniform_tax, :η, 1) 
+update_param!(nice2020_uniform_tax, :η, 1)
 run(nice2020_uniform_tax)
 println("In the welfare component η=", nice2020_uniform_tax[:welfare, :η], ", in the abatement component η=", nice2020_uniform_tax[:abatement, :η])
 
@@ -205,7 +207,7 @@ println("Updating the η parameter in only the welfare component and running the
 
 # This updates only the η parameter in the welfare component, not in the abatement component
 disconnect_param!(nice2020_uniform_tax, :welfare, :η)
-update_param!(nice2020_uniform_tax, :welfare, :η, 2) 
+update_param!(nice2020_uniform_tax, :welfare, :η, 2)
 run(nice2020_uniform_tax)
 
 println("In the welfare component η=", nice2020_uniform_tax[:welfare, :η], ", in the abatement component η=", nice2020_uniform_tax[:abatement, :η])

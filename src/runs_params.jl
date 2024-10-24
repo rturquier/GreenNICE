@@ -11,14 +11,7 @@ include("nice2020_module.jl")
 plot_1 = MimiNICE2020.create_nice2020()
 run(plot_1)
 
-t = getdataframe(plot_1, :welfare=>:welfare_global)
-tt = plot_1[:welfare, :welfare_global]
-
-# Assuming tt is a vector or a DataFrame column, add it as a new column to t
-t[!, Symbol("welfare, θ = 0.5")] = tt
-t
-
-vector = 0.1:0.1:1.0
+vector = 0.1:0.1:1.0 #values to test
 
 function plot_welfare_world(model, values, param)
 
@@ -46,16 +39,16 @@ if param == 1
     results_long = stack(results, Not(:time), variable_name=:θ, value_name=:welfare_global)
 
     fig = results_long |> @vlplot(
-        :line, 
-        x=:time, 
-        y=:welfare_global, 
+        :line,
+        x=:time,
+        y=:welfare_global,
         color=:θ,
         title="Global Welfare Over Time for Different θ Values"
     )
     return fig
 end #end case θ
 
-if param == 2 
+if param == 2
     for x in values
         set_param!(model, :α, x)
         run(model)
@@ -73,9 +66,9 @@ if param == 2
     results_long = stack(results, Not(:time), variable_name=:α, value_name=:welfare_global)
 
     fig = results_long |> @vlplot(
-        :line, 
-        x=:time, 
-        y=:welfare_global, 
+        :line,
+        x=:time,
+        y=:welfare_global,
         color=:α,
         title="Global Welfare Over Time for Different α Values"
     )
@@ -101,9 +94,9 @@ if param == 3
     results_long = stack(results, Not(:time), variable_name=:η, value_name=:welfare_global)
 
     fig = results_long |> @vlplot(
-        :line, 
-        x=:time, 
-        y=:welfare_global, 
+        :line,
+        x=:time,
+        y=:welfare_global,
         color=:η,
         title="Global Welfare Over Time for Different η Values"
     )
@@ -113,10 +106,3 @@ end #end case η
 end
 
 A = plot_welfare_world(plot_1, vector, 2)
-
-
-
-
-
-
-

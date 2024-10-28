@@ -18,7 +18,8 @@
         v.E_bar = mean(p.Env0)/1000
 
         for c in d.country, q in d.quantile
-            v.Env[t,c,q] = is_first(t) ? p.Env0[c]/100 : v.Env[t-1,c,q]
+            v.Env[t,c,q] = 100
+            #is_first(t) ? p.Env0[c]/100 : v.Env[t-1,c,q]
         end
 
     end

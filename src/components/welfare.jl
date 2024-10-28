@@ -10,7 +10,7 @@
     nb_quantile             = Parameter()                                   # Number of quantiles
     l                       = Parameter(index=[time, country])              # Population (thousands)
     mapcrwpp                = Parameter(index=[country])                    # Map from country index to wpp region index
-    Env                     = Parameter(index=[time, country, quantile]) 
+    Env                     = Parameter(index=[time, country, quantile])
 
     cons_EDE_country        = Variable(index=[time, country])               # Equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
     cons_EDE_rwpp           = Variable(index=[time, regionwpp])             # Regional qually distributed welfare equivalent consumption (thousand USD2017 per person per year)
@@ -34,8 +34,8 @@
                 if(p.GreenNice==1.0)
                     #New EDE
                     v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ))*( (1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^p.θ+p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ)))^(p.θ/(1-p.η))-p.α*p.E_bar^p.θ)^(1/p.θ)
-                    v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))
-                    
+                    v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α).*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α.*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))
+
                 elseif !(p.GreenNice==1.0)
                     v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
                     v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ./(1-p.η))
@@ -58,15 +58,15 @@
 
             for c in d.country
                 if (p.GreenNice==1)
-                    
-                    v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ)) * ( exp(1/p.nb_quantile*sum(log.((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ)+p.α*p.Env[t,c,:].^(p.θ)))) - p.α*p.E_bar^p.θ)^(1/p.θ) 
+
+                    v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ)) * ( exp(1/p.nb_quantile*sum(log.((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ)+p.α*p.Env[t,c,:].^(p.θ)))) - p.α*p.E_bar^p.θ)^(1/p.θ)
                     v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^(1/p.θ)))
 
                 elseif !(p.GreenNice==1)
 
                     v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
                     v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(p.qcpc_post_recycle[t,c,:]))
-                end 
+                end
 
             end # country loop
 

@@ -8,101 +8,103 @@ Pkg.instantiate()
 using Mimi, MimiFAIRv2, DataFrames, CSVFiles, VegaLite
 include("nice2020_module.jl")
 
-plot_1 = MimiNICE2020.create_nice2020()
-run(plot_1)
 
-vector = 0.1:0.1:1.0 #values to test
-
-function plot_welfare_world(model, values, param)
-
-    # Run the model and store values
-    first_iteration = true
+function plot_welfare_world(m, values, param)
+    param_names = Dict("θ" => :θ, "α" => :α, "η" => :η)
+    param_name = param_names[param]
     results = DataFrame()
-
-
-if param == 1
+    first_iteration = true
+    model = deepcopy(m)
 
     for x in values
-        set_param!(model, :θ, x)
+        set_param!(model, param_name, x)
         run(model)
 
         if first_iteration
-            results = getdataframe(model, :welfare=>:welfare_global)
-            rename!(results, :welfare_global => Symbol("θ = $x"))
+            results = getdataframe(model, :welfare => :welfare_global)
+            rename!(results, :welfare_global => Symbol("$param_name = $x"))
             first_iteration = false
         else
             welfare_data = model[:welfare, :welfare_global]
-            results[!, Symbol("θ = $x")] = welfare_data
+            results[!, Symbol("$param_name = $x")] = welfare_data
         end
     end
 
-    results_long = stack(results, Not(:time), variable_name=:θ, value_name=:welfare_global)
+    results_long = stack(results, Not(:time), variable_name=param_name, value_name=:welfare_global)
 
     fig = results_long |> @vlplot(
         :line,
         x=:time,
         y=:welfare_global,
-        color=:θ,
-        title="Global Welfare Over Time for Different θ Values"
+        color=param_name,
+        title="Global Welfare Over Time for Different $param_name Values"
     )
     return fig
-end #end case θ
-
-if param == 2
-    for x in values
-        set_param!(model, :α, x)
-        run(model)
-
-        if first_iteration
-            results = getdataframe(model, :welfare=>:welfare_global)
-            rename!(results, :welfare_global => Symbol("α = $x"))
-            first_iteration = false
-        else
-            welfare_data = model[:welfare, :welfare_global]
-            results[!, Symbol("α = $x")] = welfare_data
-        end
-    end
-
-    results_long = stack(results, Not(:time), variable_name=:α, value_name=:welfare_global)
-
-    fig = results_long |> @vlplot(
-        :line,
-        x=:time,
-        y=:welfare_global,
-        color=:α,
-        title="Global Welfare Over Time for Different α Values"
-    )
-    return fig
-
-end #end case α
-
-if param == 3
-    for x in values_θ
-        set_param!(model, :η, x)
-        run(model)
-
-        if first_iteration
-            results = getdataframe(model, :welfare=>:welfare_global)
-            rename!(results, :welfare_global => Symbol("η = $x"))
-            first_iteration = false
-        else
-            welfare_data = model[:welfare, :welfare_global]
-            results[!, Symbol("η = $x")] = welfare_data
-        end
-    end
-
-    results_long = stack(results, Not(:time), variable_name=:η, value_name=:welfare_global)
-
-    fig = results_long |> @vlplot(
-        :line,
-        x=:time,
-        y=:welfare_global,
-        color=:η,
-        title="Global Welfare Over Time for Different η Values"
-    )
-    return fig
-end #end case η
-
 end
 
-A = plot_welfare_world(plot_1, vector, 2)
+
+
+function plot_EDE_world(m, values, param)
+    param_names = Dict("θ" => :θ, "α" => :α, "η" => :η)
+    param_name = param_names[param]
+    results = DataFrame()
+    first_iteration = true
+    model = deepcopy(m)
+
+    for x in values
+        set_param!(model, param_name, x)
+        run(model)
+
+        if first_iteration
+            results = getdataframe(model, :welfare => :cons_EDE_global)
+            rename!(results, :cons_EDE_global => Symbol("$param_name = $x"))
+            first_iteration = false
+        else
+            EDE_data = model[:welfare, :cons_EDE_global]
+            results[!, Symbol("$param_name = $x")] = EDE_data
+        end
+    end
+
+    results_long = stack(results, Not(:time), variable_name=param_name, value_name=:EDE_data)
+
+    fig = results_long |> @vlplot(
+        :line,
+        x=:time,
+        y=:EDE_data,
+        color=param_name,
+        title="Global consumption EDE Over Time for Different $param_name Values"
+    )
+    return fig
+end
+
+
+m2 = MimiNICE2020.create_nice2020()
+run(m2)
+
+explore(m2)
+
+vector = 0:0.1:1 #values to test
+
+
+A = plot_welfare_world(m2, vector, "α")
+A
+explore(m2)
+
+
+vector2 = 0:0.5:3
+B = plot_EDE_world(m2, vector2,"η")
+
+explore(m2)
+
+C = plot_EDE_world(m1, vector, 2)
+
+
+explore(m1)
+
+m3 = MimiNICE2020.create_nice2020()
+update_param!(m3, :α, 1.0)
+update_param!(m3, :η, 0.5)
+
+run(m3)
+
+explore(m3)

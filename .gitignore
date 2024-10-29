@@ -1,7 +1,9 @@
-# Tells git to ignore given files
-
+# LaTeX
 *.toc
 *.aux
 *.log
 *.synctex.gz
 
+# macOS
+.DS_Store
+**/.DS_Store

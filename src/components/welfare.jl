@@ -1,9 +1,52 @@
+function utility(consumption, environment, η, θ, α)
+    if η == 1
+        utility = log(
+            ((1 - α) * consumption^θ + α * environment^θ)^(1 / θ)
+        )
+    else
+        utility = ((1 - α) * consumption^θ + α * environment^θ)^((1 - η) / θ) / (1 - η)
+    end
+
+    return utility
+end
+
+
+function inverse_utility(utility, environment, η, θ, α)
+    if η == 1
+        consumption = (
+            (1 / (1 - α)) * (exp(utility)^θ - α * environment^θ)
+        )^(1 / θ)
+    else
+        consumption = (
+            (1 / (1 - α)) * ( ((1 - η) * utility)^(θ / (1 - η)) - α * environment^θ)
+        )^(1 / θ)
+    end
+
+    return consumption
+end
+
+
+function EDE(consumption, environment, η, θ, α, nb_quantile)
+    average_utility = (1 / nb_quantile) * sum(utility.(consumption, environment, η, θ, α))
+    EDE = inverse_utility(average_utility, environment, η, θ, α)
+    return EDE
+end
+
+
+function EDE_aggregated(country_level_EDE, environment, η, θ, α, population)
+    total_utility = sum(population .* utility.(country_level_EDE, environment, η, θ, α))
+    total_population = sum(population)
+    average_utility = total_utility / total_population
+    aggregated_EDE = inverse_utility(average_utility, environment, η, θ, α)
+    return aggregated_EDE
+end
+
+
 @defcomp welfare begin
 
     country         = Index()
     regionwpp       = Index()
 	quantile        = Index()
-
 
     qcpc_post_recycle       = Parameter(index=[time, country, quantile])    # Quantile per capita consumption after recycling tax back to quantiles (thousand USD2017 per person per year)
     η                       = Parameter()                                   # Inequality aversion
@@ -27,61 +70,45 @@
 
 
     function run_timestep(p, v, d, t)
+        for c in d.country
+            v.cons_EDE_country[t,c] = EDE(
+                p.qcpc_post_recycle[t,c,:],
+                p.Env,
+                p.η,
+                p.θ,
+                p.α,
+                p.nb_quantile
+            )
 
-        if !(p.η==1)
-            for c in d.country
+            v.welfare_country[t,c] = (
+                (p.l[t,c] / p.nb_quantile) * sum(utility.(
+                    p.qcpc_post_recycle[t,c,:], p.Env, p.η, p.θ, p.α
+                ))
+            )
+        end # country loop
 
-                if(p.GreenNice==1.0)
-                    #New EDE
-                    v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ))*( (1/p.nb_quantile * sum(((1-p.α)*p.qcpc_post_recycle[t,c,:].^p.θ+p.α*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ)))^(p.θ/(1-p.η))-p.α*p.E_bar^p.θ)^(1/p.θ)
-                    v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(((1-p.α).*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α.*p.Env[t,c,:].^p.θ).^((1-p.η)/p.θ) ./(1-p.η))
+        for rwpp in d.regionwpp
+            country_indices = findall(x -> x == rwpp, p.mapcrwpp)
 
-                elseif !(p.GreenNice==1.0)
-                    v.cons_EDE_country[t,c] = (1/p.nb_quantile * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ) ) ^(1/(1-p.η))
-                    v.welfare_country[t,c] = (p.l[t,c]/p.nb_quantile) * sum(p.qcpc_post_recycle[t,c,:].^(1-p.η) ./(1-p.η))
-                end
+            v.cons_EDE_rwpp[t,rwpp] = EDE_aggregated(
+                v.cons_EDE_country[t,country_indices],
+                p.Env,
+                p.η,
+                p.θ,
+                p.α,
+                p.l[t,country_indices]
+            )
+            v.welfare_rwpp[t,rwpp] = sum(v.welfare_country[t,country_indices])
+        end # region loop
 
-            end # country loop
-
-            for rwpp in d.regionwpp
-                country_indices = findall(x->x==rwpp , p.mapcrwpp) #Country indices for the region
-
-                v.cons_EDE_rwpp[t,rwpp] =  ( sum(p.l[t,country_indices] .*  v.cons_EDE_country[t,country_indices].^(1-p.η) ) / sum(p.l[t,country_indices]) )^(1/(1-p.η))
-                v.welfare_rwpp[t,rwpp] = sum( v.welfare_country[t,country_indices]  )
-
-            end # region loop
-
-            v.cons_EDE_global[t] = ( sum(p.l[t,:]  .*  v.cons_EDE_country[t,:].^(1-p.η) ) / sum(p.l[t,:]) )^(1/(1-p.η))
-            v.welfare_global[t] = sum( v.welfare_country[t,:]  )
-
-        elseif p.η==1
-
-            for c in d.country
-                if (p.GreenNice==1)
-
-                    v.cons_EDE_country[t,c] = ((1-p.α)^(-1/p.θ)) * ( exp(1/p.nb_quantile*sum(log.((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ)+p.α*p.Env[t,c,:].^(p.θ)))) - p.α*p.E_bar^p.θ)^(1/p.θ)
-                    v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(((1-p.α)*p.qcpc_post_recycle[t,c,:].^(p.θ) + p.α*p.Env[t,c,:].^p.θ).^(1/p.θ)))
-
-                elseif !(p.GreenNice==1)
-
-                    v.cons_EDE_country[t,c] = exp(1/p.nb_quantile * sum( log.(p.qcpc_post_recycle[t,c,:]) ))
-                    v.welfare_country[t,c] = p.l[t,c]/p.nb_quantile * sum(log.(p.qcpc_post_recycle[t,c,:]))
-                end
-
-            end # country loop
-
-            for rwpp in d.regionwpp
-                country_indices = findall(x->x==rwpp , p.mapcrwpp) #Country indices for the region
-
-                v.cons_EDE_rwpp[t,rwpp] = exp( sum(p.l[t,country_indices]  .*  log.(v.cons_EDE_country[t,country_indices]) )  / sum(p.l[t,country_indices]) )
-                v.welfare_rwpp[t,rwpp] = sum( v.welfare_country[t,country_indices]  )
-
-            end # region loop
-
-            v.cons_EDE_global[t] = exp( sum(p.l[t,:]  .*  log.(v.cons_EDE_country[t,:]) )  / sum(p.l[t,:]) )
-            v.welfare_global[t] = sum( v.welfare_country[t,:]  )
-        end
-
-
+        v.cons_EDE_global[t] = EDE_aggregated(
+            v.cons_EDE_country[t,:],
+            p.Env,
+            p.η,
+            p.θ,
+            p.α,
+            p.l[t,:]
+        )
+        v.welfare_global[t] = sum(v.welfare_country[t,:])
     end # timestep
 end

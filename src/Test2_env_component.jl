@@ -8,12 +8,8 @@ Pkg.instantiate()
 # Load required Julia packages.
 using Mimi, MimiFAIRv2, DataFrames, CSVFiles
 
-println("Load NICE2020 source code.")
-# Load NICE2020 source code.
 include("nice2020_module.jl")
 
-
-println("Testing changes in Env component.")
 
 Env_1 = MimiNICE2020.create_nice2020()
 

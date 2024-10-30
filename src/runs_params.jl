@@ -1,4 +1,5 @@
-### RUN AND PLOT SIMULATIONS
+### This file contains the code to run the model with different parameters and
+#plot the results.
 
 using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))

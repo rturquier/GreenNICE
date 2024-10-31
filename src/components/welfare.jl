@@ -28,17 +28,20 @@ end
 
 function EDE(consumption, environment, η, θ, α, nb_quantile)
     average_utility = (1 / nb_quantile) * sum(utility.(consumption, environment, η, θ, α))
-    EDE = inverse_utility(average_utility, environment, η, θ, α)
-    return EDE
+    average_environment = (1 / nb_quantile) * sum(environment)
+    EDE = inverse_utility.(average_utility, average_environment, η, θ, α)
+    return EDE, average_environment
 end
 
 
-function EDE_aggregated(country_level_EDE, environment, η, θ, α, population)
-    total_utility = sum(population .* utility.(country_level_EDE, environment, η, θ, α))
+function EDE_aggregated(country_level_EDE, country_environment, η, θ, α, population)
+
+    total_utility = sum(population .* utility.(country_level_EDE, country_environment, η, θ, α))
     total_population = sum(population)
     average_utility = total_utility / total_population
-    aggregated_EDE = inverse_utility(average_utility, environment, η, θ, α)
-    return aggregated_EDE
+    average_environment = sum(country_environment) / total_population
+    aggregated_EDE = inverse_utility(average_utility, average_environment, η, θ, α)
+    return aggregated_EDE, average_environment
 end
 
 
@@ -53,7 +56,6 @@ end
     nb_quantile             = Parameter()                                   # Number of quantiles
     l                       = Parameter(index=[time, country])              # Population (thousands)
     mapcrwpp                = Parameter(index=[country])                    # Map from country index to wpp region index
-    Env                     = Parameter(index=[time, country, quantile])
 
     cons_EDE_country        = Variable(index=[time, country])               # Equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
     cons_EDE_rwpp           = Variable(index=[time, regionwpp])             # Regional qually distributed welfare equivalent consumption (thousand USD2017 per person per year)
@@ -62,18 +64,22 @@ end
     welfare_rwpp            = Variable(index=[time, regionwpp])             # WPP region welfare
     welfare_global          = Variable(index=[time])                        # Global welfare
 
+
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     Env                     = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**). Does not vary by quantile
     GreenNice               = Parameter()                                   # GreenNice switch (1 = ON)
-   E_bar                   = Parameter()              # Average level of environment at time 0
-
+    E_bar                   = Parameter()                                   # Average level of environment at time 0
+    Env_country             = Variable(index=[time, country])
+    Env_rwpp                = Variable(index=[time, regionwpp])
 
     function run_timestep(p, v, d, t)
+
         for c in d.country
-            v.cons_EDE_country[t,c] = EDE(
+
+            v.cons_EDE_country[t,c], v.Env_country[t,c] = EDE(
                 p.qcpc_post_recycle[t,c,:],
-                p.Env,
+                p.Env[t,c,:],
                 p.η,
                 p.θ,
                 p.α,
@@ -82,7 +88,7 @@ end
 
             v.welfare_country[t,c] = (
                 (p.l[t,c] / p.nb_quantile) * sum(utility.(
-                    p.qcpc_post_recycle[t,c,:], p.Env, p.η, p.θ, p.α
+                    p.qcpc_post_recycle[t,c,:], p.Env[t,c,:], p.η, p.θ, p.α
                 ))
             )
         end # country loop
@@ -90,9 +96,9 @@ end
         for rwpp in d.regionwpp
             country_indices = findall(x -> x == rwpp, p.mapcrwpp)
 
-            v.cons_EDE_rwpp[t,rwpp] = EDE_aggregated(
+            v.cons_EDE_rwpp[t,rwpp], v.Env_rwpp[t,rwpp] = EDE_aggregated(
                 v.cons_EDE_country[t,country_indices],
-                p.Env,
+                v.Env_country[t,country_indices],
                 p.η,
                 p.θ,
                 p.α,
@@ -103,11 +109,11 @@ end
 
         v.cons_EDE_global[t] = EDE_aggregated(
             v.cons_EDE_country[t,:],
-            p.Env,
+            v.Env_rwpp[t,:],
             p.η,
             p.θ,
             p.α,
-            p.l[t,:]
+            p.l[t,:],
         )
         v.welfare_global[t] = sum(v.welfare_country[t,:])
     end # timestep

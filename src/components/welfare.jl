@@ -26,22 +26,23 @@ function inverse_utility(utility, environment, η, θ, α)
 end
 
 
-function EDE(consumption, environment, η, θ, α, nb_quantile)
-    average_utility = (1 / nb_quantile) * sum(utility.(consumption, environment, η, θ, α))
-    average_environment = (1 / nb_quantile) * sum(environment)
-    EDE = inverse_utility.(average_utility, average_environment, η, θ, α)
-    return EDE, average_environment
+function EDE(consumption, environment, baseline_environment, η, θ, α, nb_quantile)
+    average_utility = (1 / nb_quantile) * sum(utility.(
+        consumption, environment, η, θ, α
+    ))
+    EDE = inverse_utility.(average_utility, baseline_environment, η, θ, α)
+    return EDE
 end
 
 
-function EDE_aggregated(country_level_EDE, country_environment, η, θ, α, population)
-
-    total_utility = sum(population .* utility.(country_level_EDE, country_environment, η, θ, α))
+function EDE_aggregated(country_level_EDE, baseline_environment, η, θ, α, population)
+    total_utility = sum(population .* utility.(
+        country_level_EDE, baseline_environment, η, θ, α
+    ))
     total_population = sum(population)
     average_utility = total_utility / total_population
-    average_environment = sum(country_environment) / total_population
-    aggregated_EDE = inverse_utility(average_utility, average_environment, η, θ, α)
-    return aggregated_EDE, average_environment
+    aggregated_EDE = inverse_utility(average_utility, baseline_environment, η, θ, α)
+    return aggregated_EDE
 end
 
 
@@ -69,7 +70,7 @@ end
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     Env                     = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**). Does not vary by quantile
     GreenNice               = Parameter()                                   # GreenNice switch (1 = ON)
-    E_bar                   = Parameter()                                   # Average level of environment at time 0
+    E_bar                   = Parameter()                                   # Reference level of environment
     Env_country             = Variable(index=[time, country])
     Env_rwpp                = Variable(index=[time, regionwpp])
 
@@ -77,9 +78,10 @@ end
 
         for c in d.country
 
-            v.cons_EDE_country[t,c], v.Env_country[t,c] = EDE(
+            v.cons_EDE_country[t,c] = EDE(
                 p.qcpc_post_recycle[t,c,:],
                 p.Env[t,c,:],
+                p.E_bar,
                 p.η,
                 p.θ,
                 p.α,
@@ -96,9 +98,9 @@ end
         for rwpp in d.regionwpp
             country_indices = findall(x -> x == rwpp, p.mapcrwpp)
 
-            v.cons_EDE_rwpp[t,rwpp], v.Env_rwpp[t,rwpp] = EDE_aggregated(
+            v.cons_EDE_rwpp[t,rwpp] = EDE_aggregated(
                 v.cons_EDE_country[t,country_indices],
-                v.Env_country[t,country_indices],
+                p.E_bar,
                 p.η,
                 p.θ,
                 p.α,
@@ -109,7 +111,7 @@ end
 
         v.cons_EDE_global[t] = EDE_aggregated(
             v.cons_EDE_country[t,:],
-            v.Env_rwpp[t,:],
+            p.E_bar,
             p.η,
             p.θ,
             p.α,

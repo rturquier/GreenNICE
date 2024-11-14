@@ -72,7 +72,7 @@
 end
 
 
-function utility(consumption, environment, η, θ, α)
+function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
     if η == 1
         utility = log(
             ((1 - α) * consumption^θ + α * environment^θ)^(1 / θ)
@@ -85,7 +85,7 @@ function utility(consumption, environment, η, θ, α)
 end
 
 
-function inverse_utility(utility, environment, η, θ, α)
+function inverse_utility(utility::Real, environment::Real, η::Real, θ::Real, α::Real)
     if η == 1
         consumption = (
             (1 / (1 - α)) * (exp(utility)^θ - α * environment^θ)
@@ -100,7 +100,15 @@ function inverse_utility(utility, environment, η, θ, α)
 end
 
 
-function EDE(consumption, environment, baseline_environment, η, θ, α, nb_quantile)
+function EDE(
+    consumption::Vector,
+    environment::Union{Real,Vector},
+    baseline_environment::Real,
+    η::Real,
+    θ::Real,
+    α::Real,
+    nb_quantile::Int,
+)
     average_utility = (1 / nb_quantile) * sum(utility.(
         consumption, environment, η, θ, α
     ))
@@ -109,7 +117,14 @@ function EDE(consumption, environment, baseline_environment, η, θ, α, nb_quan
 end
 
 
-function EDE_aggregated(country_level_EDE, baseline_environment, η, θ, α, population)
+function EDE_aggregated(
+    country_level_EDE::Vector,
+    baseline_environment::Real,
+    η::Real,
+    θ::Real,
+    α::Real,
+    population::Vector,
+)
     total_utility = sum(population .* utility.(
         country_level_EDE, baseline_environment, η, θ, α
     ))

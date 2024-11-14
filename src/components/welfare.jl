@@ -72,6 +72,16 @@
 end
 
 
+"""
+    utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
+
+Calculate utility of consumption and environmental goods.
+
+# Arguments
+- `η::Real`: inequality aversion (coefficient of relative risk aversion).
+- `θ::Real`: substitutability parameter. Accepts value between -∞ and 1, and cannot be null.
+- `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
+"""
 function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
     if η == 1
         utility = log(
@@ -85,6 +95,11 @@ function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::R
 end
 
 
+"""
+    inverse_utility(utility::Real, environment::Real, η::Real, θ::Real, α::Real)
+
+Calculate the consumption that would give a certain utility with the `utility` function.
+"""
 function inverse_utility(utility::Real, environment::Real, η::Real, θ::Real, α::Real)
     if η == 1
         consumption = (
@@ -100,6 +115,22 @@ function inverse_utility(utility::Real, environment::Real, η::Real, θ::Real, �
 end
 
 
+"""
+    EDE(
+    consumption::Vector,
+    environment::Union{Real,Vector},
+    baseline_environment::Real,
+    η::Real,
+    θ::Real,
+    α::Real,
+    nb_quantile::Int,
+)
+
+Calculate Equally Distributed Equivalent (EDE) consumption at the country level.
+
+EDE consumption is the consumption level that would provide the same welfare if there were
+no inequalities, given a shared `baseline_environment` level of envrionmental consumption.
+"""
 function EDE(
     consumption::Vector,
     environment::Union{Real,Vector},
@@ -117,6 +148,18 @@ function EDE(
 end
 
 
+"""
+    EDE_aggregated(
+    country_level_EDE::Vector,
+    baseline_environment::Real,
+    η::Real,
+    θ::Real,
+    α::Real,
+    population::Vector,
+)
+
+Aggregate country-level EDE consumption.
+"""
 function EDE_aggregated(
     country_level_EDE::Vector,
     baseline_environment::Real,

@@ -145,8 +145,6 @@ function create_nice2020()
 	connect_param!(m, :abatement, :l, :l)
 	connect_param!(m, :abatement, :η, :η)
 	connect_param!(m, :abatement, :σ, :σ)
-	connect_param!(m, :abatement, :α, :α)
-	connect_param!(m, :abatement, :θ, :θ)
 	# --------------------------------
 	# CO2 Emissions
 	# --------------------------------

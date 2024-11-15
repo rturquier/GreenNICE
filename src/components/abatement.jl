@@ -10,8 +10,6 @@
     s       = Parameter(index=[time, country])  # Savings rate
     l       = Parameter(index=[time, country])  #Labor - population (thousands)
     η       = Parameter()                       # Inequality aversion
-    α       = Parameter()                       # Environmental good weight in utility function
-    θ       = Parameter()                       # Elasticity of substitution between consumption and environmental goods
 
     θ2                      = Parameter()                       # Exponent of abatement cost function (DICE-2023 value)
     pbacktime               = Parameter(index=[time])           # Backstop price from DICE 2023 (2017USD per tCO2)
@@ -38,13 +36,13 @@
             if (p.control_regime==1)  # global_carbon_tax
 
                 # Set country carbon tax equal to global uniform carbon tax, bounded by the global backstop price
-                v.country_carbon_tax[t,c] = min(p.pbacktime[t], p.global_carbon_tax[t]) 
+                v.country_carbon_tax[t,c] = min(p.pbacktime[t], p.global_carbon_tax[t])
 
                 # Find abatement rate from inversion of the expression (tax = marginal abatement cost), bound between 0 and 1
                 #v.μ[t,c] = min( max((v.country_carbon_tax[t,c] / p.pbacktime[t,region_index] ) ^ (1 / (p.θ2 - 1.0)), 0.0), 1.0)
                 v.μ[t,c] = min( max((v.country_carbon_tax[t,c] / (v.θ1[t,c] * p.θ2/(p.σ[t,c]*1e3)) ) ^ (1 / (p.θ2 - 1.0)), 0.0), 1.0)
 
-                    
+
             elseif (p.control_regime==2) #country_carbon_tax
 
                 # Expression to compute carbon tax of every country from carbon tax of reference country

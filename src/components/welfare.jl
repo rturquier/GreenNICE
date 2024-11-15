@@ -20,7 +20,6 @@
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     Env                     = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**). Does not vary by quantile
-    GreenNice               = Parameter()                                   # GreenNice switch (1 = ON)
     E_bar                   = Parameter()                                   # Reference level of environment
     Env_country             = Variable(index=[time, country])
     Env_rwpp                = Variable(index=[time, regionwpp])

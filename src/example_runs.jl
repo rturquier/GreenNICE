@@ -64,8 +64,6 @@ update_param!(bau_model, :abatement, :μ_input, zeros(nb_steps, nb_country))
 
 println("Running the updated model and saving the output in the directory: ", output_directory_bau,)
 
-update_param!(bau_model, :η, 1)
-
 run(bau_model)
 
 # Save the bau (see helper functions for saving function details)

@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.4"
+julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "48c2251351678ed0ba14a1b92aef36fa0c1a0cfc"
+project_hash = "b29bf24ed8d4c27ab636e1487b9037153ee97139"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -892,7 +892,7 @@ version = "1.2.13+1"
 deps = ["Artifacts", "Libdl"]
 git-tree-sha1 = "576c27f2c23add3ce8f10717d72fbaee6fe120e9"
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.8.0+1"
+version = "5.11.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]

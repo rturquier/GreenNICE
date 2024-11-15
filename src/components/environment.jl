@@ -1,8 +1,3 @@
-# -----------------------------------------------------------
-# Environment
-# -----------------------------------------------------------
-# Measures Natural Capital Evolution
-
 @defcomp environment begin
 
     country                 = Index()                           #Note that a regional index is defined here

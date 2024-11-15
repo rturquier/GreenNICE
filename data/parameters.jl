@@ -213,4 +213,4 @@ cmip_pattern = raw_patterns[!, pattern_type]
 
 Env0_data = DataFrame(load("data/e0.csv",  header_exists=true))
 filter!(:countrycode => in(countries), Env0_data)
-Env0 = Env0_data[:, 2]
+Env0 = Env0_data[:, :e0]

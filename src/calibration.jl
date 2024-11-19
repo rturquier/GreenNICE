@@ -14,13 +14,13 @@ file_url =
     "https://datacatalogfiles.worldbank.org/ddh-published/0042066/DR0084043/" *
     "CWON%202024%20Country%20Tool%2010082024.xlsx?versionId=2024-10-23T12:54:29.3317026Z"
 
-    file_path = "data/CWON_2024.xlsx"
+file_path = "data/CWON_2024.xlsx"
 
 HTTP.download(file_url, file_path)
 
 #1.2 Create a CSV file with the data from the "country" sheet
 
-country_e0 = XLSX.readtable(file_path, "country", first_row=2) |> DataFrame
+country_e0 = XLSX.readtable(file_path, "country"; first_row=2) |> DataFrame
 
 # Filter data for the year 2020
 country_e0 = filter(row -> row[:year] == 2020, country_e0)
@@ -36,7 +36,7 @@ country_list_file_path = "data/country_list.csv"
 e0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
 # Perform a left join and update e0_data
-e0 = leftjoin(e0, country_e0, on=:countrycode, makeunique=true)
+e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
 
 # Rename torn_real_renew to e0
 rename!(e0, :torn_real_renew => :e0)

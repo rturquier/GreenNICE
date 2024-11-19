@@ -4,6 +4,7 @@ using DataFrames
 using HTTP
 using JSON
 using XLSX
+using Statistics
 
 # 1. Set initial values for E
 
@@ -40,8 +41,10 @@ e0 = leftjoin(e0, country_e0, on=:countrycode, makeunique=true)
 # Rename torn_real_renew to e0
 rename!(e0, :torn_real_renew => :e0)
 
-# Replace missing values with 0
-replace!(e0.e0, missing => 0)
+# Replace missing values with the average
+avg_e0 = mean(skipmissing(e0.e0))
+
+replace!(e0.e0, missing => avg_e0)
 
 # Scale the values by dividing by 1,000,000
 e0.e0 = e0.e0 ./ 1000000

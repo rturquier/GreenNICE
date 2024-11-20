@@ -8,8 +8,8 @@ using Statistics
 
 # 1. Set initial values for E--a non-market environmental good.
 
-# Select Tornwvist natural capital for 3 environmental services (pg 145 CWON)
-#es 1: Recreation. es 2: Other wood products. es 3: Water regulation
+# Select natural capital for 3 environmental services (pg 145 CWON)
+#es 1: Recreation. es 2: non-wood forest products. es 3: Water regulation
 
 #1.1 Download excel file from the World Bank
 
@@ -47,7 +47,7 @@ e0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
 e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
 
-# Replace missing values with the average of the column so there is an starting value for all countries
+# Replace missing values with the average so there is an starting value for all countries
 
 avg_e0 = mean(skipmissing(e0.e0))
 e0.e0 = coalesce.(e0.e0, avg_e0)

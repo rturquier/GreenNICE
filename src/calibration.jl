@@ -6,7 +6,10 @@ using JSON
 using XLSX
 using Statistics
 
-# 1. Set initial values for E
+# 1. Set initial values for E--a non-market environmental good.
+
+# Select Tornwvist natural capital for 3 environmental services (pg 145 CWON)
+#es 1: Recreation. es 2: Other wood products. es 3: Water regulation
 
 #1.1 Download excel file from the World Bank
 
@@ -22,12 +25,9 @@ HTTP.download(file_url, file_path)
 
 country_e0 = XLSX.readtable(file_path, "country"; first_row=2) |> DataFrame
 
-# Filter data for the year 2020
+# Filter data for the year 2020 and select columns of interest
 
 country_e0 = filter(row -> row[:year] == 2020, country_e0)
-
-# Select Tornwvist natural capital for 3 environmental services (pg 145 CWON)
-#es 1: Recreation. es 2: Other wood products. es 3: Water regulation
 
 country_e0 = select(
     country_e0,

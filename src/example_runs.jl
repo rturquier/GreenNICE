@@ -22,7 +22,7 @@ include("nice2020_module.jl")
 
 println("Creating an instance of the NICE2020 model and retrieving some necessary parameters.")
 
-base_model = MimiNICE2020.create_nice2020()
+base_model = GreenNICE.create()
 
 nb_steps   = length(dim_keys(base_model, :time))
 nb_country = length(dim_keys(base_model, :country))
@@ -36,7 +36,7 @@ recycle_share = ones(nb_country,nb_quantile) .* 1/nb_quantile
 # ----------------------------------------------------
 
 #Example linear uniform carbon tax pathway (not optimised), 2017 USD per tCO2
-global_co2_tax = MimiNICE2020.linear_tax_trajectory(tax_start_value = 90, increase_value=7, year_tax_start=2020, year_tax_end=2200)
+global_co2_tax = GreenNICE.linear_tax_trajectory(tax_start_value = 90, increase_value=7, year_tax_start=2020, year_tax_end=2200)
 
 #------------
 # DIRECTORIES
@@ -57,7 +57,7 @@ println("--0-- Baseline model without CO2 mitigation")
 println("Creating an instance of the NICE2020 model and updating some parameters.")
 
 # Get an instance of the BAU no-policy model. This includes the user-specifications but has no CO2 mitigation policy (will be used to calculte global CO2 policy).
-bau_model = MimiNICE2020.create_nice2020()
+bau_model = GreenNICE.create()
 
 update_param!(bau_model, :abatement, :control_regime, 3) # Switch for emissions control regime  1:"global_carbon_tax", 2:"country_carbon_tax", 3:"country_abatement_rate"
 update_param!(bau_model, :abatement, :μ_input, zeros(nb_steps, nb_country))
@@ -67,7 +67,7 @@ println("Running the updated model and saving the output in the directory: ", ou
 run(bau_model)
 
 # Save the bau (see helper functions for saving function details)
-MimiNICE2020.save_nice2020_results(bau_model, output_directory_bau, revenue_recycling=false)
+GreenNICE.save_results(bau_model, output_directory_bau, revenue_recycling=false)
 
 
 # ----------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ println("--1-- Example run with uniform global carbon tax (non-optimized), with 
 println("Creating an instance of the NICE2020 model and updating some parameters.")
 
 # Get baseline instance of the model.
-nice2020_uniform_tax = MimiNICE2020.create_nice2020()
+nice2020_uniform_tax = GreenNICE.create()
 
 switch_recycle  = 0 # OFF   Recycle revenues to households
 
@@ -95,7 +95,7 @@ println("Running the updated model and saving the output in the directory: ", ou
 run(nice2020_uniform_tax)
 
 # Save the run (see helper functions for saving function details)
-MimiNICE2020.save_nice2020_results(nice2020_uniform_tax, output_directory_uniform, revenue_recycling=false)
+GreenNICE.save_results(nice2020_uniform_tax, output_directory_uniform, revenue_recycling=false)
 
 
 # -------------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ println("Running the updated model and saving the output in the directory: ", ou
 run(nice2020_uniform_tax)
 
 # Save the recycle run (see helper functions for saving function details)
-MimiNICE2020.save_nice2020_results(nice2020_uniform_tax, output_directory_uniform, revenue_recycling=true, recycling_type=1)
+GreenNICE.save_results(nice2020_uniform_tax, output_directory_uniform, revenue_recycling=true, recycling_type=1)
 
 
 #------------------------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ println("Running the updated model and saving the output in the directory: ", ou
 run(nice2020_uniform_tax)
 
 # Save the recycle run (see helper functions for saving function details)
-MimiNICE2020.save_nice2020_results(nice2020_uniform_tax, output_directory_uniform, revenue_recycling=true, recycling_type=2)
+GreenNICE.save_results(nice2020_uniform_tax, output_directory_uniform, revenue_recycling=true, recycling_type=2)
 
 
 #------------------------------------------------------------------------------------------------

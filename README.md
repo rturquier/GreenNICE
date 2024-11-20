@@ -30,7 +30,7 @@ There are two ways to run this code.
 
 First, you can run a set of example runs with different model settings. 
 
-Alternatively, you can run the code for the NICE2020 model using the `MimiNICE2020` module.
+Alternatively, you can run the code for the GreenNICE model using the `GreenNICE` module.
 
 #### Running The Example Runs
 (1) Set this repository as your working directory.  
@@ -45,9 +45,9 @@ include("src/example_runs.jl")
 ```julia
 include("src/nice2020_module.jl")
 ```
-(3) Create an instance of this model. By loading the module, it's as if you imported a `create_nice2020` function from one of your Julia packages.
+(3) Create an instance of this model. By loading the module, it's as if you imported a `create` function from one of your Julia packages.
 ```julia
-m = MimiNICE2020.create_nice2020()
+m = GreenNICE.create()
 ```
 (4) Run the model.
 ```julia

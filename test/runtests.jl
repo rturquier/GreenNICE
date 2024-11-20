@@ -3,10 +3,10 @@ using Mimi
 
 @testset "Global tests" begin
     include("../src/nice2020_module.jl")
-    using .MimiNICE2020
+    using .GreenNICE
 
     # Test that the model builds
-    m = MimiNICE2020.create_nice2020()
+    m = GreenNICE.create()
     @test m isa Model
 
     # Test that the model runs

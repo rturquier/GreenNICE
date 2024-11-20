@@ -65,7 +65,7 @@ end
 #######################################################################################################################
 # CALCULATE AN EXPONENTIAL GROWTH TAX TRAJECTORY
 ########################################################################################################################
-# Description: This function computes an exponential growth carbon tax path. 
+# Description: This function computes an exponential growth carbon tax path.
 # It assumes a carbon tax of $0 in period 1.
 #
 # Function Arguments:
@@ -106,7 +106,7 @@ end
 #       revenue_recycling:        A check for whether or not the results recycle CO2 tax revenue (true = recycle, false = no recycling).
 #----------------------------------------------------------------------------------------------------------------------
 
-function save_nice2020_results(m::Model, output_directory::String; revenue_recycling::Bool=true, recycling_type::Int64=0,  result_year_end::Int64= 2100)
+function save_results(m::Model, output_directory::String; revenue_recycling::Bool=true, recycling_type::Int64=0,  result_year_end::Int64= 2100)
 
     # Make subdirectory folders to store results with and without revenue recycling.
     if revenue_recycling == true

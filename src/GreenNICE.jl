@@ -1,8 +1,4 @@
-# This file creates the NICE2020 model as a module
-##################################################
-
-# Set as a Julia module.
-module MimiNICE2020
+module GreenNICE
 
 # Load required packages.
 using Mimi, MimiFAIRv2, Statistics, Random, Distributions, Inequality
@@ -29,7 +25,7 @@ include(joinpath("components", "welfare.jl"))
 
 
 # Create a function that couples FAIRv2.0 to the economic model components
-function create_nice2020()
+function create()
 
 	# Get an instance of Mimi-FAIRv2 with SSP2-45 emissions and radiative forcing.
 	m = MimiFAIRv2.get_model(emissions_forcing_scenario="ssp245", start_year=2020, end_year=2300, param_type = "Number")

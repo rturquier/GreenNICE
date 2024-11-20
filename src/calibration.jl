@@ -23,32 +23,38 @@ HTTP.download(file_url, file_path)
 country_e0 = XLSX.readtable(file_path, "country"; first_row=2) |> DataFrame
 
 # Filter data for the year 2020
+
 country_e0 = filter(row -> row[:year] == 2020, country_e0)
 
-# Keep only the columns 'countrycode' and 'torn_real_renew'
-#We use renewable natural capital
-country_e0 = select(country_e0, [:countrycode, :torn_real_renew])
+# Select Tornwvist natural capital for 3 environmental services (pg 145 CWON)
+#es 1: Recreation. es 2: Other wood products. es 3: Water regulation
+
+country_e0 = select(
+    country_e0,
+    [:countrycode, :torn_real_forest_es1, :torn_real_forest_es2, :torn_real_forest_es3],
+)
+
+country_e0[!, :e0] =
+    country_e0.torn_real_forest_es1 .+ country_e0.torn_real_forest_es2 .+
+    country_e0.torn_real_forest_es3
+
+country_e0 = select(country_e0, [:countrycode, :e0])
 
 #1.3 Create a CSV file with initial natural capital values
 
-# Open file country list, merge, scale values and save
 country_list_file_path = "data/country_list.csv"
 e0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
-# Perform a left join and update e0_data
 e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
 
-# Rename torn_real_renew to e0
-rename!(e0, :torn_real_renew => :e0)
+# Replace missing values with the average of the column so there is an starting value for all countries
 
-# Replace missing values with the average
 avg_e0 = mean(skipmissing(e0.e0))
+e0.e0 = coalesce.(e0.e0, avg_e0)
 
-replace!(e0.e0, missing => avg_e0)
+# Scale down the values by dividing by 1,000,000 to get the units in million USD
 
-# Scale the values by dividing by 1,000,000
 e0.e0 = e0.e0 ./ 1000000
 
-# Save the updated data back to the CSV file
 e0_file_path = "data/e0.csv"
 CSVFiles.save(e0_file_path, e0)

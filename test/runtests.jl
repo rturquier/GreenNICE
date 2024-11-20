@@ -2,7 +2,7 @@ using Test
 using Mimi
 
 @testset "Global tests" begin
-    include("../src/nice2020_module.jl")
+    include("../src/GreenNICE.jl")
     using .GreenNICE
 
     # Test that the model builds

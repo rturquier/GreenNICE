@@ -43,7 +43,7 @@ include("src/example_runs.jl")
 (1) Set this repository as your working directory.  
 (2) Load the module file to create your model:
 ```julia
-include("src/nice2020_module.jl")
+include("src/GreenNICE.jl")
 ```
 (3) Create an instance of this model. By loading the module, it's as if you imported a `create` function from one of your Julia packages.
 ```julia

@@ -52,6 +52,10 @@ e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
 avg_e0 = mean(skipmissing(e0.e0))
 e0.e0 = coalesce.(e0.e0, avg_e0)
 
+#Get the flow of the nat cap stock. r = 4%. t = 100 years
+
+e0.e0 = e0.e0 .* (0.96 / (1-0.04 ^ 100))
+
 # Scale down the values by dividing by 1,000,000 to get the units in million USD
 
 e0.e0 = e0.e0 ./ 1000000

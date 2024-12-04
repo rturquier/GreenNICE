@@ -71,7 +71,7 @@ function create()
 	add_shared_param!(m, :η, 	1.5)
 	add_shared_param!(m, :σ, 	Matrix(emissionsrate), dims=[:time, :country])
 	add_shared_param!(m,  :s, Matrix(srate), dims=[:time, :country])
-	add_shared_param!(m, :α, 0.5)
+	add_shared_param!(m, :α, 0.1)
 	add_shared_param!(m, :θ, 0.5)
 
 
@@ -121,6 +121,9 @@ function create()
 	# --------------------------------
 	# Environment
 	# --------------------------------
+
+    connect_param!(m, :environment, :l, :l)
+    connect_param!(m, :environment, :nb_quantile, :nb_quantile)
 
 	update_param!(m, :environment, :Env0, Env0)
 

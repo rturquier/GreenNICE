@@ -21,8 +21,6 @@
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     Env_percapita           = Parameter(index=[time, country, quantile])    # Non_market environmental good
     E_bar                   = Parameter()                                   # Reference level of environment
-    Env_country             = Variable(index=[time, country])
-    Env_rwpp                = Variable(index=[time, regionwpp])
 
     function run_timestep(p, v, d, t)
 

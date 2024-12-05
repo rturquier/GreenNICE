@@ -126,6 +126,7 @@ function create()
     connect_param!(m, :environment, :nb_quantile, :nb_quantile)
 
 	update_param!(m, :environment, :Env0, Env0)
+    update_param!(m, :environment, :damage, 0.01)
 
 	# --------------------------------
 	# Abatement

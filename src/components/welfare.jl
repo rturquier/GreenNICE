@@ -19,7 +19,7 @@
 
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
-    Env                     = Parameter(index=[time, country, quantile])    # Environmental good consumption (**Unit to be defined**). Does not vary by quantile
+    Env_percapita           = Parameter(index=[time, country, quantile])    # Non_market environmental good
     E_bar                   = Parameter()                                   # Reference level of environment
     Env_country             = Variable(index=[time, country])
     Env_rwpp                = Variable(index=[time, regionwpp])
@@ -29,7 +29,7 @@
         for c in d.country
             v.cons_EDE_country[t,c] = EDE(
                 p.qcpc_post_recycle[t,c,:],
-                p.Env[t,c,:],
+                p.Env_percapita[t,c,:],
                 p.E_bar,
                 p.η,
                 p.θ,
@@ -39,7 +39,7 @@
 
             v.welfare_country[t,c] = (
                 (p.l[t,c] / p.nb_quantile) * sum(utility.(
-                    p.qcpc_post_recycle[t,c,:], p.Env[t,c,:], p.η, p.θ, p.α
+                    p.qcpc_post_recycle[t,c,:], p.Env_percapita[t,c,:], p.η, p.θ, p.α
                 ))
             )
         end # country loop

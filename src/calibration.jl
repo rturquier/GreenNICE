@@ -12,13 +12,13 @@ nice_inputs = JSON.parsefile("data/nice_inputs.json") # This file contains the e
 countries = nice_inputs["country_set_ssp_183"]["x"]["countrycode"] # country set (ISO3 codes in alphabetic order)countries = string.(countries)
 
 # REMOVE SOMALIA, VENEZUELA, NEW CALEDONIA, and TRINIDAD AND TOBAGO
-filter!( x-> !(x in ["SOM", "VEN", "NCL", "TTO" ]), countries )
+filter!(x -> !(x in ["SOM", "VEN", "NCL", "TTO"]), countries)
 
 sort!(countries) # Sort country names to be in alphabetical order.
 
 # Save the filtered and sorted country codes as a CSV file
 country_list_file_path = "data/country_list.csv"
-CSVFiles.save(country_list_file_path, DataFrame(countrycode=countries))
+CSVFiles.save(country_list_file_path, DataFrame(; countrycode=countries))
 
 # 1. Set initial values for E--a non-market environmental good.
 
@@ -67,7 +67,7 @@ e0.e0 = coalesce.(e0.e0, avg_e0)
 
 #Get the flow of the nat cap stock. r = 4%. t = 100 years
 
-e0.e0 = e0.e0 .* ( (1 - 0.04) / (1 - 0.04 ^ 100))
+e0.e0 = e0.e0 .* ((1 - 0.04) / (1 - 0.04^100))
 
 # Scale down the values by dividing by 1,000,000 to get the units in million USD
 

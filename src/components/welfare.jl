@@ -232,6 +232,8 @@ function EDE_decilecountry(
     utility_decilecountry = utility.(
         consumption, environment, η, θ, α
     )
-    EDE_decilecountry = inverse_utility.(utility_decilecountry, baseline_environment, η, θ, α)
+    EDE_decilecountry = inverse_utility.(
+        utility_decilecountry, baseline_environment, η, θ, α
+    )
     return EDE_decilecountry
 end

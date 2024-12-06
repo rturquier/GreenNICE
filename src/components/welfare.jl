@@ -14,6 +14,7 @@
     cons_EDE_rwpp           = Variable(index=[time, regionwpp])             # Regional qually distributed welfare equivalent consumption (thousand USD2017 per person per year)
     cons_EDE_global         = Variable(index=[time])                        # Glibal equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
     cons_EDE_decile         = Variable(index=[time, quantile])
+    cons_EDE_decilecountry  = Variable(index=[time, country, quantile])
     welfare_country         = Variable(index=[time, country])               # Country welfare
     welfare_rwpp            = Variable(index=[time, regionwpp])             # WPP region welfare
     welfare_global          = Variable(index=[time])                        # Global welfare
@@ -78,6 +79,17 @@
                 p.α,
                 p.nb_quantile,
                 p.l[t,:]
+            )
+        end
+
+        for c in d.country, q in d.quantile
+            v.cons_EDE_decilecountry[t,c,q] = EDE_decilecountry(
+                p.qcpc_post_recycle[t,c,q],
+                p.Env_percapita[t,c,q],
+                p.E_bar,
+                p.η,
+                p.θ,
+                p.α
             )
         end
 
@@ -207,4 +219,19 @@ function EDE_decile(
     ))
     EDE_decile = inverse_utility.(average_utility, baseline_environment, η, θ, α)
     return EDE_decile
+end
+
+function EDE_decilecountry(
+    consumption::Real,
+    environment::Real,
+    baseline_environment::Real,
+    η::Real,
+    θ::Real,
+    α::Real
+)
+    utility_decilecountry = utility.(
+        consumption, environment, η, θ, α
+    )
+    EDE_decilecountry = inverse_utility.(utility_decilecountry, baseline_environment, η, θ, α)
+    return EDE_decilecountry
 end

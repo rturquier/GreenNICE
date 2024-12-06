@@ -13,6 +13,7 @@
     cons_EDE_country        = Variable(index=[time, country])               # Equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
     cons_EDE_rwpp           = Variable(index=[time, regionwpp])             # Regional qually distributed welfare equivalent consumption (thousand USD2017 per person per year)
     cons_EDE_global         = Variable(index=[time])                        # Glibal equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
+    cons_EDE_decile         = Variable(index=[time, quantile])
     welfare_country         = Variable(index=[time, country])               # Country welfare
     welfare_rwpp            = Variable(index=[time, regionwpp])             # WPP region welfare
     welfare_global          = Variable(index=[time])                        # Global welfare
@@ -65,6 +66,21 @@
             p.l[t,:],
         )
         v.welfare_global[t] = sum(v.welfare_country[t,:])
+
+        ### Analysis by decile
+        for q in d.quantile
+            v.cons_EDE_decile[t,q] = EDE_decile(
+                p.qcpc_post_recycle[t,:,q],
+                p.Env_percapita[t,:,q],
+                p.E_bar,
+                p.η,
+                p.θ,
+                p.α,
+                p.nb_quantile,
+                p.l[t,:]
+            )
+        end
+
     end # timestep
 end
 
@@ -172,4 +188,23 @@ function EDE_aggregated(
     average_utility = total_utility / total_population
     aggregated_EDE = inverse_utility(average_utility, baseline_environment, η, θ, α)
     return aggregated_EDE
+end
+
+
+function EDE_decile(
+    consumption::Vector,
+    environment::Union{Real,Vector},
+    baseline_environment::Real,
+    η::Real,
+    θ::Real,
+    α::Real,
+    nb_quantile::Int,
+    population::Vector
+)
+    total_population = sum(population)
+    average_utility = (1 / total_population) * sum( (population / nb_quantile) .* utility.(
+        consumption, environment, η, θ, α
+    ))
+    EDE_decile = inverse_utility.(average_utility, baseline_environment, η, θ, α)
+    return EDE_decile
 end

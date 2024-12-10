@@ -93,21 +93,30 @@ end
 
 
 """
-    inverse_utility(utility::Real, environment::Real, η::Real, θ::Real, α::Real)
+    inverse_utility(u::Real, E::Real, η::Real, θ::Real, α::Real)
 
-Calculate the consumption that would give a certain utility with the `utility` function.
+Calculate the consumption that would give utility `u` and reference environment level `E`.
 """
-function inverse_utility(utility::Real, environment::Real, η::Real, θ::Real, α::Real)
+function inverse_utility(u::Real, E::Real, η::Real, θ::Real, α::Real)
     if η == 1
         consumption = (
-            (1 / (1 - α)) * (exp(utility)^θ - α * environment^θ)
+            (1 / (1 - α)) * (exp(u)^θ - α * E^θ)
         )^(1 / θ)
     else
         consumption = (
-            (1 / (1 - α)) * ( ((1 - η) * utility)^(θ / (1 - η)) - α * environment^θ)
+            (1 / (1 - α)) * ( ((1 - η) * u)^(θ / (1 - η)) - α * E^θ)
         )^(1 / θ)
     end
 
+    try
+        @assert utility(consumption, E, η, θ, α) ≈ u
+    catch
+        error_message = "Inverse utility seems to be undefined for these parameters.\n" *
+                        "utility = $u\n" *
+                        "reference environment = $E\n" *
+                        "η = $η, θ = $θ, α = $α"
+        throw(DomainError(u, error_message))
+    end
     return consumption
 end
 

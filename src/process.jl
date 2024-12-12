@@ -12,65 +12,201 @@ base_model = GreenNICE.create()
 
 run(base_model)
 
-getdataframe(base_model, :welfare, :cons_EDE_decilecountry)
+EDE_decile = EDE_globaldecile_init(base_model)
 
-getdataframe(base_model, :welfare, :l)
+# EDE by decile. Deciles constant.
+Table_decileEDE = EDE_weightedavg_decile(EDE_decile)
 
-EDE_decile = EDE_globaldecile(base_model)
+#EDE De Palma quantiles. Deciles constant.
+EDE_10_40 = get_10_40(EDE_decile)
 
-Table_decileEDE = combine(groupby(EDE_decile, [:year, :global_decile]),
-            [:EDE, :population] => ((x, y) -> sum(x .*y) / sum(y)) => :EDE_w_mean)
+#EDE DE palma ratio. Deciles constant.
+EDE_depalmaRatio = get_env_depalma_ratio(EDE_decile)
+
+
+#PLOTS
 
 plot = @vlplot(
     :line,
-    x = :year,
+    x = {field=:time, axis={labelAngle=-90}},
     y = :EDE_w_mean,
     color = {field=:global_decile, type="nominal"},
-    data = Table_decileEDE
+    data = Table_decileEDE,
+    width=800,
+    height=600
     )
 
 display(plot)
 
+plot_10_40 = @vlplot() + @vlplot(
+    :line,
+    x = {field=:time, axis={labelAngle=-90}},
+    y = {field="top 10%", type="quantitative"},
+    color = {value="blue"},
+    data = EDE_10_40,
+    width=800,
+    height=600
+) + @vlplot(
+    :line,
+    x = {field=:time, axis={labelAngle=-90}},
+    y = {field="bottom 40%", type="quantitative"},
+    color = {value="red"},
+    data = EDE_10_40,
+    width=800,
+    height=600
+)
+
+display(plot_10_40)
+
+plot_depalma = @vlplot(
+    :line,
+    x = {field=:time, axis={labelAngle=-90}},
+    y = {field=:ratio, type="quantitative"},
+    color = {value="green"},
+    data = EDE_depalmaRatio,
+    width=800,
+    height=600
+)
+
+display(plot_depalma)
 
 
-function EDE_globaldecile(model)
-    EDE_decilecountry = model[:welfare, :cons_EDE_decilecountry]
-    t0 = 1
-    l = base_model[:welfare, :l]
-    nb_quantile = model[:welfare, :nb_quantile]
 
-    total_population_0 = sum(l[t0, :])
+function quantile_to_int(dataframe)
+    dataframe.quantile .= replace(dataframe.quantile,
+        "First" => 1, "Second" => 2, "Third" => 3, "Fourth" => 4,
+        "Fifth" => 5, "Sixth" => 6, "Seventh" => 7, "Eighth" => 8,
+        "Ninth" => 9, "Tenth" => 10)
+    return dataframe
+end
 
-    df = DataFrame(Country = Int64[], Decile = Int64[], EDE_init = Float64[],
-        Pop = Float64[])
+function make_decile(pop, nb_quantile)
+    pop = pop[repeat(1:nrow(pop), inner=nb_quantile), :]
+    pop.quantile = repeat(1:nb_quantile, outer=nrow(pop) ÷ nb_quantile)
+    pop.l = pop.l / nb_quantile
+    return pop
+end
 
-    for c in 1:size(EDE_decilecountry, 2)
-        for d in 1:size(EDE_decilecountry, 3)
-            push!(df, (c, d, EDE_decilecountry[t0, c, d], (l[t0,c] / nb_quantile) ))
-        end
-    end
+function set_globaldecile(EDE_decilecountry, population, year)
 
+    df = deepcopy(EDE_decilecountry)
+    df = filter(row -> row.time == year, df)
+
+    population_T = filter(row -> row.time == year, population)
+    total_population_T = sum(population_T.l)
+
+    df.population = [population_T.l[(population_T.country .== row.country) .&
+        (population_T.quantile .== row.quantile)][1] for row in eachrow(df)]
     sort!(df, 3)
 
-    df.key = string.(df.Country, "_", df.Decile)
-    df.cumulative_population = cumsum(df[:, 4])
-    df.global_decile = 10 .* ceil.(df.cumulative_population ./ total_population_0, digits = 1)
+    df.cumulative_population = cumsum(df[:, 5])
+    df.global_decile = 10 .*
+        ceil.(df.cumulative_population ./ total_population_T, digits = 1)
 
-    EDE_globaldecile = DataFrame(year = Int64[], Country = Int64[], Decile = Int64[],
-        population = Float64[],  EDE = Float64[])
+    return df
+end
 
-    for t in 1:size(EDE_decilecountry,1)
-        for c in 1:size(EDE_decilecountry, 2)
-            for d in 1:size(EDE_decilecountry, 3)
-                push!(EDE_globaldecile, (t, c, d, (l[t,c] / nb_quantile),
-                    EDE_decilecountry[t, c, d]))
-            end
-        end
-    end
+function set_population_decile(EDE_decilecountry, population)
 
-    EDE_globaldecile.key = string.(EDE_globaldecile.Country, "_", EDE_globaldecile.Decile)
-    EDE_globaldecile = leftjoin(EDE_globaldecile, df[:, ["key", "global_decile"]], on = :key)
+    EDE_globaldecile = deepcopy(EDE_decilecountry)
+    EDE_globaldecile.key = string.(EDE_globaldecile.country,"_",EDE_globaldecile.quantile,"_",EDE_globaldecile.time)
+
+    population.key = string.(population.country,"_",population.quantile,"_",population.time)
+    EDE_globaldecile = leftjoin(EDE_globaldecile, population[:, ["key", "l"]], on = :key)
+    select!(EDE_globaldecile, Not(:key))
+
+    return EDE_globaldecile
+end
+
+function EDE_globaldecile_init(model)
+
+    EDE_decilecountry = getdataframe(model, :welfare, :cons_EDE_decilecountry)
+    EDE_decilecountry = quantile_to_int(EDE_decilecountry)
+
+    nb_quantile = model[:welfare, :nb_quantile]
+
+    population = getdataframe(model, :welfare, :l)
+    population = make_decile(population, nb_quantile)
+
+    EDE_globaldecile = set_population_decile(EDE_decilecountry, population)
+
+    df = set_globaldecile(EDE_decilecountry, population, 2020)
+    df.key2 = string.(df.country, "_", df.quantile)
+
+    EDE_globaldecile.key2 = string.(EDE_globaldecile.country, "_", EDE_globaldecile.quantile)
+    EDE_globaldecile = leftjoin(EDE_globaldecile, df[:, ["key2", "global_decile"]], on = :key2)
+    select!(EDE_globaldecile, Not(:key2))
 
     return EDE_globaldecile
 
+end
+
+function EDE_globaldecile_evolution(model)
+
+    EDE_decilecountry = getdataframe(model, :welfare, :cons_EDE_decilecountry)
+    EDE_decilecountry = quantile_to_int(EDE_decilecountry)
+
+    nb_quantile = model[:welfare, :nb_quantile]
+
+    population = getdataframe(model, :welfare, :l)
+    population = make_decile(population, nb_quantile)
+
+    EDE_globaldecile = set_population_decile(EDE_decilecountry, population)
+    EDE_globaldecile.global_decile = similar(EDE_globaldecile.time)
+    EDE_globaldecile.global_decile .= 0.0
+    EDE_globaldecile.key3 = string.(EDE_globaldecile.country, "_",
+        EDE_globaldecile.quantile,"_",EDE_globaldecile.time)
+
+    for t in 2020:2300
+        df = set_globaldecile(EDE_decilecountry, population, t)
+        df.key3 = string.(df.country, "_", df.quantile,"_",df.time)
+        for row in eachrow(df)
+            key = row.key3
+            new_decile = row.global_decile
+
+            # Find the row in EDE_globaldecile with the matching key3 and update the global_decile value
+            EDE_globaldecile[EDE_globaldecile.key3 .== key, :global_decile] .= new_decile
+        end
+    end
+    select!(EDE_globaldecile, Not(:key3))
+
+    return EDE_globaldecile
+
+end
+
+function EDE_weightedavg_decile(EDE_decile)
+    weighted_avg = combine(groupby(EDE_decile, [:time, :global_decile]),
+    [:cons_EDE_decilecountry, :l] => ((x, y) -> sum(x .*y) / sum(y)) => :EDE_w_mean)
+
+    return weighted_avg
+end
+
+function set_depalmadecile(EDE_decile)
+    EDE_globaldecile = deepcopy(EDE_decile)
+    EDE_globaldecile = filter(row -> !(row.global_decile > 4 && row.global_decile < 10), EDE_globaldecile)
+    replace!(EDE_globaldecile.global_decile,
+        1=> 40,
+        2=> 40,
+        3=> 40,
+        4=> 40,
+        10=> 10)
+    return EDE_globaldecile
+end
+
+function get_10_40(EDE_decile)
+    EDE_depalma= set_depalmadecile(EDE_decile)
+    EDE_ratio = EDE_weightedavg_decile(EDE_depalma)
+    EDE_ratio = unstack(EDE_ratio, :global_decile, :EDE_w_mean)
+    rename!(EDE_ratio, "10.0" => "top 10%", "40.0" => "bottom 40%")
+    return EDE_ratio
+end
+
+
+
+function get_env_depalma_ratio(EDE_decile)
+    EDE_depalma= set_depalmadecile(EDE_decile)
+    EDE_ratio = EDE_weightedavg_decile(EDE_depalma)
+    EDE_ratio = unstack(EDE_ratio, :global_decile, :EDE_w_mean)
+    EDE_ratio.ratio = EDE_ratio[!, "10.0"] ./ EDE_ratio[!, "40.0"]
+    return EDE_ratio[:, [:time, :ratio]]
 end

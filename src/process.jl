@@ -4,7 +4,7 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 #Pkg.resolve() # To resolve inconsistencies between Manifest.toml and Project.toml
 Pkg.instantiate()
-using Mimi, MimiFAIRv2, DataFrames, CSVFiles, Statistics, VegaLite
+using Mimi, MimiFAIRv2, DataFrames, CSVFiles, Statistics, VegaLite, TidierData
 
 include("../src/GreenNICE.jl")
 
@@ -12,16 +12,21 @@ base_model = GreenNICE.create()
 
 run(base_model)
 
-EDE_decile = EDE_globaldecile_init(base_model)
-
 # EDE by decile. Deciles constant.
+EDE_decile = EDE_globaldecile_constant(base_model)
+
+
 Table_decileEDE = EDE_weightedavg_decile(EDE_decile)
-
-#EDE De Palma quantiles. Deciles constant.
 EDE_10_40 = get_10_40(EDE_decile)
-
-#EDE DE palma ratio. Deciles constant.
 EDE_depalmaRatio = get_env_depalma_ratio(EDE_decile)
+
+# EDE by decile. Deciles evolve over time.
+EDE_decile_var = EDE_globaldecile_evolution(base_model)
+
+Table_decileEDE_variable = EDE_weightedavg_decile(EDE_decile_var)
+EDE_10_40_variable = get_10_40(EDE_decile_var)
+EDE_depalmaRatio_var = get_env_depalma_ratio(EDE_decile_var)
+
 
 
 #PLOTS
@@ -37,6 +42,18 @@ plot = @vlplot(
     )
 
 display(plot)
+
+plot_TT = @vlplot(
+    :line,
+    x = {field=:time, axis={labelAngle=-90}},
+    y = {field=:EDE, type="quantitative"},
+    color = {field=:global_decile, type="nominal"},
+    data = TT,
+    width=800,
+    height=600
+)
+
+display(plot_TT)
 
 plot_10_40 = @vlplot() + @vlplot(
     :line,
@@ -71,6 +88,7 @@ plot_depalma = @vlplot(
 display(plot_depalma)
 
 
+# FUNCTIONS
 
 function quantile_to_int(dataframe)
     dataframe.quantile .= replace(dataframe.quantile,
@@ -91,12 +109,12 @@ function set_globaldecile(EDE_decilecountry, population, year)
 
     df = deepcopy(EDE_decilecountry)
     df = filter(row -> row.time == year, df)
-
     population_T = filter(row -> row.time == year, population)
     total_population_T = sum(population_T.l)
 
     df.population = [population_T.l[(population_T.country .== row.country) .&
         (population_T.quantile .== row.quantile)][1] for row in eachrow(df)]
+
     sort!(df, 3)
 
     df.cumulative_population = cumsum(df[:, 5])
@@ -118,7 +136,7 @@ function set_population_decile(EDE_decilecountry, population)
     return EDE_globaldecile
 end
 
-function EDE_globaldecile_init(model)
+function EDE_globaldecile_constant(model)
 
     EDE_decilecountry = getdataframe(model, :welfare, :cons_EDE_decilecountry)
     EDE_decilecountry = quantile_to_int(EDE_decilecountry)
@@ -150,25 +168,8 @@ function EDE_globaldecile_evolution(model)
 
     population = getdataframe(model, :welfare, :l)
     population = make_decile(population, nb_quantile)
-
     EDE_globaldecile = set_population_decile(EDE_decilecountry, population)
-    EDE_globaldecile.global_decile = similar(EDE_globaldecile.time)
-    EDE_globaldecile.global_decile .= 0.0
-    EDE_globaldecile.key3 = string.(EDE_globaldecile.country, "_",
-        EDE_globaldecile.quantile,"_",EDE_globaldecile.time)
-
-    for t in 2020:2300
-        df = set_globaldecile(EDE_decilecountry, population, t)
-        df.key3 = string.(df.country, "_", df.quantile,"_",df.time)
-        for row in eachrow(df)
-            key = row.key3
-            new_decile = row.global_decile
-
-            # Find the row in EDE_globaldecile with the matching key3 and update the global_decile value
-            EDE_globaldecile[EDE_globaldecile.key3 .== key, :global_decile] .= new_decile
-        end
-    end
-    select!(EDE_globaldecile, Not(:key3))
+    EDE_globaldecile = variable_decile(EDE_globaldecile)
 
     return EDE_globaldecile
 
@@ -209,4 +210,21 @@ function get_env_depalma_ratio(EDE_decile)
     EDE_ratio = unstack(EDE_ratio, :global_decile, :EDE_w_mean)
     EDE_ratio.ratio = EDE_ratio[!, "10.0"] ./ EDE_ratio[!, "40.0"]
     return EDE_ratio[:, [:time, :ratio]]
+end
+
+
+
+
+function variable_decile(EDE_globaldecile)
+    EDE_evo = @chain EDE_globaldecile begin
+        @group_by(time)
+        @arrange(cons_EDE_decilecountry)
+        @mutate(cummulative_pop = cumsum(l))
+        @mutate(global_decile =  min(ceil(10 * cummulative_pop / sum(l)), 10))
+        @ungroup()
+       # @group_by(time, global_decile)
+       # @summarize(EDE = sum(l .* cons_EDE_decilecountry) / sum(l))
+       # @ungroup()
+    end
+    return EDE_evo
 end

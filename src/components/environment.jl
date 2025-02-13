@@ -8,7 +8,7 @@
     Env0            = Parameter(index=[country])            # Initial level of environmental good
     mapcrwpp        = Parameter(index=[country])
 
-    LOCAL_DAM_ENV = Parameter(index=[time,country])
+    LOCAL_DAM_ENV   = Parameter(index=[time,country])
 
     Env             = Variable(index=[time, country, quantile])     # Environmental variable
     Env_percapita   = Variable(index=[time, country, quantile])     #E percapita
@@ -24,7 +24,7 @@
             v.Env[t, c, q] = is_first(t) ?
             #(p.Env0[c] / p.nb_quantile) : v.Env[t - 1, c, q] * (1-p.damage)
             ####New damage to the environment
-            (p.Env0[c] / p.nb_quantile) : (p.Env0[c] * p.LOCAL_DAM_NATCAP[t,c]) / p.nb_quantile
+            (p.Env0[c] / p.nb_quantile) : (p.Env0[c] * p.LOCAL_DAM_ENV[t,c]) / p.nb_quantile
         end
 
         for c in d.country, q in d.quantile

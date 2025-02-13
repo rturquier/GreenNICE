@@ -129,7 +129,6 @@ function create()
 	update_param!(m, :environment, :Env0, Env0)
     update_param!(m, :environment, :damage, 0.01)
 
-
 	# --------------------------------
 	# Abatement
 	# --------------------------------
@@ -167,6 +166,7 @@ function create()
 	update_param!(m, :damages, :β2, 2.0)
 	update_param!(m, :damages, :β1_KW, beta1_KW)
 	update_param!(m, :damages, :β2_KW, beta2_KW)
+    update_param!(m, :damages, :θ_env, θ_env)
 
 	# --------------------------------
 	# Net Economy
@@ -244,7 +244,7 @@ function create()
 	connect_param!(m, :quantile_recycle => :Y_pc,				:neteconomy 		=> :Y_pc)
 	connect_param!(m, :quantile_recycle => :country_pc_dividend,:revenue_recycle	=> :country_pc_dividend)
 	connect_param!(m, :quantile_recycle => :tax_pc_revenue,		:revenue_recycle	=> :tax_pc_revenue)
-    connect_param!(m, :environment      => :LOCAL_DAM_NATCAP    :damages            => :LOCAL_DAM_NATCAP)
+    connect_param!(m, :environment      => :LOCAL_DAM_ENV       :damages            => :LOCAL_DAM_ENV)
 	connect_param!(m, :welfare 			=> :Env_percapita, 		:environment		=> :Env_percapita)
 	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)

@@ -35,7 +35,7 @@ file_path = "data/CWON_2024.xlsx"
 
 HTTP.download(file_url, file_path)
 
-#1.2 Create a CSV file with the data from the "country" sheet
+#1.2 Create a data frame file with the data from the "country" sheet
 
 country_e0 = XLSX.readtable(file_path, "country"; first_row=2) |> DataFrame
 
@@ -75,3 +75,43 @@ e0.e0 = e0.e0 ./ 1000000
 
 e0_file_path = "data/e0.csv"
 CSVFiles.save(e0_file_path, e0)
+
+# 2. Get environmental damage function aprameters from Bastien-Olver et al. 2024
+
+damage_coef_url = "https://raw.githubusercontent.com/BerBastien/NatCap_DGVMs/main/Data/" *
+                    "Damage_coef_Submission3v2_06052023.csv"
+damage_coef_file_path = "data/raw_env_damage.csv"
+
+HTTP.download(damage_coef_url, damage_coef_file_path)
+
+# Load the environmental damage coefficients data
+damage_coef = CSVFiles.load(damage_coef_file_path) |> DataFrame
+
+# Filter the data to only include rows where the first column has the value "temp7"
+damage_coef_filtered = filter(row -> row[:formula] == "lin" &&
+                              row[:capital] == "nN" &&
+                              row[:dgvm] == "all", damage_coef)
+
+damage_coef_filtered = select(damage_coef_filtered,
+                            [:iso3, :coef, :se, :pval])
+
+rename!(damage_coef_filtered, :iso3 => :countrycode)
+
+coef_env_damage = CSVFiles.load(country_list_file_path) |> DataFrame
+
+coef_env_damage = leftjoin(coef_env_damage, damage_coef_filtered, on=:countrycode,
+                            makeunique=true)
+
+# Replace missing values with the average so there is an starting value for all countries
+
+avg_coef = mean(skipmissing(coef_env_damage.coef))
+
+for i in 1:nrow(coef_env_damage)
+    if ismissing(coef_env_damage[i, :coef])
+        coef_env_damage[i, :coef] = avg_coef
+    end
+end
+
+# Save the filtered data to a new CSV file
+filtered_damage_coef_file_path = "data/coef_env_damage.csv"
+CSVFiles.save(filtered_damage_coef_file_path, damage_coef_filtered)

@@ -113,5 +113,6 @@ for i in 1:nrow(coef_env_damage)
 end
 
 # Save the filtered data to a new CSV file
+
 filtered_damage_coef_file_path = "data/coef_env_damage.csv"
-CSVFiles.save(filtered_damage_coef_file_path, damage_coef_filtered)
+CSVFiles.save(filtered_damage_coef_file_path, coef_env_damage)

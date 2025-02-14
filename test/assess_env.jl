@@ -18,6 +18,9 @@ include("../src/GreenNICE.jl")
 
 m = GreenNICE.create()
 
+# Different E, equal damages
+update_param!(m, :environment, :dam_assessment, 2)
+
 run(m)
 
 explore(m)

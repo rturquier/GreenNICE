@@ -59,6 +59,7 @@ country_e0 = select(country_e0, [:countrycode, :e0])
 e0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
 e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
+sort!(e0, :countrycode)
 
 # Replace missing values with the average so there is an starting value for all countries
 
@@ -76,7 +77,7 @@ e0.e0 = e0.e0 ./ 1000000
 e0_file_path = "data/e0.csv"
 CSVFiles.save(e0_file_path, e0)
 
-# 2. Get environmental damage function aprameters from Bastien-Olver et al. 2024
+# 2. Get environmental damage function parameters from Bastien-Olver et al. 2024
 
 damage_coef_url = "https://raw.githubusercontent.com/BerBastien/NatCap_DGVMs/main/Data/" *
                     "Damage_coef_Submission3v2_06052023.csv"
@@ -101,6 +102,8 @@ coef_env_damage = CSVFiles.load(country_list_file_path) |> DataFrame
 
 coef_env_damage = leftjoin(coef_env_damage, damage_coef_filtered, on=:countrycode,
                             makeunique=true)
+
+sort!(coef_env_damage, :countrycode)
 
 # Replace missing values with the average so there is an starting value for all countries
 

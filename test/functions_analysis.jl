@@ -1,0 +1,118 @@
+using DataFrames, RCall, CSV, Downloads
+
+function get_e0(m)
+
+    # Create a new DataFrame for damage assessment
+    Damage_table = DataFrame(CSV.File(joinpath(@__DIR__, "..", "data", "country_list.csv"),
+                                        header=true))
+    rename!(Damage_table, :countrycode => :iso3)
+    sort!(Damage_table, :iso3)
+
+    # Add the values of m[:environment, :Env0] as a column to the Damage_table DataFrame
+    Damage_table[!, :e0] = m[:environment, :Env0]
+
+    return(Damage_table)
+end
+
+
+function get_env_damages_year(m, year_end)
+
+    Damage_table = get_e0(m)
+
+    e_damages = m[:environment, :Env_country]
+
+    year_analysis = year_end - 2019
+
+    Damage_table[!, :e_end] = e_damages[year_analysis, :]
+
+    Damage_table[!, :abs_loss] = Damage_table.e_end .- Damage_table.e0
+
+    Damage_table[!, :percent_change] =
+    (Damage_table.e_end .- Damage_table.e0) ./ Damage_table.e0 * 100
+
+    return (Damage_table)
+
+end
+
+function get_env_damage_temp(m, temperature)
+
+        Damage_table = get_e0(m)
+
+        coef_damages = DataFrame(CSV.File(joinpath(@__DIR__, "..", "data", "coef_env_damage.csv"),
+                                            header=true))
+        rename!(coef_damages, :countrycode => :iso3)
+
+
+        Damage_table= leftjoin(Damage_table, coef_damages, on=:iso3)
+
+        Damage_table[!, :e_end] = Damage_table.e0 .* (1 .+ temperature .* Damage_table.coef)
+
+        Damage_table[!, :abs_loss] = Damage_table.e_end .- Damage_table.e0
+
+        Damage_table[!, :percent_change] =
+        (Damage_table.e_end .- Damage_table.e0) ./ Damage_table.e0 * 100
+
+        return(Damage_table)
+
+end
+
+function plot_env_damages!(Damage_table, file_name)
+
+    ## Function, plot to map based on ISO 3 (taken from: https://github.com/alfaromartino/coding/blob/main/assets/PAGES/01_heatmaps_world/codeDownload/allCode.jl)
+    R"""
+    library(ggplot2)
+    library(svglite) #to save graphs in svg format, otherwise not necessary
+
+    """
+
+    get_coordinates = Downloads.download("https://alfaromartino.github.io/data/countries_mapCoordinates.csv")
+    df_coordinates = DataFrame(CSV.File(get_coordinates)) |> x-> dropmissing(x, :iso3)
+
+    merged_df = leftjoin(df_coordinates, Damage_table, on=:iso3)
+    merged_df = merged_df[.!(occursin.(r"Antarct", merged_df.short_name_country)),:]
+
+    isdir(joinpath(@__DIR__, "maps")) || mkdir(joinpath(@__DIR__, "maps"))
+    graphs_folder = joinpath(@__DIR__, "maps")
+
+    R"""
+
+    user_theme <- function(){
+        theme(
+        panel.background = element_blank(),
+        panel.border     = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid       = element_blank(),
+
+        axis.line    = element_blank(),
+        axis.text.x  = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.ticks   = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()
+            )
+            }
+
+    #baseline code
+    map_damages <- ggplot() + geom_polygon(data = $(merged_df),
+                                        aes(x=long, y = lat, group = group,
+                                            fill=percent_change),
+                                        color = "black", linewidth = 0.1) +
+                            user_theme() +
+                            coord_fixed(1.3) +
+                            scale_fill_gradient2(low = "red",
+                                                mid = "white",
+                                                high ="green",
+                                                name = "Non-market Natural Capital\nPercent Change")
+
+
+
+    height <- 5
+
+    ggsave(filename = file.path($(graphs_folder), paste0($(file_name), ".svg")),
+                            plot = map_damages,
+                            width = height * 3,
+                            height = height)
+    """
+
+    end

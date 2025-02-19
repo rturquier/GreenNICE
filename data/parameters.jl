@@ -222,4 +222,3 @@ Env0 = Env0_data[:, :e0]
 Env_damage_coef = DataFrame(load("data/coef_env_damage.csv", header_exists=true))
 filter!(:countrycode => in(countries), Env_damage_coef)
 θ_env = Env_damage_coef[:,:coef]
-θ_env

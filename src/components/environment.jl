@@ -34,7 +34,7 @@
                 (p.Env0[c] / p.nb_quantile) : v.Env[t - 1, c, q] * (1-p.damage)
 
             elseif p.dam_assessment == 2                #same E, different damages
-                v.Env[t, c, q] = is_first(t) ?
+                v.Env[t, c, q] = is_first(t) ?          ###PROBLEM
                 (v.E_bar * p.l[t,c] / p.nb_quantile) :
                 (v.Env[TimestepIndex(1),c,q] * p.LOCAL_DAM_ENV[t,c])
 

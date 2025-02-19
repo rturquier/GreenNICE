@@ -56,7 +56,7 @@ function get_env_damage_temp(m, temperature)
 
 end
 
-function plot_env_damages!(Damage_table, file_name)
+function plot_env_damages!(Damage_table, title, save_name)
 
     ## Function, plot to map based on ISO 3 (taken from: https://github.com/alfaromartino/coding/blob/main/assets/PAGES/01_heatmaps_world/codeDownload/allCode.jl)
     R"""
@@ -100,16 +100,17 @@ function plot_env_damages!(Damage_table, file_name)
                                         color = "black", linewidth = 0.1) +
                             user_theme() +
                             coord_fixed(1.3) +
-                            scale_fill_gradient2(low = "red",
-                                                mid = "white",
-                                                high ="green",
-                                                name = "Non-market Natural Capital\nPercent Change")
+                            scale_fill_gradient2(low = "#d73027",
+                                                mid = "#ffffbf",
+                                                high ="#1a9850",
+                                                name = "Non-market Natural Capital\nPercent Change") +
+                            ggtitle($(title))
 
 
 
     height <- 5
 
-    ggsave(filename = file.path($(graphs_folder), paste0($(file_name), ".svg")),
+    ggsave(filename = file.path($(graphs_folder), paste0($(save_name), ".svg")),
                             plot = map_damages,
                             width = height * 3,
                             height = height)

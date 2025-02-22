@@ -117,3 +117,22 @@ function plot_env_damages!(Damage_table, title, save_name)
     """
 
     end
+
+    function Env_damages_EDE_trajectories(m, array_damage_type, array_α)
+
+        list_alpha = []
+
+        for value in array_α
+            update_param!(m, :α, value)
+
+            list_models = []
+            for param in array_damage_type
+                update_param!(m, :environment, :dam_assessment, param)
+                run(m)
+                push!(list_models, m[:welfare, :cons_EDE_global])
+            end
+            push!(list_alpha, list_models)
+        end
+
+    return(list_alpha)
+    end

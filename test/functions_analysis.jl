@@ -36,23 +36,23 @@ end
 
 function get_env_damage_temp(m, temperature)
 
-        Damage_table = get_e0(m)
+    Damage_table = get_e0(m)
 
-        coef_damages = DataFrame(CSV.File(joinpath(@__DIR__, "..", "data", "coef_env_damage.csv"),
-                                            header=true))
-        rename!(coef_damages, :countrycode => :iso3)
+    coef_damages = DataFrame(CSV.File(joinpath(@__DIR__, "..", "data", "coef_env_damage.csv"),
+                                        header=true))
+    rename!(coef_damages, :countrycode => :iso3)
 
 
-        Damage_table= leftjoin(Damage_table, coef_damages, on=:iso3)
+    Damage_table= leftjoin(Damage_table, coef_damages, on=:iso3)
 
-        Damage_table[!, :e_end] = Damage_table.e0 .* (1 .+ temperature .* Damage_table.coef)
+    Damage_table[!, :e_end] = Damage_table.e0 .* (1 .+ temperature .* Damage_table.coef)
 
-        Damage_table[!, :abs_loss] = Damage_table.e_end .- Damage_table.e0
+    Damage_table[!, :abs_loss] = Damage_table.e_end .- Damage_table.e0
 
-        Damage_table[!, :percent_change] =
-        (Damage_table.e_end .- Damage_table.e0) ./ Damage_table.e0 * 100
+    Damage_table[!, :percent_change] =
+    (Damage_table.e_end .- Damage_table.e0) ./ Damage_table.e0 * 100
 
-        return(Damage_table)
+    return(Damage_table)
 
 end
 
@@ -116,23 +116,63 @@ function plot_env_damages!(Damage_table, title, save_name)
                             height = height)
     """
 
-    end
+end
 
-    function Env_damages_EDE_trajectories(m, array_damage_type, array_α)
+function Env_damages_EDE_trajectories(m, array_damage_type, array_α)
 
-        list_alpha = []
+    list_alpha = []
 
-        for value in array_α
-            update_param!(m, :α, value)
+    for value in array_α
+        update_param!(m, :α, value)
 
-            list_models = []
-            for param in array_damage_type
-                update_param!(m, :environment, :dam_assessment, param)
-                run(m)
-                push!(list_models, m[:welfare, :cons_EDE_global])
-            end
-            push!(list_alpha, list_models)
+        list_models = []
+        for param in array_damage_type
+            update_param!(m, :environment, :dam_assessment, param)
+            run(m)
+            push!(list_models, m[:welfare, :cons_EDE_global])
         end
-
-    return(list_alpha)
+        push!(list_alpha, list_models)
     end
+
+return(list_alpha)
+end
+
+function plot_EDE_trajectories!(EDE_estimates, array_params, alpha_params, end_year)
+    p = plot()
+
+    # Create a mapping for alpha values to line styles
+    linestyle_map = Dict(0.1 => :solid, 0.2 => :dash, 0.3 => :dashdotdot)
+
+    for (j, alpha) in enumerate(alpha_params)
+        for (i, param) in enumerate(array_params)
+            linestyle = linestyle_map[alpha]
+            color = [:blue, :green, :red, :purple][param % 4 + 1]
+
+            plot!(p,
+                EDE_estimates[j][i],
+                label="",
+                linestyle=linestyle,
+                color=color)
+        end
+    end
+
+    # Create labels by plotting invisible lines
+    plot!(p, rand(1), color= :blue, label = "Equal E, equal damages")
+    plot!(p, rand(1), color= :green, label = "Different E, different damages")
+    plot!(p, rand(1), color= :red, label = "Same E, different damages")
+    plot!(p, rand(1), color= :purple, label = "Different E, equal damages")
+    plot!([1], [0], linestyle = :solid, label = "α = 0.1", color = "black")
+    plot!([1], [0], linestyle = :dash, label = "α = 0.2", color = "black")
+    plot!([1], [0], linestyle = :dashdotdot, label = "α = 0.3", color = "black")
+
+    # Labels and title
+    xlabel!("Year")
+    ylabel!("EDE Global Consumption")
+    title!("EDE Trajectories for Different Parameters")
+    plot!(p, legend=:bottomright)
+
+    # Display the plot
+    display(p)
+    # Save the plot as SVG
+    savefig(p, "test/figures/EDE_Trajectories.svg")
+end

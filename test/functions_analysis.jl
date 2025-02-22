@@ -159,7 +159,7 @@ function plot_EDE_trajectories!(EDE_estimates, array_params, alpha_params, end_y
     # Create labels by plotting invisible lines
     plot!(p, rand(1), color= :blue, label = "Equal E, equal damages")
     plot!(p, rand(1), color= :green, label = "Different E, different damages")
-    plot!(p, rand(1), color= :red, label = "Same E, different damages")
+    plot!(p, rand(1), color= :red, label = "Equal E, different damages")
     plot!(p, rand(1), color= :purple, label = "Different E, equal damages")
     plot!([1], [0], linestyle = :solid, label = "α = 0.1", color = "black")
     plot!([1], [0], linestyle = :dash, label = "α = 0.2", color = "black")

@@ -5,6 +5,7 @@ using HTTP
 using JSON
 using XLSX
 using Statistics
+using CSV
 
 nice_inputs = JSON.parsefile("data/nice_inputs.json") # This file contains the economic and emissions calibration and the list of used country codes
 # the json file reads in a several nested dictionaries, where in each case the "last" dictionary contains the keys, "units", "dimensions", "notes", and "x". The "x" key always contains the data to be read into a DataFrame.
@@ -61,10 +62,37 @@ e0 = CSVFiles.load(country_list_file_path) |> DataFrame
 e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
 sort!(e0, :countrycode)
 
-# Replace missing values with the average so there is an starting value for all countries
+# Define a dictionary with country codes and their corresponding replacement country codes
+# Used world bank data to find country in vecinity with similar forest surface (year 2020)
+# Data for islands is more arbitrary. Matched
+replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "MNE", "BRB" => "SLB",
+                            "BRN" => "SGP", "BTN" => "NPL", "CPV" => "MUS", "CUB" => "DOM",
+                            "CYP" => "MLT", "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB",
+                            "GNQ" => "BEN", "HKG" => "SGP", "LBY" => "EGY", "MMR" => "THA",
+                            "PSE" => "JOR", "PYF" => "SLB", "SYR" => "IRQ", "TKM" => "KAZ",
+                            "TLS" => "SLB", "TON" => "SLB", "TWN" => "KOR", "UZB" => "KAZ",
+                            "VCT" => "SLB", "VUT" => "SLB", "WSM" => "SLB", "YEM" => "SAU")
 
-avg_e0 = mean(skipmissing(e0.e0))
-e0.e0 = coalesce.(e0.e0, avg_e0)
+
+
+# Update the values of e0 based on the replacement_countries dictionary
+for (country, replacement) in replacement_countries
+    if country in e0.countrycode
+        replacement_row = e0[e0.countrycode .== replacement, :e0]
+        if !isempty(replacement_row)
+            replacement_value = replacement_row[1]
+            e0[e0.countrycode .== country, :e0] .= replacement_value
+        else
+            println("No replacement value found for country: $replacement")
+        end
+    end
+end
+
+# Set MAC = 0
+e0[e0.countrycode .== "MAC", :e0] .= 0
+
+#avg_e0 = mean(skipmissing(e0.e0))
+#e0.e0 = coalesce.(e0.e0, avg_e0)
 
 #Get the flow of the nat cap stock. r = 4%. t = 100 years
 
@@ -77,7 +105,7 @@ e0.e0 = e0.e0 ./ 1000000
 e0_file_path = "data/e0.csv"
 CSVFiles.save(e0_file_path, e0)
 
-# 2. Get environmental damage function parameters from Bastien-Olver et al. 2024
+# 2. Get environmental damage function parameters from Bastien-Olvera et al. 2024
 
 damage_coef_url = "https://raw.githubusercontent.com/BerBastien/NatCap_DGVMs/main/Data/" *
                     "Damage_coef_Submission3v2_06052023.csv"

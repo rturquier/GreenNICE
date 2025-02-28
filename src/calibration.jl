@@ -5,7 +5,6 @@ using HTTP
 using JSON
 using XLSX
 using Statistics
-using CSV
 
 nice_inputs = JSON.parsefile("data/nice_inputs.json") # This file contains the economic and emissions calibration and the list of used country codes
 # the json file reads in a several nested dictionaries, where in each case the "last" dictionary contains the keys, "units", "dimensions", "notes", and "x". The "x" key always contains the data to be read into a DataFrame.
@@ -91,9 +90,6 @@ end
 # Set MAC = 0
 e0[e0.countrycode .== "MAC", :e0] .= 0
 
-#avg_e0 = mean(skipmissing(e0.e0))
-#e0.e0 = coalesce.(e0.e0, avg_e0)
-
 #Get the flow of the nat cap stock. r = 4%. t = 100 years
 
 e0.e0 = e0.e0 .* ((1 - 0.04) / (1 - 0.04^100))
@@ -133,13 +129,34 @@ coef_env_damage = leftjoin(coef_env_damage, damage_coef_filtered, on=:countrycod
 
 sort!(coef_env_damage, :countrycode)
 
-# Replace missing values with the average so there is an starting value for all countries
+# Assign damage coeficient to neighboring countries, prioritazing existing assignment.
+# Caribean islands get values from Dominican Republic (DOM).
 
-avg_coef = mean(skipmissing(coef_env_damage.coef))
+replacement_coefs = Dict("ABW" => "DOM", "AFG" => "TJK", "AGO" => "COD", "BHR" => "QAT",
+                        "BHS" => "HRV", "BRB" => "DOM", "BRN" => "IDN", "BTN" => "NPL",
+                        "COM" => "MDG", "CPV" => "MDG", "CUB" => "DOM", "CYP" => "TUR",
+                        "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB", "GNB" => "GIN",
+                        "GNQ" => "BEN", "HKG" => "CHN", "ISR" => "JOR", "LBY" => "EGY",
+                        "LCA" => "DOM", "MAC" => "CHN", "MDV" => "LKA", "MLT" => "ITA",
+                        "MMR" => "THA", "MNE" => "ALB", "MUS" => "MDG", "NZL" => "AUS",
+                        "PSE" => "JOR", "PYF" => "SLB", "SDN" => "TCD", "SGP" => "MYS",
+                        "SRB" => "HRV", "STP" => "GAB", "SYR" => "IRQ", "TKM" => "KAZ",
+                        "TLS" => "SLB", "TON" => "SLB", "TWN" => "KOR", "UZB" => "KAZ",
+                        "VCT" => "SLB", "VUT" => "SLB", "WSM" => "SLB")
 
-for i in 1:nrow(coef_env_damage)
-    if ismissing(coef_env_damage[i, :coef])
-        coef_env_damage[i, :coef] = avg_coef
+
+# Update the values of coef, se, and pval based on the replacement_coefs dictionary
+for (country, replacement) in replacement_coefs
+    if country in coef_env_damage.countrycode
+        replacement_row = coef_env_damage[coef_env_damage.countrycode .== replacement, [:coef, :se, :pval]]
+        if !isempty(replacement_row)
+            replacement_values = replacement_row[1, :]
+            coef_env_damage[coef_env_damage.countrycode .== country, :coef] .= replacement_values[:coef]
+            coef_env_damage[coef_env_damage.countrycode .== country, :se] .= replacement_values[:se]
+            coef_env_damage[coef_env_damage.countrycode .== country, :pval] .= replacement_values[:pval]
+        else
+            println("No replacement values found for country: $replacement")
+        end
     end
 end
 

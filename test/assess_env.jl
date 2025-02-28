@@ -43,4 +43,4 @@ damage_options = [4, 3, 1]
 
 EDE = Env_damages_EDE_trajectories(m, damage_options, alpha_params)
 
-plot_EDE_trajectories!(Damages_plot, array_params, alpha_params, 2200)
+plot_EDE_trajectories!(EDE, damage_options, alpha_params, 2200)

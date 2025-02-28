@@ -137,7 +137,7 @@ function Env_damages_EDE_trajectories(m, array_damage_type, array_α)
 return(list_alpha)
 end
 
-function plot_EDE_trajectories!(EDE_estimates, array_params, alpha_params, end_year)
+function plot_EDE_trajectories_alpha!(EDE_estimates, array_params, alpha_params, end_year)
     p = plot()
 
     # Create a mapping for alpha values to line styles

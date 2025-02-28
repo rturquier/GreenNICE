@@ -63,7 +63,7 @@ sort!(e0, :countrycode)
 
 # Define a dictionary with country codes and their corresponding replacement country codes
 # Used world bank data to find country in vecinity with similar forest surface (year 2020)
-# Data for islands is more arbitrary. Matched
+# Data for islands does not follow geographic proximity, but size.
 replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "MNE", "BRB" => "SLB",
                             "BRN" => "SGP", "BTN" => "NPL", "CPV" => "MUS", "CUB" => "DOM",
                             "CYP" => "MLT", "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB",

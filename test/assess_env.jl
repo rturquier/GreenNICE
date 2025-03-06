@@ -15,12 +15,15 @@ using Mimi, MimiFAIRv2, DataFrames, CSVFiles, Plots
 include("../src/GreenNICE.jl")
 include("functions_analysis.jl")
 
+
+
 m = GreenNICE.create()
 
-## Set E and parameters
-update_param!(m, :environment, :dam_assessment, 1)
-
 run(m)
+
+#######
+# Plot changes in E
+#######
 
 Damages_2200 = get_env_damages_year(m, 2200)
 
@@ -33,8 +36,6 @@ Damages_1c = get_env_damage_temp(m, 1)
 plot_env_damages!(Damages_1c,
                     "Percentage changes in non-market natural capital with a 1C increase",
                     "Percentage_loss_1c")
-
-
 
 alpha_params = [0.1, 0.2, 0.3]
 damage_options = [4, 3, 1]

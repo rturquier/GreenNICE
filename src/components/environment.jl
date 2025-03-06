@@ -25,7 +25,7 @@
 
         for c in d.country, q in d.quantile
 
-            if p.dam_assessment == 4                    # equal E, equal damages
+            if p.dam_assessment == 4                    # samel E, equal damages
                 v.Env[t, c, q] = is_first(t) ?
                 (v.E_bar * p.l[t,c] / p.nb_quantile) : v.Env[t - 1, c, q] * (1-p.damage)
 
@@ -37,6 +37,7 @@
                 v.Env[t, c, q] = is_first(t) ?          ###PROBLEM
                 (v.E_bar * p.l[t,c] / p.nb_quantile) :
                 (v.Env[TimestepIndex(1),c,q] * p.LOCAL_DAM_ENV[t,c])
+                #((v.E_bar * p.l[TimestepIndex(1),c] / p.nb_quantile) * p.LOCAL_DAM_ENV[t,c])
 
             else                                        # different E, different damages
                 v.Env[t, c, q] = is_first(t) ?

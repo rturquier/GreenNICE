@@ -35,7 +35,7 @@ file_path = "data/CWON_2024.xlsx"
 
 HTTP.download(file_url, file_path)
 
-#1.2 Create a CSV file with the data from the "country" sheet
+#1.2 Create a data frame file with the data from the "country" sheet
 
 country_e0 = XLSX.readtable(file_path, "country"; first_row=2) |> DataFrame
 
@@ -59,11 +59,36 @@ country_e0 = select(country_e0, [:countrycode, :e0])
 e0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
 e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
+sort!(e0, :countrycode)
 
-# Replace missing values with the average so there is an starting value for all countries
+# Define a dictionary with country codes and their corresponding replacement country codes
+# Used world bank data to find country in vecinity with similar forest surface (year 2020)
+# Data for islands does not follow geographic proximity, but size.
+replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "MNE", "BRB" => "SLB",
+                            "BRN" => "SGP", "BTN" => "NPL", "CPV" => "MUS", "CUB" => "DOM",
+                            "CYP" => "MLT", "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB",
+                            "GNQ" => "BEN", "HKG" => "SGP", "LBY" => "EGY", "MMR" => "THA",
+                            "PSE" => "JOR", "PYF" => "SLB", "SYR" => "IRQ", "TKM" => "KAZ",
+                            "TLS" => "SLB", "TON" => "SLB", "TWN" => "KOR", "UZB" => "KAZ",
+                            "VCT" => "SLB", "VUT" => "SLB", "WSM" => "SLB", "YEM" => "SAU")
 
-avg_e0 = mean(skipmissing(e0.e0))
-e0.e0 = coalesce.(e0.e0, avg_e0)
+
+
+# Update the values of e0 based on the replacement_countries dictionary
+for (country, replacement) in replacement_countries
+    if country in e0.countrycode
+        replacement_row = e0[e0.countrycode .== replacement, :e0]
+        if !isempty(replacement_row)
+            replacement_value = replacement_row[1]
+            e0[e0.countrycode .== country, :e0] .= replacement_value
+        else
+            println("No replacement value found for country: $replacement")
+        end
+    end
+end
+
+# Set MAC = 0
+e0[e0.countrycode .== "MAC", :e0] .= 0
 
 #Get the flow of the nat cap stock. r = 4%. t = 100 years
 
@@ -75,3 +100,67 @@ e0.e0 = e0.e0 ./ 1000000
 
 e0_file_path = "data/e0.csv"
 CSVFiles.save(e0_file_path, e0)
+
+# 2. Get environmental damage function parameters from Bastien-Olvera et al. 2024
+
+damage_coef_url = "https://raw.githubusercontent.com/BerBastien/NatCap_DGVMs/main/Data/" *
+                    "Damage_coef_Submission3v2_06052023.csv"
+damage_coef_file_path = "data/raw_env_damage.csv"
+
+HTTP.download(damage_coef_url, damage_coef_file_path)
+
+# Load the environmental damage coefficients data
+damage_coef = CSVFiles.load(damage_coef_file_path) |> DataFrame
+
+# Filter the data to only include rows where the first column has the value "temp7"
+damage_coef_filtered = filter(row -> row[:formula] == "lin" &&
+                              row[:capital] == "nN" &&
+                              row[:dgvm] == "all", damage_coef)
+
+damage_coef_filtered = select(damage_coef_filtered,
+                            [:iso3, :coef, :se, :pval])
+
+rename!(damage_coef_filtered, :iso3 => :countrycode)
+
+coef_env_damage = CSVFiles.load(country_list_file_path) |> DataFrame
+
+coef_env_damage = leftjoin(coef_env_damage, damage_coef_filtered, on=:countrycode,
+                            makeunique=true)
+
+sort!(coef_env_damage, :countrycode)
+
+# Assign damage coeficient to neighboring countries, prioritazing existing assignment.
+# Caribean islands get values from Dominican Republic (DOM).
+
+replacement_coefs = Dict("ABW" => "DOM", "AFG" => "TJK", "AGO" => "COD", "BHR" => "QAT",
+                        "BHS" => "HRV", "BRB" => "DOM", "BRN" => "IDN", "BTN" => "NPL",
+                        "COM" => "MDG", "CPV" => "MDG", "CUB" => "DOM", "CYP" => "TUR",
+                        "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB", "GNB" => "GIN",
+                        "GNQ" => "BEN", "HKG" => "CHN", "ISR" => "JOR", "LBY" => "EGY",
+                        "LCA" => "DOM", "MAC" => "CHN", "MDV" => "LKA", "MLT" => "ITA",
+                        "MMR" => "THA", "MNE" => "ALB", "MUS" => "MDG", "NZL" => "AUS",
+                        "PSE" => "JOR", "PYF" => "SLB", "SDN" => "TCD", "SGP" => "MYS",
+                        "SRB" => "HRV", "STP" => "GAB", "SYR" => "IRQ", "TKM" => "KAZ",
+                        "TLS" => "SLB", "TON" => "SLB", "TWN" => "KOR", "UZB" => "KAZ",
+                        "VCT" => "SLB", "VUT" => "SLB", "WSM" => "SLB")
+
+
+# Update the values of coef, se, and pval based on the replacement_coefs dictionary
+for (country, replacement) in replacement_coefs
+    if country in coef_env_damage.countrycode
+        replacement_row = coef_env_damage[coef_env_damage.countrycode .== replacement, [:coef, :se, :pval]]
+        if !isempty(replacement_row)
+            replacement_values = replacement_row[1, :]
+            coef_env_damage[coef_env_damage.countrycode .== country, :coef] .= replacement_values[:coef]
+            coef_env_damage[coef_env_damage.countrycode .== country, :se] .= replacement_values[:se]
+            coef_env_damage[coef_env_damage.countrycode .== country, :pval] .= replacement_values[:pval]
+        else
+            println("No replacement values found for country: $replacement")
+        end
+    end
+end
+
+# Save the filtered data to a new CSV file
+
+filtered_damage_coef_file_path = "data/coef_env_damage.csv"
+CSVFiles.save(filtered_damage_coef_file_path, coef_env_damage)

@@ -10,7 +10,7 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 
 # Load required Julia packages.
-using Mimi, MimiFAIRv2, DataFrames, CSVFiles, Plots
+using Mimi, MimiFAIRv2, DataFrames, CSVFiles
 
 include("../src/GreenNICE.jl")
 include("functions_analysis.jl")
@@ -19,11 +19,13 @@ include("functions_analysis.jl")
 
 m = GreenNICE.create()
 
-run(m)
+#############
+# Make plots
+############
 
-#######
-# Plot changes in E
-#######
+#Map damages
+
+run(m)
 
 Damages_2200 = get_env_damages_year(m, 2200)
 
@@ -37,9 +39,48 @@ plot_env_damages!(Damages_1c,
                     "Percentage changes in non-market natural capital with a 1C increase",
                     "Percentage_loss_1c")
 
-alpha_params = [0.1, 0.2, 0.3]
+# Plot EDE
+
+
 damage_options = [4, 3, 1]
 
-EDE = Env_damages_EDE_trajectories(m, damage_options, alpha_params)
+m = GreenNICE.create()
 
-plot_EDE_trajectories_alpha!(EDE, damage_options, alpha_params, 2200)
+alpha_params = [0.1, 0.2, 0.3]
+
+EDE = Env_damages_EDE_trajectories_alpha(m, damage_options, alpha_params)
+
+plot_EDE_trajectories!(EDE, damage_options,
+                        alpha_params,
+                        2200,
+                        "α",
+                        "EDE_Trajectories_alpha")
+
+#Test η and damage options
+m = GreenNICE.create()
+
+eta_params = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+
+EDE_eta = Env_damages_EDE_trajectories_eta(m, damage_options, eta_params)
+
+plot_EDE_trajectories!(EDE_eta,
+                        damage_options,
+                        eta_params,
+                        2200,
+                        "η",
+                        "EDE_Trajectories_eta")
+
+#Test θ and damage options
+
+m = GreenNICE.create()
+
+theta_params = [-0.5, 0.5, 1.0]
+
+EDE_theta = Env_damages_EDE_trajectories_theta(m, damage_options, theta_params)
+
+plot_EDE_trajectories!(EDE_theta,
+                        damage_options,
+                        theta_params,
+                        2200,
+                        "θ",
+                        "EDE_Trajectories_theta")

@@ -1,4 +1,5 @@
 using DataFrames, RCall, CSV, Downloads
+using VegaLite
 
 function get_e0(m)
 
@@ -118,7 +119,7 @@ function plot_env_damages!(Damage_table, title, save_name)
 
 end
 
-function Env_damages_EDE_trajectories(m, array_damage_type, array_α)
+function Env_damages_EDE_trajectories_alpha(m, array_damage_type, array_α)
 
     list_alpha = []
 
@@ -133,46 +134,96 @@ function Env_damages_EDE_trajectories(m, array_damage_type, array_α)
         end
         push!(list_alpha, list_models)
     end
-
 return(list_alpha)
 end
 
-function plot_EDE_trajectories_alpha!(EDE_estimates, array_params, alpha_params, end_year)
-    p = plot()
+function Env_damages_EDE_trajectories_eta(m, array_damage_type, array_η)
 
-    # Create a mapping for alpha values to line styles
-    linestyle_map = Dict(0.1 => :solid, 0.2 => :dash, 0.3 => :dashdotdot)
+    list_eta = []
 
-    for (j, alpha) in enumerate(alpha_params)
-        for (i, param) in enumerate(array_params)
-            linestyle = linestyle_map[alpha]
-            color = [:blue, :green, :red, :purple][param % 4 + 1]
+    for value in array_η
+        update_param!(m, :η, value)
 
-            plot!(p,
-                EDE_estimates[j][i],
-                label="",
-                linestyle=linestyle,
-                color=color)
+        list_models = []
+        for param in array_damage_type
+            update_param!(m, :environment, :dam_assessment, param)
+            run(m)
+            push!(list_models, m[:welfare, :cons_EDE_global])
+        end
+        push!(list_eta, list_models)
+    end
+
+return(list_eta)
+end
+
+function Env_damages_EDE_trajectories_theta(m, array_damage_type, array_θ)
+
+    list_theta = []
+
+    for value in array_θ
+        update_param!(m, :θ, value)
+
+        list_models = []
+        for param in array_damage_type
+            update_param!(m, :environment, :dam_assessment, param)
+            run(m)
+            push!(list_models, m[:welfare, :cons_EDE_global])
+        end
+        push!(list_theta, list_models)
+    end
+
+return(list_theta)
+end
+
+
+
+function plot_EDE_trajectories!(EDE_estimates, damage_params, var_params, end_year, param_name, save_name)
+    # Prepare the data for plotting
+    data = DataFrame(year = Int[], EDE = Float64[], var = Float64[], damage_type = Int[],
+                     damage_label = String[])
+
+    damage_type_labels = Dict(1 => "GreenNice",
+                                2 => "Unequal damages",
+                                3 => "Unequal natural capital",
+                                4 => "Equal natural capital and damages"
+                             )
+
+
+
+    # Generate the data based on the input parameters
+    for (j, alpha) in enumerate(var_params)
+        for (i, param) in enumerate(damage_params)
+            EDE = EDE_estimates[j][i]
+            for (k, year) in enumerate(2020:end_year)
+                push!(data, (year = year,
+                             EDE = EDE[k],
+                             var = alpha,
+                             damage_type = param,
+                             damage_label = get(damage_type_labels, param, "Unknown")))
+            end
         end
     end
 
-    # Create labels by plotting invisible lines
-    plot!(p, rand(1), color= :blue, label = "Equal E, equal damages")
-    plot!(p, rand(1), color= :green, label = "Different E, different damages")
-    plot!(p, rand(1), color= :red, label = "Equal E, different damages")
-    plot!(p, rand(1), color= :purple, label = "Different E, equal damages")
-    plot!([1], [0], linestyle = :solid, label = "α = 0.1", color = "black")
-    plot!([1], [0], linestyle = :dash, label = "α = 0.2", color = "black")
-    plot!([1], [0], linestyle = :dashdotdot, label = "α = 0.3", color = "black")
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = data,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :EDE, type = :quantitative},
+            color = {field = :var, type = :nominal, title = param_name},
+            strokeDash = {
+            field = :damage_label,
+            type = :nominal,
+            tittle = "Damage type"
+            }
+        },
+        title = "EDE Trajectories for Different Values of $param_name"
+    )
 
-    # Labels and title
-    xlabel!("Year")
-    ylabel!("EDE Global Consumption")
-    title!("EDE Trajectories for Different Parameters")
-    plot!(p, legend=:bottomright)
-
-    # Display the plot
+    # Show the plot
     display(p)
-    # Save the plot as SVG
-    savefig(p, "test/figures/EDE_Trajectories.svg")
+
+    # Optionally, save the plot to a file (e.g., as SVG)
+    save("test/figures/$(save_name).svg", p)
+
 end

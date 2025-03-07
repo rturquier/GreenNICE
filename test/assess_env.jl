@@ -87,7 +87,7 @@ plot_EDE_trajectories!(EDE_theta,
 
 
 
-##Countries
+# Plot for selected countries
 
 m = GreenNICE.create()
 update_param!(m, :α, 0.3)

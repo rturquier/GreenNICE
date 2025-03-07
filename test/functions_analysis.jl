@@ -191,7 +191,7 @@ function plot_EDE_trajectories!(EDE_estimates,
     damage_type_labels = Dict(1 => "GreenNice",
                                 2 => "Unequal damages",
                                 3 => "Unequal natural capital",
-                                4 => "Equal natural capital and damages"
+                                4 => "Same natural capital and damages"
                              )
 
 
@@ -279,7 +279,7 @@ function plot_EDE_country!(EDE_estimates, iso3_list,  damage_params, end_year, s
     damage_type_labels = Dict(1 => "GreenNice",
                                 2 => "Unequal damages",
                                 3 => "Unequal natural capital",
-                                4 => "Equal natural capital and damages"
+                                4 => "Same natural capital and damages"
                                 )
     for (j, iso3) in enumerate(iso3_list)
         for (i, param) in enumerate(damage_params)

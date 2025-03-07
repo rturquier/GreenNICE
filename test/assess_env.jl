@@ -84,3 +84,18 @@ plot_EDE_trajectories!(EDE_theta,
                         2200,
                         "θ",
                         "EDE_Trajectories_theta")
+
+
+
+##Countries
+
+m = GreenNICE.create()
+update_param!(m, :α, 0.3)
+
+iso3_list = ["IND", "USA", "CHN", "RUS", "BRA", "ZAF"]
+
+damage_options = [4, 3, 1]
+
+country_damages = Env_damages_EDE_country(m, damage_options, iso3_list)
+
+plot_EDE_country!(country_damages, iso3_list, damage_options, 2200, "EDE_Country")

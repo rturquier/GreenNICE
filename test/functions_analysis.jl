@@ -177,7 +177,13 @@ end
 
 
 
-function plot_EDE_trajectories!(EDE_estimates, damage_params, var_params, end_year, param_name, save_name)
+function plot_EDE_trajectories!(EDE_estimates,
+                                damage_params,
+                                var_params,
+                                end_year,
+                                param_name,
+                                save_name)
+
     # Prepare the data for plotting
     data = DataFrame(year = Int[], EDE = Float64[], var = Float64[], damage_type = Int[],
                      damage_label = String[])
@@ -224,6 +230,89 @@ function plot_EDE_trajectories!(EDE_estimates, damage_params, var_params, end_ye
     display(p)
 
     # Optionally, save the plot to a file (e.g., as SVG)
+    save("test/figures/$(save_name).svg", p)
+
+end
+
+function get_EDE_country(m, iso3_list, country_list)
+
+    EDE_country_list = []
+
+    EDE_matrix = m[:welfare, :cons_EDE_country]
+
+    for iso3 in iso3_list
+        index = findfirst(row -> row == iso3, country_list[!,:countrycode])
+        EDE_country = EDE_matrix[:, index]
+        push!(EDE_country_list, EDE_country)
+    end
+
+    return(EDE_country_list)
+end
+
+
+function Env_damages_EDE_country(m, damage_options, iso3_list)
+
+    country_list = DataFrame(CSV.File("data/country_list.csv"))
+
+    damages_country_list = []
+
+for param in damage_options
+    update_param!(m, :environment, :dam_assessment, param)
+    run(m)
+    EDE_country_list = get_EDE_country(m, iso3_list, country_list)
+    push!(damages_country_list, EDE_country_list)
+
+end
+
+return(damages_country_list)
+
+end
+
+
+
+
+function plot_EDE_country!(EDE_estimates, iso3_list,  damage_params, end_year, save_name)
+
+    data = DataFrame(year = Int[], EDE = Float64[], countrycode = String[],
+        damage_type = Int[], damage_label = String[])
+
+    damage_type_labels = Dict(1 => "GreenNice",
+                                2 => "Unequal damages",
+                                3 => "Unequal natural capital",
+                                4 => "Equal natural capital and damages"
+                                )
+    for (j, iso3) in enumerate(iso3_list)
+        for (i, param) in enumerate(damage_params)
+            EDE = EDE_estimates[i][j]
+            for (k, year) in enumerate(2020:end_year)
+                push!(data, (year = year,
+                             EDE = EDE[k],
+                             countrycode = iso3,
+                             damage_type = param,
+                             damage_label = get(damage_type_labels, param, "Unknown")))
+            end
+        end
+    end
+
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = data,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :EDE, type = :quantitative},
+            color = {field = :countrycode, type = :nominal, title = "Country"},
+            strokeDash = {
+            field = :damage_label,
+            type = :nominal,
+            tittle = "Damage type"
+            }
+        },
+        title = "EDE Trajectories by country"
+    )
+
+
+    display(p)
+
     save("test/figures/$(save_name).svg", p)
 
 end

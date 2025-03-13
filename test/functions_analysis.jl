@@ -57,7 +57,7 @@ function get_env_damage_temp(m, temperature)
 
 end
 
-function plot_env_damages!(Damage_table, title, save_name)
+function map_data!(Data_table, title, save_name)
 
     ## Function, plot to map based on ISO 3 (taken from: https://github.com/alfaromartino/coding/blob/main/assets/PAGES/01_heatmaps_world/codeDownload/allCode.jl)
     R"""
@@ -69,7 +69,7 @@ function plot_env_damages!(Damage_table, title, save_name)
     get_coordinates = Downloads.download("https://alfaromartino.github.io/data/countries_mapCoordinates.csv")
     df_coordinates = DataFrame(CSV.File(get_coordinates)) |> x-> dropmissing(x, :iso3)
 
-    merged_df = leftjoin(df_coordinates, Damage_table, on=:iso3)
+    merged_df = leftjoin(df_coordinates, Data_table, on=:iso3)
     merged_df = merged_df[.!(occursin.(r"Antarct", merged_df.short_name_country)),:]
 
     isdir(joinpath(@__DIR__, "maps")) || mkdir(joinpath(@__DIR__, "maps"))

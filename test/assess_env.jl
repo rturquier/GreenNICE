@@ -23,19 +23,19 @@ m = GreenNICE.create()
 # Make plots
 ############
 
-#Map damages
+# Map damages
 
 run(m)
 
 Damages_2200 = get_env_damages_year(m, 2200)
 
-plot_env_damages!(Damages_2200,
+map_data!(Damages_2200,
                     "Percent change in non-market natural capital by 2200",
                     "Percentage_loss_env")
 
 Damages_1c = get_env_damage_temp(m, 1)
 
-plot_env_damages!(Damages_1c,
+map_data!(Damages_1c,
                     "Percentage changes in non-market natural capital with a 1C increase",
                     "Percentage_loss_1c")
 

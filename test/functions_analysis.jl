@@ -380,6 +380,38 @@ function make_env_gdp_plots(m, year_vector)
     return scatter_plots
 end
 
+function plot_env_gdp_double!(m, year_vector)
+
+    GDP_table = get_Y_pc(m, year_vector)
+
+    Env_table = get_Env_pc(m, year_vector)
+
+    merged_table = DataFrame(iso3 = String[], GDP = Float64[], Env = Float64[], year = Int[])
+
+    for year in year_vector
+        gdp_data = GDP_table[:, [:iso3, Symbol(year)]]
+        env_data = Env_table[:, [:iso3, Symbol(year)]]
+        rename!(gdp_data, Symbol(year) => :GDP)
+        rename!(env_data, Symbol(year) => :Env)
+        gdp_data.year .= year
+        env_data.year .= year
+        combined_data = innerjoin(gdp_data, env_data, on = [:iso3, :year])
+        append!(merged_table, combined_data)
+    end
+
+   plot =  merged_table|>
+    @vlplot(
+        :text,
+        row = :year,
+        x = {:GDP, axis={title="GDP per capita"}},
+        y = {:Env, axis={title="Env per capita"}},
+        text = {:iso3, title="Country"}
+    )
+
+    save("test/figures/env_gdp_double.svg", plot)
+
+end
+
 function map_env_pc(m, year_vector)
 
     world110m = dataset("world-110m")

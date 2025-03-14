@@ -17,13 +17,13 @@ include("functions_analysis.jl")
 
 m = GreenNICE.create()
 
-#############
-# Make plots
-############
-
 # Map damages
 
 run(m)
+
+#############
+# Make plots
+############
 
 Damages_2200 = get_env_damages_year(m, 2200)
 
@@ -41,6 +41,9 @@ map_damage!(Damages_1c,
 
 year_vector = [2020, 2200]
 
+plot_env_gdp_double!(m, [2020, 2200])
+
+# Make a list
 scater_plots = make_env_gdp_plots(m, year_vector)
 
 ## Map Env percapita

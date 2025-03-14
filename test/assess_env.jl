@@ -15,8 +15,6 @@ using Mimi, MimiFAIRv2, DataFrames, CSVFiles
 include("../src/GreenNICE.jl")
 include("functions_analysis.jl")
 
-
-
 m = GreenNICE.create()
 
 #############
@@ -48,7 +46,7 @@ scater_plots = make_env_gdp_plots(m, year_vector)
 ## Map Env percapita
 
 maps_env_pc = map_env_pc(m, year_vector)
-
+AAAQ = get_Env_pc(m, year_vector)
 # Plot EDE
 
 damage_options = [4, 3, 1]
@@ -65,7 +63,7 @@ plot_EDE_trajectories!(EDE, damage_options,
                         "α",
                         "EDE_Trajectories_alpha")
 
-#Test η and damage options
+## Test η and damage options
 m = GreenNICE.create()
 
 eta_params = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
@@ -79,11 +77,11 @@ plot_EDE_trajectories!(EDE_eta,
                         "η",
                         "EDE_Trajectories_eta")
 
-#Test θ and damage options
+## Test θ and damage options
 
 m = GreenNICE.create()
 
-theta_params = [-4, -0.5, 0.5, 1.0]
+theta_params = [-0.5, 0.5, 1.0]
 
 EDE_theta = Env_damages_EDE_trajectories_theta(m, damage_options, theta_params)
 
@@ -96,7 +94,7 @@ plot_EDE_trajectories!(EDE_theta,
 
 
 
-# Plot for selected countries
+## Plot for selected countries
 
 m = GreenNICE.create()
 update_param!(m, :α, 0.3)

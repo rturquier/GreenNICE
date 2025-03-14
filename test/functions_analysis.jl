@@ -39,10 +39,13 @@ function get_env_damage_temp(m, temperature)
 
     Damage_table = get_e0(m)
 
-    coef_damages = DataFrame(CSV.File(joinpath(@__DIR__, "..", "data", "coef_env_damage.csv"),
+    coef_damages = DataFrame(CSV.File(joinpath(@__DIR__,
+                                        "..",
+                                        "data",
+                                        "coef_env_damage.csv"),
                                         header=true))
-    rename!(coef_damages, :countrycode => :iso3)
 
+    rename!(coef_damages, :countrycode => :iso3)
 
     Damage_table= leftjoin(Damage_table, coef_damages, on=:iso3)
 
@@ -235,15 +238,15 @@ function Env_damages_EDE_country(m, damage_options, iso3_list)
 
     damages_country_list = []
 
-for param in damage_options
-    update_param!(m, :environment, :dam_assessment, param)
-    run(m)
-    EDE_country_list = get_EDE_country(m, iso3_list, country_list)
-    push!(damages_country_list, EDE_country_list)
+    for param in damage_options
+        update_param!(m, :environment, :dam_assessment, param)
+        run(m)
+        EDE_country_list = get_EDE_country(m, iso3_list, country_list)
+        push!(damages_country_list, EDE_country_list)
 
-end
+    end
 
-return(damages_country_list)
+    return(damages_country_list)
 
 end
 
@@ -371,6 +374,7 @@ function make_env_gdp_plots(m, year_vector)
     for year in year_vector
         scat_plot = plot_scatter_env_y(Env_table, GDP_table, year)
         push!(scatter_plots, scat_plot)
+        save("test/figures/scatter_env_gdp_$(year).svg", scat_plot)
     end
 
     return scatter_plots
@@ -416,9 +420,8 @@ function map_env_pc(m, year_vector)
         )
 
         push!(map_env_list, map_env)
-
+        save("test/maps/map_env_pc_$(year).svg", map_env)
     end
-
 
     return map_env_list
 

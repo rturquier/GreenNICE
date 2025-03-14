@@ -39,8 +39,17 @@ map_data!(Damages_1c,
                     "Percentage changes in non-market natural capital with a 1C increase",
                     "Percentage_loss_1c")
 
-# Plot EDE
+## Scatter Plot GDP and Env (both per capita)
 
+year_vector = [2020, 2200]
+
+scater_plots = make_env_gdp_plots(m, year_vector)
+
+## Map Env percapita
+
+maps_env_pc = map_env_pc(m, year_vector)
+
+# Plot EDE
 
 damage_options = [4, 3, 1]
 
@@ -74,7 +83,7 @@ plot_EDE_trajectories!(EDE_eta,
 
 m = GreenNICE.create()
 
-theta_params = [-0.5, 0.5, 1.0]
+theta_params = [-4, -0.5, 0.5, 1.0]
 
 EDE_theta = Env_damages_EDE_trajectories_theta(m, damage_options, theta_params)
 

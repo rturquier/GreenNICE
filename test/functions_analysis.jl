@@ -57,65 +57,44 @@ function get_env_damage_temp(m, temperature)
 
 end
 
-function map_data!(Data_table, title, save_name)
+function map_damage!(damages, title, save_name)
 
-    ## Function, plot to map based on ISO 3 (taken from: https://github.com/alfaromartino/coding/blob/main/assets/PAGES/01_heatmaps_world/codeDownload/allCode.jl)
-    R"""
-    library(ggplot2)
-    library(svglite) #to save graphs in svg format, otherwise not necessary
+    world110m = dataset("world-110m")
 
-    """
+    damages.id = [alpha3_to_numeric[iso3] for iso3 in damages.iso3]
 
-    get_coordinates = Downloads.download("https://alfaromartino.github.io/data/countries_mapCoordinates.csv")
-    df_coordinates = DataFrame(CSV.File(get_coordinates)) |> x-> dropmissing(x, :iso3)
-
-    merged_df = leftjoin(df_coordinates, Data_table, on=:iso3)
-    merged_df = merged_df[.!(occursin.(r"Antarct", merged_df.short_name_country)),:]
-
-    isdir(joinpath(@__DIR__, "maps")) || mkdir(joinpath(@__DIR__, "maps"))
-    graphs_folder = joinpath(@__DIR__, "maps")
-
-    R"""
-
-    user_theme <- function(){
-        theme(
-        panel.background = element_blank(),
-        panel.border     = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.grid       = element_blank(),
-
-        axis.line    = element_blank(),
-        axis.text.x  = element_blank(),
-        axis.text.y  = element_blank(),
-        axis.ticks   = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()
-            )
+    map = @vlplot(
+        width = 640,
+        height = 360,
+        title = "$(title)",
+        projection = {type = :mercator}
+    ) +
+    @vlplot(
+        data = {
+            values = world110m,
+            format = {
+                type = :topojson,
+                feature = :countries
             }
+        },
+        transform = [{
+            lookup = "id",
+            from = {
+                data = damages,
+                key = :id,
+                fields = ["percent_change"]
+            }
+        }],
+        mark = :geoshape,
+        encoding = {
+            color = {
+                field = "percent_change",
+                type = "quantitative"
+            }
+        }
+    )
 
-    #baseline code
-    map_damages <- ggplot() + geom_polygon(data = $(merged_df),
-                                        aes(x=long, y = lat, group = group,
-                                            fill=percent_change),
-                                        color = "black", linewidth = 0.1) +
-                            user_theme() +
-                            coord_fixed(1.3) +
-                            scale_fill_gradient2(low = "#d73027",
-                                                mid = "#ffffbf",
-                                                high ="#1a9850",
-                                                name = "Non-market Natural Capital\nPercent Change") +
-                            ggtitle($(title))
-
-
-
-    height <- 5
-
-    ggsave(filename = file.path($(graphs_folder), paste0($(save_name), ".svg")),
-                            plot = map_damages,
-                            width = height * 3,
-                            height = height)
-    """
+    save("test/maps/$(save_name).svg", map)
 
 end
 

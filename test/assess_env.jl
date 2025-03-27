@@ -52,8 +52,7 @@ scater_plots = make_env_gdp_plots(m, year_vector)
 ## Map Env percapita
 maps_env_pc = map_env_pc(m, year_vector)
 
-## plot map faceted
-
+### plot map faceted
 map_env_pc_faceted!(m, year_vector)
 
 # Plot EDE
@@ -64,22 +63,21 @@ m = GreenNICE.create()
 
 alpha_params = [0.1, 0.2, 0.3]
 
-EDE = Env_damages_EDE_trajectories_alpha(m, damage_options, alpha_params)
+EDE_alpha = EDE_trajectories(m, damage_options, alpha_params, "α")
 
 
-
-plot_EDE_trajectories!(EDE, damage_options,
+plot_EDE_trajectories!(EDE_alpha, damage_options,
                         alpha_params,
                         2200,
                         "α",
                         "EDE_Trajectories_alpha")
 
 ## Test η and damage options
-m = GreenNICE.create()
+reset!(m)
 
 eta_params = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 
-EDE_eta = Env_damages_EDE_trajectories_eta(m, damage_options, eta_params)
+EDE_eta = EDE_trajectories(m, damage_options, eta_params, "η")
 
 plot_EDE_trajectories!(EDE_eta,
                         damage_options,
@@ -90,11 +88,11 @@ plot_EDE_trajectories!(EDE_eta,
 
 ## Test θ and damage options
 
-m = GreenNICE.create()
+reset!(m)
 
 theta_params = [-0.5, 0.5, 1.0]
 
-EDE_theta = Env_damages_EDE_trajectories_theta(m, damage_options, theta_params)
+EDE_theta = EDE_trajectories(m, damage_options, theta_params, "θ")
 
 plot_EDE_trajectories!(EDE_theta,
                         damage_options,
@@ -104,8 +102,7 @@ plot_EDE_trajectories!(EDE_theta,
                         "EDE_Trajectories_theta")
 
 ## Plot for selected countries
-
-m = GreenNICE.create()
+reset!(m)
 update_param!(m, :α, 0.3)
 
 iso3_list = ["IND", "USA", "CHN", "RUS", "BRA", "ZAF"]
@@ -119,14 +116,14 @@ plot_EDE_country!(country_damages, iso3_list, damage_options, 2200, "EDE_Country
 
 # Numbers to report in paper
 ## pct change of EDE conditional on climate damages
-pct_change_01 = (EDE[1][1][end] - EDE[1][3][end]) / EDE[1][3][end] * 100
-pct_change_02 = (EDE[2][1][end] - EDE[2][3][end]) / EDE[2][3][end] * 100
-pct_change_03 = (EDE[3][1][end] - EDE[3][3][end]) / EDE[3][3][end] * 100
+pct_change_01 = (EDE_alpha[1][1][end] - EDE_alpha[1][3][end]) / EDE_alpha[1][3][end] * 100
+pct_change_02 = (EDE_alpha[2][1][end] - EDE_alpha[2][3][end]) / EDE_alpha[2][3][end] * 100
+pct_change_03 = (EDE_alpha[3][1][end] - EDE_alpha[3][3][end]) / EDE_alpha[3][3][end] * 100
 
 ## changes in EDE conditional on parameters
 ### alpha
-pct_change_alpha_1 = (EDE[1][3][end] - EDE[2][3][end]) / EDE[1][3][end] * 100
-pct_change_alpha_2 = (EDE[1][3][end] - EDE[3][3][end]) / EDE[1][3][end] * 100
+pct_change_alpha_1 = (EDE_alpha[1][3][end] - EDE_alpha[2][3][end]) / EDE_alpha[1][3][end] * 100
+pct_change_alpha_2 = (EDE_alpha[1][3][end] - EDE_alpha[3][3][end]) / EDE_alpha[1][3][end] * 100
 
 ### theta
 pct_change_theta = (EDE_theta[3][3][end] - EDE_theta[2][3][end]) / EDE_theta[2][3][end] * 100

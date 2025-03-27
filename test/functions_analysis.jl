@@ -157,6 +157,33 @@ function Env_damages_EDE_trajectories_theta(m, array_damage_type, array_θ)
 return(list_theta)
 end
 
+function EDE_trajectories(m, array_damage_type, array_values, parameter)
+
+    list = []
+
+    for value in array_values
+        update_param!(m, Symbol(parameter), value)
+
+        list_models = []
+        for param in array_damage_type
+            update_param!(m, :environment, :dam_assessment, param)
+            run(m)
+            push!(list_models, m[:welfare, :cons_EDE_global])
+        end
+        push!(list, list_models)
+    end
+
+return(list)
+end
+
+function reset!(m)
+
+    update_param!(m, :α, 0.1)
+    update_param!(m, :η, 1.5)
+    update_param!(m, :θ, 0.5)
+
+    return(m)
+end
 
 
 function plot_EDE_trajectories!(EDE_estimates,
@@ -197,7 +224,7 @@ function plot_EDE_trajectories!(EDE_estimates,
         data = data,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :EDE, type = :quantitative},
+            y = {field = :EDE, type = :quantitative, scale = {domain=[0, 65]}},
             color = {field = :var, type = :nominal, title = param_name},
             strokeDash = {
             field = :damage_label,
@@ -206,7 +233,7 @@ function plot_EDE_trajectories!(EDE_estimates,
             #tittle = "Damage type"
             }
         },
-        title = "EDE Trajectories for Different Values of $param_name"
+        title = nothing
     )
 
     # Show the plot
@@ -214,7 +241,6 @@ function plot_EDE_trajectories!(EDE_estimates,
 
     # Optionally, save the plot to a file (e.g., as SVG)
     save("test/figures/$(save_name).svg", p)
-
 end
 
 function get_EDE_country(m, iso3_list, country_list)
@@ -764,3 +790,79 @@ alpha3_to_numeric = Dict(
     "ZWE" => 716,  # Zimbabwe
     "ALA" => 248   # Åland Islands
 )
+
+# See if it can be improved. Otherwise, delete.
+
+function Plot_all_EDE!( m,
+    damage_params,
+    alpha_params,
+    theta_params,
+    eta_params,
+    end_year)
+
+# Prepare the data for plotting
+data = DataFrame(year = Int[], EDE = Float64[], var = Float64[], damage_type = Int[],
+damage_label = String[], parameter = String[])
+
+damage_type_labels = Dict(1 => "GreenNice",
+    2 => "Unequal damages",
+    3 => "Unequal natural capital",
+    4 => "Same natural capital and damages"
+ )
+
+parameters_list = [alpha_params, theta_params, eta_params]
+
+greek_letter = "α"
+
+for var_params in parameters_list
+    reset!(m)
+    if var_params == alpha_params
+    greek_letter = "α"
+        elseif var_params == theta_params
+        greek_letter = "θ"
+        elseif var_params == eta_params
+        greek_letter = "η"
+    end
+
+    EDE_estimates = EDE_trajectories(m, damage_params, var_params, greek_letter)
+
+# Generate the data based on the input parameters
+    for (j, alpha) in enumerate(var_params)
+        for (i, param) in enumerate(damage_params)
+        EDE = EDE_estimates[j][i]
+            for (k, year) in enumerate(2020:end_year)
+            push!(data, (year = year,
+            EDE = EDE[k],
+            var = alpha,
+            damage_type = param,
+            damage_label = get(damage_type_labels, param, "Unknown"),
+            parameter = greek_letter))
+            end
+        end
+    end
+end
+
+p = @vlplot(
+mark = {type=:line, strokeWidth=0.5},
+data = data,
+encoding = {
+column = :parameter,
+x = {field = :year, type = :quantitative},
+y = {field = :EDE, type = :quantitative},
+color = {field = :var, type = :nominal},
+strokeDash = {
+field = :damage_label,
+type = :nominal,
+legend = nothing
+}
+}#,
+#title = "EDE Trajectories for Different Values of $param_name"
+)
+
+# Show the plot
+display(p)
+
+# Optionally, save the plot to a file (e.g., as SVG)
+save("test/figures/TESTING.svg", p)
+
+end

@@ -25,10 +25,13 @@ include(joinpath("components", "welfare.jl"))
 
 
 # Create a function that couples FAIRv2.0 to the economic model components
-function create()
+function create(scenario = "ssp245")
 
 	# Get an instance of Mimi-FAIRv2 with SSP2-45 emissions and radiative forcing.
-	m = MimiFAIRv2.get_model(emissions_forcing_scenario="ssp245", start_year=2020, end_year=2300, param_type = "Number")
+	m = MimiFAIRv2.get_model(emissions_forcing_scenario = scenario,
+                            start_year=2020,
+                            end_year=2300,
+                            param_type = "Number")
 
 	# Set country dimension
 	c = Symbol.(countries)
@@ -73,7 +76,6 @@ function create()
 	add_shared_param!(m,  :s, Matrix(srate), dims=[:time, :country])
 	add_shared_param!(m, :α, 0.1)
 	add_shared_param!(m, :θ, 0.5)
-
 
 
 	# --------------------------------

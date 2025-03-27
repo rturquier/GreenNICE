@@ -12,6 +12,8 @@ Pkg.instantiate()
 # Load required Julia packages.
 using Mimi, MimiFAIRv2, DataFrames, CSVFiles
 
+
+
 include("../src/GreenNICE.jl")
 include("functions_analysis.jl")
 
@@ -41,15 +43,19 @@ map_damage!(Damages_1c,
 
 year_vector = [2020, 2200]
 
-plot_env_gdp_double!(m, [2020, 2200])
+### Both plots no trend line.
+plot_env_gdp_faceted!(m, year_vector)
 
-# Make a list
+### Separate plots with trend line
 scater_plots = make_env_gdp_plots(m, year_vector)
 
 ## Map Env percapita
-
 maps_env_pc = map_env_pc(m, year_vector)
-AAAQ = get_Env_pc(m, year_vector)
+
+## plot map faceted
+
+map_env_pc_faceted!(m, year_vector)
+
 # Plot EDE
 
 damage_options = [4, 3, 1]
@@ -59,6 +65,8 @@ m = GreenNICE.create()
 alpha_params = [0.1, 0.2, 0.3]
 
 EDE = Env_damages_EDE_trajectories_alpha(m, damage_options, alpha_params)
+
+
 
 plot_EDE_trajectories!(EDE, damage_options,
                         alpha_params,
@@ -95,8 +103,6 @@ plot_EDE_trajectories!(EDE_theta,
                         "θ",
                         "EDE_Trajectories_theta")
 
-
-
 ## Plot for selected countries
 
 m = GreenNICE.create()
@@ -109,3 +115,22 @@ damage_options = [4, 3, 1]
 country_damages = Env_damages_EDE_country(m, damage_options, iso3_list)
 
 plot_EDE_country!(country_damages, iso3_list, damage_options, 2200, "EDE_Country")
+
+
+# Numbers to report in paper
+## pct change of EDE conditional on climate damages
+pct_change_01 = (EDE[1][1][end] - EDE[1][3][end]) / EDE[1][3][end] * 100
+pct_change_02 = (EDE[2][1][end] - EDE[2][3][end]) / EDE[2][3][end] * 100
+pct_change_03 = (EDE[3][1][end] - EDE[3][3][end]) / EDE[3][3][end] * 100
+
+## changes in EDE conditional on parameters
+### alpha
+pct_change_alpha_1 = (EDE[1][3][end] - EDE[2][3][end]) / EDE[1][3][end] * 100
+pct_change_alpha_2 = (EDE[1][3][end] - EDE[3][3][end]) / EDE[1][3][end] * 100
+
+### theta
+pct_change_theta = (EDE_theta[3][3][end] - EDE_theta[2][3][end]) / EDE_theta[2][3][end] * 100
+
+### eta
+pct_change_eta_up = (EDE_eta[1][3][end] - EDE_eta[4][3][end]) / EDE_eta[4][3][end] * 100
+pct_change_eta_down = (EDE_eta[7][3][end] - EDE_eta[4][3][end]) / EDE_eta[4][3][end] * 100

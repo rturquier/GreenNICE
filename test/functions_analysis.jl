@@ -202,7 +202,8 @@ function plot_EDE_trajectories!(EDE_estimates,
             strokeDash = {
             field = :damage_label,
             type = :nominal,
-            tittle = "Damage type"
+            legend = nothing
+            #tittle = "Damage type"
             }
         },
         title = "EDE Trajectories for Different Values of $param_name"
@@ -344,10 +345,14 @@ function plot_scatter_env_y(Env_table, GDP_table, year)
     @vlplot(
     layer =[
     {
-        :text,
-        x = {:GDP, axis={title="GDP per capita ($year)"}},
-        y = {:Env, axis={title="Env per capita ($year)"}},
-        text = {:iso3, title="Country"}
+        :point,
+        x = {:GDP,
+            axis={title="GDP per capita ($year)"},
+            scale = {domain=[0, 250000]}},
+        y = {:Env,
+            axis={title="Env per capita ($year)"},
+            scale = {domain=[0, 20]}}#,
+        #text = {:iso3, title="Country"}
     },
     {
         transform = [{
@@ -356,8 +361,10 @@ function plot_scatter_env_y(Env_table, GDP_table, year)
                     }],
 
         mark = {:line, color = "firebrick"},
-        x = :GDP,
-        y = :Env
+        x = {:GDP,
+            scale={domain=[0, 250000]}},
+        y = {:Env,
+            scale = {domain=[0, 20]}}
     }
     ]
     )
@@ -380,7 +387,7 @@ function make_env_gdp_plots(m, year_vector)
     return scatter_plots
 end
 
-function plot_env_gdp_double!(m, year_vector)
+function plot_env_gdp_faceted!(m, year_vector)
 
     GDP_table = get_Y_pc(m, year_vector)
 
@@ -401,14 +408,14 @@ function plot_env_gdp_double!(m, year_vector)
 
    plot =  merged_table|>
     @vlplot(
-        :text,
+        :point,
         row = :year,
         x = {:GDP, axis={title="GDP per capita"}},
-        y = {:Env, axis={title="Env per capita"}},
-        text = {:iso3, title="Country"}
+        y = {:Env, axis={title="E per capita"}}#,
+        #text = {:iso3, title="Country"}
     )
 
-    save("test/figures/env_gdp_double.svg", plot)
+    save("test/figures/env_gdp_faceted.svg", plot)
 
 end
 
@@ -426,7 +433,7 @@ function map_env_pc(m, year_vector)
         map_env = @vlplot(
             width = 640,
             height = 360,
-            title = "Non-market natural capital per capita in $(year)",
+            title = "Non-market natural capital per capita per capita in $(year)",
             projection = {type = :mercator}
         ) +
         @vlplot(
@@ -448,7 +455,8 @@ function map_env_pc(m, year_vector)
             mark = :geoshape,
             color = {field = Symbol(string(year)),
                      type = "quantitative",
-                     title = "million USD"}
+                     title = "million USD",
+                     scale = {domain = [0, 20]}}
         )
 
         push!(map_env_list, map_env)
@@ -457,6 +465,52 @@ function map_env_pc(m, year_vector)
 
     return map_env_list
 
+end
+
+function map_env_pc_faceted!(m, year_vector)
+
+    world110m = dataset("world-110m")
+
+    long_table = get_Env_pc(m, year_vector)
+
+    Env = DataFrame()
+
+    for year in year_vector
+        append!(Env, DataFrame(iso3=long_table.iso3,
+                                E_percapita=long_table[:, string(year)],
+                                year=year))
+    end
+
+    Env.id = [alpha3_to_numeric[iso3] for iso3 in Env.iso3]
+
+    map = @vlplot(
+        width=640,
+        height=360,
+        :geoshape,
+        data=Env,
+        transform=[{
+            lookup=:id,
+            from={
+                data={
+                    values=world110m,
+                    format={
+                        type=:topojson,
+                        feature=:countries
+                    }
+                },
+                key=:id
+            },
+            as=:geo
+        }],
+        projection={type=:mercator},
+        encoding={
+            shape={field=:geo,type=:geojson},
+            color={field=:E_percapita,type=:quantitative},
+            row={field=:year,type=:nominal}
+        }
+    )
+
+    save("test/maps/map_env_faceted.svg", map)
 end
 
 alpha3_to_numeric = Dict(

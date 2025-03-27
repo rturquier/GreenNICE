@@ -27,6 +27,8 @@ run(m)
 # Make plots
 ############
 
+# Map damages
+
 Damages_2200 = get_env_damages_year(m, 2200)
 
 map_damage!(Damages_2200,
@@ -39,11 +41,10 @@ map_damage!(Damages_1c,
                     "Percentage changes in non-market natural capital with a 1C increase",
                     "Percentage_loss_1c")
 
-## Scatter Plot GDP and Env (both per capita)
-
+# Scatter Plot GDP and Env (both per capita)
 year_vector = [2020, 2200]
 
-### Both plots no trend line.
+## Both plots no trend line.
 plot_env_gdp_faceted!(m, year_vector)
 
 ### Separate plots with trend line
@@ -57,6 +58,7 @@ map_env_pc_faceted!(m, year_vector)
 
 # Plot EDE
 
+## Test α and damage options
 damage_options = [4, 3, 1]
 
 m = GreenNICE.create()
@@ -65,12 +67,25 @@ alpha_params = [0.1, 0.2, 0.3]
 
 EDE_alpha = EDE_trajectories(m, damage_options, alpha_params, "α")
 
-
 plot_EDE_trajectories!(EDE_alpha, damage_options,
                         alpha_params,
                         2200,
                         "α",
                         "EDE_Trajectories_alpha")
+
+## Test θ and damage options
+reset!(m) #set initial parameters for α, θ and η.
+
+theta_params = [-0.5, 0.5, 1.0]
+
+EDE_theta = EDE_trajectories(m, damage_options, theta_params, "θ")
+
+plot_EDE_trajectories!(EDE_theta,
+                        damage_options,
+                        theta_params,
+                        2200,
+                        "θ",
+                        "EDE_Trajectories_theta")
 
 ## Test η and damage options
 reset!(m)
@@ -86,22 +101,7 @@ plot_EDE_trajectories!(EDE_eta,
                         "η",
                         "EDE_Trajectories_eta")
 
-## Test θ and damage options
-
-reset!(m)
-
-theta_params = [-0.5, 0.5, 1.0]
-
-EDE_theta = EDE_trajectories(m, damage_options, theta_params, "θ")
-
-plot_EDE_trajectories!(EDE_theta,
-                        damage_options,
-                        theta_params,
-                        2200,
-                        "θ",
-                        "EDE_Trajectories_theta")
-
-## Plot for selected countries
+## Plot EDE for BRICS countries
 reset!(m)
 update_param!(m, :α, 0.3)
 
@@ -131,3 +131,28 @@ pct_change_theta = (EDE_theta[3][3][end] - EDE_theta[2][3][end]) / EDE_theta[2][
 ### eta
 pct_change_eta_up = (EDE_eta[1][3][end] - EDE_eta[4][3][end]) / EDE_eta[4][3][end] * 100
 pct_change_eta_down = (EDE_eta[7][3][end] - EDE_eta[4][3][end]) / EDE_eta[4][3][end] * 100
+
+# Plot EDE for different emissions scenarios
+
+emissions_scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
+
+## Compare EDE GreenNICE and NICE
+plot_EDE_GreenNICE_NICE!(emissions_scenarios, 2200, "EDE_GreenNICE_NICE")
+
+## Get numbers to describe in paper
+EDE_scenarios_values = EDE_GreenNICE_NICE(emissions_scenarios)
+
+### EDE GreenNICE in 2200 in BAU (ssp126), α = 0.1, θ = 0.5 and η = 1.5
+EDE_scenarios_values[2][1][end]
+### EDE NICE in 2200 BAU
+EDE_scenarios_values[2][2][end]
+### pct change
+( EDE_scenarios_values[2][1][end] -EDE_scenarios_values[2][2][end]) / EDE_scenarios_values[2][2][end] * 100
+
+### Max EDE in scenario ssp119
+EDE_scenarios_values[1][1][end]
+
+### Min EDE in scenario ssp370
+EDE_scenarios_values[4][1][end]
+### compare with NICE
+(EDE_scenarios_values[4][2][end] - EDE_scenarios_values[4][1][end]) / EDE_scenarios_values[4][1][end] * 100

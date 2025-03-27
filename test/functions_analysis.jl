@@ -539,6 +539,71 @@ function map_env_pc_faceted!(m, year_vector)
     save("test/maps/map_env_faceted.svg", map)
 end
 
+function EDE_GreenNICE_NICE(emissions_scenarios)
+
+    list_scenario = []
+    for scenario in emissions_scenarios
+
+        list_EDE = []
+
+        #first GreenNICE
+        m = GreenNICE.create(scenario)
+        run(m)
+        push!(list_EDE, m[:welfare, :cons_EDE_global])
+
+        #Second, Original NICE
+        update_param!(m, :α, 0.0)
+        run(m)
+        push!(list_EDE, m[:welfare, :cons_EDE_global])
+
+        push!(list_scenario, list_EDE)
+    end
+
+    return(list_scenario)
+
+end
+
+function plot_EDE_GreenNICE_NICE!(emissions_scenario, end_year, save_name)
+
+    EDE_list = EDE_GreenNICE_NICE(emissions_scenario)
+
+# Prepare the data for plotting
+    data = DataFrame(year = Int[], EDE = Float64[], scenario = String[], model = String[])
+
+    for (i, scenario) in enumerate(EDE_list)
+        for (j) in 1:2
+
+            EDE = EDE_list[i][j]
+                for (k, year) in enumerate(2020:end_year)
+                    push!(data, (year = year,
+                                EDE = EDE[k],
+                                scenario = emissions_scenario[i],
+                                model = j == 1 ? "GreenNICE" : "NICE"))
+                end
+        end
+    end
+
+    # create and save plot
+    p = @vlplot(
+    mark = {type=:line, strokeWidth=0.5},
+    data = data,
+    encoding = {
+        x = {field = :year, type = :quantitative},
+        y = {field = :EDE, type = :quantitative},
+        color = {field = :scenario, type = :nominal},
+        strokeDash = {
+            field = :model,
+            type = :nominal,
+            legend = :model
+        }
+        },
+    title = nothing
+    )
+
+    save("test/figures/$(save_name).svg", p)
+end
+
+
 alpha3_to_numeric = Dict(
     "AFG" => 4,    # Afghanistan
     "ALB" => 8,    # Albania

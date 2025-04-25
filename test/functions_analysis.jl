@@ -70,7 +70,7 @@ function map_damage!(damages, title, save_name)
         width = 640,
         height = 360,
         title = "$(title)",
-        projection = {type = :mercator}
+        projection = {type = :equirectangular}
     ) +
     @vlplot(
         data = {
@@ -460,7 +460,7 @@ function map_env_pc(m, year_vector)
             width = 640,
             height = 360,
             title = "Non-market natural capital per capita per capita in $(year)",
-            projection = {type = :mercator}
+            projection = {type = :equirectangular}
         ) +
         @vlplot(
             data = {
@@ -528,7 +528,7 @@ function map_env_pc_faceted!(m, year_vector)
             },
             as=:geo
         }],
-        projection={type=:mercator},
+        projection={type=:equirectangular},
         encoding={
             shape={field=:geo,type=:geojson},
             color={field=:E_percapita,type=:quantitative},

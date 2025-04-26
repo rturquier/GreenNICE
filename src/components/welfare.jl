@@ -16,6 +16,9 @@
     welfare_country         = Variable(index=[time, country])               # Country welfare
     welfare_rwpp            = Variable(index=[time, regionwpp])             # WPP region welfare
     welfare_global          = Variable(index=[time])                        # Global welfare
+    E_cons_country          = Variable(index=[time, country])                # Consumption of E and c (thousand USD2017 per person per year)
+    E_cons_rwpp             = Variable(index=[time, regionwpp])              # Regional consumption of E and c (thousand USD2017 per person per year)
+    E_cons_global           = Variable(index=[time])                        # Global avg consumption of E and c (thousand USD2017 per person per year)
 
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
@@ -37,9 +40,23 @@
 
             v.welfare_country[t,c] = (
                 (p.l[t,c] / p.nb_quantile) * sum(utility.(
-                    p.qcpc_post_recycle[t,c,:], p.Env_percapita[t,c,:], p.η, p.θ, p.α
+                    p.qcpc_post_recycle[t,c,:],
+                    p.Env_percapita[t,c,:],
+                    p.η,
+                    p.θ,
+                    p.α
                 ))
             )
+
+            v.E_cons_country[t,c] = (
+                (1 / p.nb_quantile) * sum(E_consumption.(
+                    p.qcpc_post_recycle[t,c,:],
+                    p.Env_percapita[t,c,:],
+                    p.θ,
+                    p.α
+                ))
+            )
+
         end # country loop
 
         for rwpp in d.regionwpp
@@ -54,6 +71,9 @@
                 p.l[t,country_indices]
             )
             v.welfare_rwpp[t,rwpp] = sum(v.welfare_country[t,country_indices])
+
+        #    v.E_cons_rwpp[t,rwpp] = sum(v.E_cons_country[t,country_indices],
+        #                                p.l[t,country_indices])
         end # region loop
 
         v.cons_EDE_global[t] = EDE_aggregated(
@@ -65,7 +85,46 @@
             p.l[t,:],
         )
         v.welfare_global[t] = sum(v.welfare_country[t,:])
+
+        v.E_cons_global[t] = E_consumption_aggregated(
+            v.E_cons_country[t,:],
+            p.l[t,:]
+        )
     end # timestep
+end
+
+"""
+    E_consumption(consumption::Real, environment::Real, θ::Real, α::Real)
+
+Get sum of utility between consumption and environmental goods.
+
+# Arguments
+- `consumption::Real`: consumption level (thousand USD2017 per person per year).
+- `environment::Real`: environmental good level (thousand USD2017 per person per year).
+- `θ::Real`: substitutability parameter. Accepts value between -∞ and 1, and cannot be null.
+- `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
+
+"""
+function E_consumption(consumption::Real, environment::Real,θ::Real, α::Real)
+    E_c = ((1 - α) * consumption^θ + α * environment^θ)^(1 / θ)
+    return E_c
+end
+
+"""
+    E_consumption_aggregated(country_level_E_c::Vector, population::Vector)
+Get average consumption of E and c at an aggregate level.
+
+#Arguments
+- `country_level_E_c::Vector`: vector of country-level E consumption.
+- `population::Vector`: vector of population for each country.
+
+"""
+
+function E_consumption_aggregated(country_level_E_c, population::Vector)
+    total_E_c = sum(population .* country_level_E_c)
+    total_population = sum(population)
+    average_E_c = total_E_c / total_population
+    return average_E_c
 end
 
 

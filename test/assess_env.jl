@@ -19,8 +19,6 @@ include("functions_analysis.jl")
 
 m = GreenNICE.create()
 
-# Map damages
-
 run(m)
 
 #############
@@ -90,7 +88,7 @@ plot_EDE_trajectories!(EDE_theta,
 ## Test η and damage options
 reset!(m)
 
-eta_params = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+eta_params = 0.7:0.2:2.0
 
 EDE_eta = EDE_trajectories(m, damage_options, eta_params, "η")
 
@@ -112,6 +110,13 @@ damage_options = [4, 3, 1]
 country_damages = Env_damages_EDE_country(m, damage_options, iso3_list)
 
 plot_EDE_country!(country_damages, iso3_list, damage_options, 2200, "EDE_Country")
+
+# PLOT Atkinson proxy
+
+reset!(m)
+run(m)
+
+Welfare_time =
 
 
 # Numbers to report in paper

@@ -1,18 +1,17 @@
-#########################################################
-# Get changes in environment
-#########################################################
+using Plots
+
+# Plot
 
 # Activate the project and make sure all packages we need
 # are installed.
 using Pkg
+
 Pkg.activate(joinpath(@__DIR__, ".."))
 #Pkg.resolve() # To resolve inconsistencies between Manifest.toml and Project.toml
 Pkg.instantiate()
 
 # Load required Julia packages.
 using Mimi, MimiFAIRv2, DataFrames, CSVFiles
-
-
 
 include("../src/GreenNICE.jl")
 include("functions_analysis.jl")
@@ -147,7 +146,7 @@ plot_EDE_GreenNICE_NICE!(emissions_scenarios, 2200, "EDE_GreenNICE_NICE")
 ## Get numbers to describe in paper
 EDE_scenarios_values = EDE_GreenNICE_NICE(emissions_scenarios)
 
-### EDE GreenNICE in 2200 in BAU (ssp126), α = 0.1, θ = 0.5 and η = 1.5
+### EDE GreenNICE in 2200 in BAU (ssp245), α = 0.1, θ = 0.5 and η = 1.5
 EDE_scenarios_values[2][1][end]
 ### EDE NICE in 2200 BAU
 EDE_scenarios_values[2][2][end]
@@ -161,3 +160,37 @@ EDE_scenarios_values[1][1][end]
 EDE_scenarios_values[4][1][end]
 ### compare with NICE
 (EDE_scenarios_values[4][2][end] - EDE_scenarios_values[4][1][end]) / EDE_scenarios_values[4][1][end] * 100
+
+# Atkinson Index
+
+
+Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
+
+long_df = stack(Regions_Atkinson, Not(:year), variable_name = :Region, value_name = :Value)
+
+p = @vlplot(
+    mark = {type=:line, strokeWidth=0.5},
+    data = long_df,
+    encoding = {
+        x = {field = :year, type = :quantitative},
+        y = {field = :Value, type = :quantitative},
+        color = {field = :Region, type = :nominal, title = "World_Region"}
+    },
+    title = nothing
+)
+
+
+save("test/figures/Atkinson_Regions.svg", p)
+
+Global_Atkinson = get_Atkinson_dataframe(m, 2150, "global")
+
+q = @vlplot(
+    mark = {type=:line, strokeWidth=0.5},
+    data = Global_Atkinson,
+    encoding = {
+        x = {field = :year, type = :quantitative},
+        y = {field = :Global, type = :quantitative}
+    },
+)
+
+save("test/figures/Atkinson_Global.svg", q)

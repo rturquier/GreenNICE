@@ -931,3 +931,46 @@ display(p)
 save("test/figures/TESTING.svg", p)
 
 end
+
+function get_Atkinson_index(m, year_end, region_level)
+
+    if region_level == "country"
+        c_EDE = m[:welfare, :cons_EDE_country]
+        c = m[:quantile_recycle, :CPC_post]
+
+    elseif region_level == "region"
+        c_EDE = m[:welfare, :cons_EDE_rwpp]
+        c = m[:quantile_recycle, :CPC_post_rwpp]
+    else
+        c_EDE = m[:welfare, :cons_EDE_global]
+        c = m[:quantile_recycle, :CPC_post_global]
+    end
+
+    Atkinson = 1 .- (c_EDE ./ c)
+
+    Atkinson = Atkinson[1:year_end-2019, :]
+
+    return Atkinson
+end
+
+function get_Atkinson_dataframe(m, year_end, region_level)
+
+    atkinson_index = get_Atkinson_index(m, year_end, region_level)
+
+    if region_level == "country"
+        column_names = DataFrame(CSV.File("data/country_list.csv"))
+        sort!(column_names, :countrycode)
+        column_names = column_names.countrycode
+    elseif region_level == "region"
+        regions = DataFrame(CSV.File("data/WPP_regions_country_list.csv"))
+        sort!(regions, :WPP_region_number)
+        column_names = unique(regions.WPP_region_name)
+    else
+        column_names = ["Global"]
+    end
+
+    Atkinson_dataframe = DataFrame(atkinson_index, Symbol.(column_names))
+    Atkinson_dataframe.year = 2020:(2020 + size(atkinson_index, 1) - 1)
+
+    return Atkinson_dataframe
+end

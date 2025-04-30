@@ -1,5 +1,6 @@
 using DataFrames, RCall, CSV, Downloads
 using VegaLite, VegaDatasets
+using PrettyTables
 
 function get_e0(m)
 
@@ -966,11 +967,285 @@ function get_Atkinson_dataframe(m, year_end, region_level)
         sort!(regions, :WPP_region_number)
         column_names = unique(regions.WPP_region_name)
     else
-        column_names = ["Global"]
+        column_names = ["Atkinson_index"]
     end
 
     Atkinson_dataframe = DataFrame(atkinson_index, Symbol.(column_names))
     Atkinson_dataframe.year = 2020:(2020 + size(atkinson_index, 1) - 1)
 
     return Atkinson_dataframe
+end
+
+function plot_atkinson_envdamage!(m, damage_options, year_end)
+
+    Atk_damage = []
+
+    damage_type_labels = Dict(1 => "GreenNice",
+    2 => "Unequal damages",
+    3 => "Unequal natural capital",
+    4 => "Proportional damages"
+    )
+
+    for param in damage_options
+        update_param!(m, :environment, :dam_assessment, param)
+        run(m)
+
+        Atk_df = get_Atkinson_dataframe(m, year_end, "global")
+        Atk_df[:, :damage_options] .= damage_type_labels[param]
+        push!(Atk_damage, Atk_df)
+    end
+    Atk_damage_long = vcat(Atk_damage...)
+
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = Atk_damage_long,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative},
+            color = {field = :damage_options, type = :nominal, title = "E damage distribution"},
+        }
+    )
+
+
+    display(p)
+    save("test/figures/Atk_Env_damages.svg", p)
+end
+
+function get_Atkinson_trajectories(m, alpha_params, theta_params, eta_params, end_year)
+
+    parameter_list = ["α", "θ", "η"]
+    output = []
+    for param in parameter_list
+
+        Atk_dataframe = []
+
+        if param == "α"
+            list = alpha_params
+        elseif param == "θ"
+            list = theta_params
+        else
+            list = eta_params
+        end
+
+        values = minimum(list):0.05:maximum(list)
+
+            for value in values
+                reset!(m)
+                update_param!(m, Symbol(param), value)
+                run(m)
+                Atk_df = get_Atkinson_dataframe(m, end_year, "global")
+                Atk_df[:, param] .= value
+                push!(Atk_dataframe, Atk_df)
+            end
+
+        Atk_dataframe = vcat(Atk_dataframe...)
+        push!(output, Atk_dataframe)
+
+    end
+return output
+end
+
+function get_Atkinson_lastyear(m, alpha_params, theta_params, eta_params, end_year)
+
+    Dataframes = get_Atkinson_trajectories(m,
+                                        alpha_params,
+                                        theta_params,
+                                        eta_params,
+                                        end_year)
+    Atkinson_year_parameter = []
+
+        for Atk_df in Dataframes
+            last_year_data = filter(row -> row[:year] == maximum(Atk_df.year), Atk_df)
+            push!(Atkinson_year_parameter, last_year_data)
+        end
+
+        return Atkinson_year_parameter
+
+end
+
+function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_year)
+
+    Atkinson_end_year = get_Atkinson_lastyear(m,
+                                            alpha_params,
+                                            theta_params,
+                                            eta_params,
+                                            end_year)
+
+    for Atk_df in Atkinson_end_year
+
+         p = @vlplot(
+             mark = {type=:line, strokeWidth=1.5},
+             data = Atk_df,
+             encoding = {
+                 x = {field = names(Atk_df)[3], type = :quantitative},
+                 y = {field = :Atkinson_index,
+                        type = :quantitative,
+                        scale = {domain = [0, 0.6]}}
+             }
+         )
+
+         display(p)
+         if names(Atk_df)[3] == "α"
+             save("test/figures/Atkinson_alpha.svg", p)
+         elseif names(Atk_df)[3] == "θ"
+             save("test/figures/Atkinson_theta.svg", p)
+         elseif names(Atk_df)[3] == "η"
+             save("test/figures/Atkinson_eta.svg", p)
+         end
+     end
+ end
+
+ function plot_c_EDE!(end_year)
+
+    m = GreenNICE.create()
+    run(m)
+
+    c = m[:quantile_recycle, :CPC_post_global]
+    EDE_GreenNICE = m[:welfare, :cons_EDE_global]
+
+    update_param!(m, :α, 0.0)
+    run(m)
+    EDE_NICE = m[:welfare, :cons_EDE_global]
+
+    year = 2020:end_year
+    df = DataFrame(
+        year = year,
+        c = c[1:length(year)],
+        EDE_GreenNICE = EDE_GreenNICE[1:length(year)],
+        EDE_NICE = EDE_NICE[1:length(year)]
+    )
+
+    df_long = stack(df, Not(:year), variable_name=:c_type, value_name=:Value)
+
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=1.5},
+        data = df_long,
+        encoding = {
+            x = {field = :year, type = :quantitative, title = "Year"},
+            y = {field= :Value, type = :quantitative, title = "consumption"}
+        },
+        color = {field = :c_type, type = :nominal, title = ""},
+        strokeDash = {
+            condition = {test = "datum.c_type === 'EDE_NICE'", value = [5, 5]},
+            value = []
+        }
+    )
+
+display(p)
+    save("test/figures/c_EDE.svg", p)
+
+end
+
+function plot_Atkinson_emissionscenario!(emissions_scenarios, year_end = 2100)
+
+    Atkinson_scenario_list = []
+
+    for scenario in emissions_scenarios
+        m = GreenNICE.create(scenario)
+        run(m)
+
+        Atkinson_scenario = get_Atkinson_dataframe(m, year_end, "global")
+        Atkinson_scenario[!, :scenario] .= scenario
+
+        push!(Atkinson_scenario_list, Atkinson_scenario)
+    end
+
+    combined_df = vcat(Atkinson_scenario_list...)
+    combined_df_long = stack(combined_df,
+                            Not([:year, :scenario]),
+                            variable_name=:Atkinson_index,
+                            value_name=:Value)
+
+    # Calculate percentage difference with respect to :Atkinson_index == ssp245
+    reference_scenario = "ssp245"
+    reference_df = filter(row -> row[:scenario] == reference_scenario, combined_df)
+    reference_values = Dict(row[:year] => row[:Atkinson_index]
+                            for row in eachrow(reference_df))
+
+    combined_df_long[!, :Difference] .= [row[:Value] - reference_values[row[:year]]
+                                        for row in eachrow(combined_df_long)]
+
+    # Update the plot to use Percentage_Difference
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = combined_df_long,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Difference, type = :quantitative, title = "Difference"},
+            color = {field = :scenario, type = :nominal, title = "Scenario"}
+        }
+    )
+
+    save("test/figures/Atkinson_Emissions_Scenarios.svg", p)
+
+end
+
+function plot_global_Atkinson(year_end = 2100)
+    m= GreenNICE.create()
+    run(m)
+
+    Global_Atkinson = get_Atkinson_dataframe(m, year_end, "global")
+
+    m_0 = GreenNICE.create()
+    update_param!(m_0, :α, 0.0)
+    run(m_0)
+
+    Atkinson_NICE = get_Atkinson_dataframe(m_0, year_end, "global")
+
+    insertcols!(Global_Atkinson, :model => "greenNICE")
+    insertcols!(Atkinson_NICE, :model => "NICE")
+
+    append!(Global_Atkinson, Atkinson_NICE)
+
+    q = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = Global_Atkinson,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative}
+        },
+        color = {field = :model, type = :nominal, title = "Model"}
+    )
+
+    save("test/figures/Atkinson_Global.svg", q)
+end
+
+function table_Atkinson_regions(m, m_0, year_end = 2100)
+
+    Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
+
+    Regions_Atkinson_0 = get_Atkinson_dataframe(m_0, 2100, "region")
+
+    regions = names(Regions_Atkinson)[1:end-1]
+    I_GreenNICE = [Regions_Atkinson[end, region] for region in regions]
+    I_NICE = [Regions_Atkinson_0[end, region] for region in regions]
+    Diff = I_GreenNICE .- I_NICE
+
+    table_data = DataFrame(
+        Region = regions,
+        GreenNICE = I_GreenNICE,
+        NICE = I_NICE,
+        Difference = Diff
+    )
+
+    table_data.GreenNICE .= round.(table_data.GreenNICE, digits=3)
+    table_data.NICE .= round.(table_data.NICE, digits=3)
+    table_data.Difference .= round.(table_data.Difference, digits=3)
+
+    header = ["Region", "GreenNICE", "NICE", "Difference"]
+
+    # Write LaTeX table to a .tex file using an IO stream
+    open("test/tables/Atkinson_regions.tex", "w") do io
+        pretty_table(
+            io,
+            table_data;
+            backend = Val(:latex),
+            tf = tf_latex_double,
+            header = header,
+            wrap_table = true,
+            table_type = :tabular,
+            label = "t:Atkinson_regions"
+        )
+    end
+
 end

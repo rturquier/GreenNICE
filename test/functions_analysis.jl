@@ -182,6 +182,7 @@ function reset!(m)
     update_param!(m, :α, 0.1)
     update_param!(m, :η, 1.5)
     update_param!(m, :θ, 0.5)
+    update_param!(m, :environment, :dam_assessment, 1)
 
     return(m)
 end
@@ -1216,23 +1217,42 @@ function table_Atkinson_regions(m, m_0, year_end = 2100)
 
     Regions_Atkinson_0 = get_Atkinson_dataframe(m_0, 2100, "region")
 
+    update_param!(m, :environment, :dam_assessment, 4)
+    run(m)
+
+    Regions_Atkinson_same = get_Atkinson_dataframe(m, 2100, "region")
+
+    update_param!(m, :environment, :dam_assessment, 3)
+    run(m)
+
+    Regions_Atkinson_unequalE = get_Atkinson_dataframe(m, 2100, "region")
+
+
+
     regions = names(Regions_Atkinson)[1:end-1]
     I_GreenNICE = [Regions_Atkinson[end, region] for region in regions]
     I_NICE = [Regions_Atkinson_0[end, region] for region in regions]
     Diff = I_GreenNICE .- I_NICE
+    I_same = [Regions_Atkinson_same[end, region] for region in regions]
+    I_unequalE = [Regions_Atkinson_unequalE[end, region] for region in regions]
 
     table_data = DataFrame(
         Region = regions,
-        GreenNICE = I_GreenNICE,
         NICE = I_NICE,
-        Difference = Diff
+        GreenNICE = I_GreenNICE,
+       # Difference = Diff,
+        Equal_dam = I_same,
+        Unequal_dam = I_unequalE
     )
 
     table_data.GreenNICE .= round.(table_data.GreenNICE, digits=3)
     table_data.NICE .= round.(table_data.NICE, digits=3)
-    table_data.Difference .= round.(table_data.Difference, digits=3)
+    #table_data.Difference .= round.(table_data.Difference, digits=3)
+    table_data.Equal_dam .= round.(table_data.Equal_dam, digits=3)
+    table_data.Unequal_dam .= round.(table_data.Unequal_dam, digits=3)
 
-    header = ["Region", "GreenNICE", "NICE", "Difference"]
+    header = ["Region", "NICE", "greenNICE",
+              "Proportional dam.", "Unequal Nat Cap"]
 
     # Write LaTeX table to a .tex file using an IO stream
     open("test/tables/Atkinson_regions.tex", "w") do io
@@ -1288,4 +1308,102 @@ function plot_regions_Atkinson!(m, m_0, list_regions, year_end = 2100)
 
     save("test/figures/Atkinson_NICEgreenNICE_regions.svg", p)
 
+end
+
+function plot_atkinson_region_envdamage!(m, damage_options, list_regions, year_end)
+
+    Atk_damage = []
+
+    damage_type_labels = Dict(1 => "GreenNice",
+    2 => "Unequal damages",
+    3 => "Unequal natural capital",
+    4 => "Proportional damages"
+    )
+
+    for param in damage_options
+        update_param!(m, :environment, :dam_assessment, param)
+        run(m)
+
+        Atk_df = get_Atkinson_dataframe(m, year_end, "region")
+        Atk_df = Atk_df[:, Cols(:year, list_regions...)]
+        Atk_df[:, :damage_options] .= damage_type_labels[param]
+        push!(Atk_damage, Atk_df)
+    end
+
+    Atk_damage_long = vcat(Atk_damage...)
+    Atk_damage_long = stack(Atk_damage_long, Not(:year, :damage_options), variable_name = :region, value_name = :Atkinson_index)
+
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = Atk_damage_long,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative},
+            color = {field = :region, type = :nominal, title = "Region"},
+            strokeDash = {field = :damage_options, type = :nominal}
+        }
+    )
+
+
+    display(p)
+    save("test/figures/Atkinson_region_Env_damages.svg", p)
+end
+
+function get_Atkinson_country(m, list_countries, year_end = 2100)
+
+    countries = DataFrame(CSV.File("data/country_list.csv"))
+    country_df = DataFrame(year = Int[], Atkinson_index = Float64[], country = String[])
+    years = 2020:year_end
+
+    EDE_matrix = m[:welfare, :cons_EDE_country]
+    c_matrix = m[:quantile_recycle, :CPC_post]
+
+        for iso3 in list_countries
+            index = findfirst(row -> row == iso3, countries[!,:countrycode])
+            Atkinson_country = EDE_matrix[:, index] ./ c_matrix[:, index]
+            years = 2020:year_end
+            for (i, year) in enumerate(years)
+                push!(country_df, (year, Atkinson_country[i], iso3))
+            end
+        end
+
+
+    return country_df
+end
+
+function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, year_end = 2100)
+
+    atk_dataframe = DataFrame(year = Int[], Atkinson_index = Float64[], country = String[],
+                                damage_type = String[])
+
+    damage_type_labels = Dict(1 => "GreenNice",
+    2 => "Unequal damages",
+    3 => "Unequal natural capital",
+    4 => "Proportional damages"
+    )
+
+    for damage in damage_options
+        update_param!(m, :environment, :dam_assessment, damage)
+        run(m)
+        Atk_country = get_Atkinson_country(m, list_countries, year_end)
+
+        for row in eachrow(Atk_country)
+            push!(atk_dataframe, (row.year, row.Atkinson_index, row.country, damage_type_labels[damage]))
+        end
+
+    end
+
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = atk_dataframe,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative},
+            color = {field = :country, type = :nominal, title = "Country"},
+            strokeDash = {field = :damage_type, type = :nominal}
+        }
+    )
+
+    display(p)
+    save("test/figures/Atkinson_country_Env_damages.svg", p)
 end

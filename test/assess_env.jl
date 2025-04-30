@@ -56,6 +56,9 @@ theta_params = 0.5:0.5:1.0
 eta_params = 0.6:0.2:2.0
 damage_options = [4, 3, 1]
 emissions_scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
+list_regions = ["Eastern Africa", "South America", "Southern Asia",
+                "Australia and New Zealand"]
+list_countries = ["IND", "USA", "CHN", "RUS", "BRA", "ZAF"]
 
 ## Test α and damage options
 
@@ -98,11 +101,11 @@ plot_EDE_trajectories!(EDE_eta,
 reset!(m)
 update_param!(m, :α, 0.3)
 
-iso3_list = ["IND", "USA", "CHN", "RUS", "BRA", "ZAF"]
 
-country_damages = Env_damages_EDE_country(m, damage_options, iso3_list)
 
-plot_EDE_country!(country_damages, iso3_list, damage_options, 2200, "EDE_Country")
+country_damages = Env_damages_EDE_country(m, damage_options, list_countries)
+
+plot_EDE_country!(country_damages, list_countries, damage_options, 2200, "EDE_Country")
 
 # Numbers to report in paper
 ## pct change of EDE conditional on climate damages
@@ -170,6 +173,8 @@ p = @vlplot(
 )
 save("test/figures/Atkinson_Regions.svg", p)
 
+reset!(m)
+
 table_Atkinson_regions(m, m_0)
 
 plot_global_Atkinson()
@@ -190,7 +195,12 @@ plot_c_EDE!(2100)
 
 plot_Atkinson_emissionscenario!(emissions_scenarios)
 
-list_regions = ["Eastern Africa", "South America", "Southern Asia",
-                "Australia and New Zealand"]
+plot_regions_Atkinson!(m_at, m_0, list_regions, 2100)
 
-plot_regions_Atkinson!(m, m_0, list_regions, 2100)
+reset!(m)
+
+plot_atkinson_region_envdamage!(m, damage_options, list_regions, 2100)
+
+reset!(m)
+
+plot_Atkinson_country_envdamage!(m, damage_options, list_countries, 2100)

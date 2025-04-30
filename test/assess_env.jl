@@ -189,3 +189,8 @@ plot_Atkinson_param!(m_at, alpha_params, theta_params, eta_params, 2100)
 plot_c_EDE!(2100)
 
 plot_Atkinson_emissionscenario!(emissions_scenarios)
+
+list_regions = ["Eastern Africa", "South America", "Southern Asia",
+                "Australia and New Zealand"]
+
+plot_regions_Atkinson!(m, m_0, list_regions, 2100)

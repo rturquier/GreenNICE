@@ -1249,3 +1249,43 @@ function table_Atkinson_regions(m, m_0, year_end = 2100)
     end
 
 end
+
+function plot_regions_Atkinson!(m, m_0, list_regions, year_end = 2100)
+
+    Regions_Atkinson = get_Atkinson_dataframe(m, year_end, "region")
+    Regions_Atkinson_0 = get_Atkinson_dataframe(m_0, year_end, "region")
+
+    Regions_Atkinson = Regions_Atkinson[:, Cols(:year, list_regions...)]
+    Regions_Atkinson_0 = Regions_Atkinson_0[:, Cols(:year, list_regions...)]
+
+    Regions_Atkinson[:, :model] .= "GreenNICE"
+    Regions_Atkinson_0[:, :model] .= "NICE"
+
+    Regions_Atkinson_combined= vcat(
+        Regions_Atkinson,
+        Regions_Atkinson_0
+    )
+    Regions_Atkinson_combined = stack(Regions_Atkinson_combined,
+                                    Not(:year, :model),
+                                    variable_name = :Region,
+                                    value_name = :Atkinson_index)
+
+    p = @vlplot(
+        mark = {type = :line, strokeWidth = 1.0},
+        data = Regions_Atkinson_combined,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative},
+            color = {field = :Region, type = :nominal, title = "World_Region"},
+            strokeDash = {
+                field = :model,
+                type = :nominal,
+                scale = {domain = ["greenNICE", "NICE"]},
+            }
+        },
+        title = nothing
+    )
+
+    save("test/figures/Atkinson_NICEgreenNICE_regions.svg", p)
+
+end

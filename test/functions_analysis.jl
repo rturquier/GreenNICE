@@ -461,7 +461,7 @@ function map_env_pc(m, year_vector)
         map_env = @vlplot(
             width = 640,
             height = 360,
-            title = "Non-market natural capital per capita per capita in $(year)",
+            title = nothing,
             projection = {type = :equirectangular}
         ) +
         @vlplot(
@@ -977,14 +977,14 @@ function get_Atkinson_dataframe(m, year_end, region_level)
     return Atkinson_dataframe
 end
 
-function plot_atkinson_envdamage!(m, damage_options, year_end)
+function plot_Atkinson_envdamage!(m, damage_options, year_end=2100)
 
     Atk_damage = []
 
     damage_type_labels = Dict(1 => "GreenNice",
     2 => "Unequal damages",
-    3 => "Unequal natural capital",
-    4 => "Proportional damages"
+    3 => "E baseline",
+    4 => "E equal share"
     )
 
     for param in damage_options
@@ -996,28 +996,38 @@ function plot_atkinson_envdamage!(m, damage_options, year_end)
         push!(Atk_damage, Atk_df)
     end
     Atk_damage_long = vcat(Atk_damage...)
-
     p = @vlplot(
-        mark = {type=:line, strokeWidth=0.5},
+        mark = {type=:line, strokeWidth=1.5},
         data = Atk_damage_long,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative},
-            color = {field = :damage_options, type = :nominal, title = "E damage distribution"},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            strokeDash = {
+                field = :damage_options,
+                type = :nominal,
+                title = "Damage Type",
+                legend = {orient = :bottom},
+                scale = {
+                    domain = ["GreenNice", "E baseline", "E equal share"],
+                    range = [[], [1, 3], [5, 5]]
+                }
+            },
+            color = {
+                value = "orange"  # Use default orange color for all lines
+            }
         }
     )
 
-
     display(p)
-    save("test/figures/Atk_Env_damages.svg", p)
+    save("test/figures/Atkinson_Env_damages.svg", p)
 end
 
 function get_Atkinson_trajectories(m, alpha_params, theta_params, eta_params, end_year)
 
     parameter_list = ["α", "θ", "η"]
     output = []
-    for param in parameter_list
 
+    for param in parameter_list
         Atk_dataframe = []
 
         if param == "α"
@@ -1030,20 +1040,25 @@ function get_Atkinson_trajectories(m, alpha_params, theta_params, eta_params, en
 
         values = minimum(list):0.05:maximum(list)
 
-            for value in values
-                reset!(m)
-                update_param!(m, Symbol(param), value)
-                run(m)
-                Atk_df = get_Atkinson_dataframe(m, end_year, "global")
-                Atk_df[:, param] .= value
-                push!(Atk_dataframe, Atk_df)
+        for value in values
+            if param == "θ" && value == 0
+                continue
             end
+
+            reset!(m)
+            update_param!(m, Symbol(param), value)
+            run(m)
+
+            Atk_df = get_Atkinson_dataframe(m, end_year, "global")
+            Atk_df[:, param] .= value
+            push!(Atk_dataframe, Atk_df)
+        end
 
         Atk_dataframe = vcat(Atk_dataframe...)
         push!(output, Atk_dataframe)
-
     end
-return output
+
+    return output
 end
 
 function get_Atkinson_lastyear(m, alpha_params, theta_params, eta_params, end_year)
@@ -1081,7 +1096,8 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
                  x = {field = names(Atk_df)[3], type = :quantitative},
                  y = {field = :Atkinson_index,
                         type = :quantitative,
-                        scale = {domain = [0, 0.6]}}
+                        scale = {domain = [0, 0.6]},
+                        title = "Atkinson index"},
              }
          )
 
@@ -1092,11 +1108,45 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
              save("test/figures/Atkinson_theta.svg", p)
          elseif names(Atk_df)[3] == "η"
              save("test/figures/Atkinson_eta.svg", p)
-         end
-     end
+        end
+    end
+
+    for table in Atkinson_end_year
+        rename!(table, names(table)[3] => :value)
+    end
+
+    Atkinson_end_year[1][:, :parameter] .= "α"
+    Atkinson_end_year[2][:, :parameter] .= "θ"
+    Atkinson_end_year[3][:, :parameter] .= "η"
+
+    # Merge the tables into one
+    merged_table = vcat(Atkinson_end_year...)
+
+    p_faceted = @vlplot(
+        mark = {type=:line, strokeWidth=1.5},
+        data = merged_table,
+        column = {field = :parameter, title = nothing, header = {labelOrient = "bottom"}},
+        encoding = {
+            x = {field = :value, type = :quantitative, title = nothing},
+            y = {field = :Atkinson_index,
+                    type = :quantitative,
+                    title = "Atkinson Index (2100)"},
+        },
+        resolve = {
+            scale = {x = "independent"}
+        },
+        config = {
+            header = {
+                labelFontWeight = "bold"
+            }
+        }
+    )
+
+    save("test/figures/Atkinson_param_faceted.svg", p_faceted)
+
  end
 
- function plot_c_EDE!(end_year)
+ function plot_c_EDE!(end_year = 2100)
 
     m = GreenNICE.create()
     run(m)
@@ -1118,17 +1168,42 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
 
     df_long = stack(df, Not(:year), variable_name=:c_type, value_name=:Value)
 
+    label_map = Dict(
+        "c" => "Consumption",
+        "EDE_GreenNICE" => "EDE (greenNICE)",
+        "EDE_NICE" => "EDE (NICE)"
+    )
+
+    df_long.label = [label_map[c] for c in df_long.c_type]
+
+    # Step 2: Plot using `label` column
     p = @vlplot(
-        mark = {type=:line, strokeWidth=1.5},
+        mark = {type = :line, strokeWidth = 1.5},
         data = df_long,
         encoding = {
             x = {field = :year, type = :quantitative, title = "Year"},
-            y = {field= :Value, type = :quantitative, title = "consumption"}
-        },
-        color = {field = :c_type, type = :nominal, title = ""},
-        strokeDash = {
-            condition = {test = "datum.c_type === 'EDE_NICE'", value = [5, 5]},
-            value = []
+            y = {field = :Value, type = :quantitative, title = "2017 kUSD/year"},
+            color = {
+                field = :label,
+                type = :nominal,
+                title = nothing,
+                scale = {
+                    domain = [
+                        "EDE (NICE)",
+                        "EDE (greenNICE)",
+                        "Consumption"
+                    ],
+                    range = ["#1f77b4", "#ff7f0e", "#d62728"]
+                },
+                legend = {
+                    orient = :bottom,
+                    direction = "vertical"
+                }
+            },
+            strokeDash = {
+                condition = {test = "datum.c_type === 'EDE_NICE'", value = [5, 5]},
+                value = []
+            }
         }
     )
 
@@ -1166,14 +1241,25 @@ function plot_Atkinson_emissionscenario!(emissions_scenarios, year_end = 2100)
     combined_df_long[!, :Difference] .= [row[:Value] - reference_values[row[:year]]
                                         for row in eachrow(combined_df_long)]
 
-    # Update the plot to use Percentage_Difference
+
     p = @vlplot(
-        mark = {type=:line, strokeWidth=0.5},
+        mark = {type=:line, strokeWidth=1.5},
         data = combined_df_long,
         encoding = {
             x = {field = :year, type = :quantitative},
             y = {field = :Difference, type = :quantitative, title = "Difference"},
-            color = {field = :scenario, type = :nominal, title = "Scenario"}
+            color = {field = :scenario,
+                type = :nominal,
+                title = "Scenario",
+                scale = {
+                    domain = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"],
+                    range  = ["#1f77b4", "#2ca02c", "#ff7f0e", "#d62728", "#9467bd"]
+                },
+                legend = {
+                    orient = :bottom,
+                    columns = 3
+                }
+            }
         }
     )
 
@@ -1181,7 +1267,9 @@ function plot_Atkinson_emissionscenario!(emissions_scenarios, year_end = 2100)
 
 end
 
-function plot_global_Atkinson(year_end = 2100)
+
+
+function plot_Atkinson_global!(year_end = 2100)
     m= GreenNICE.create()
     run(m)
 
@@ -1199,19 +1287,23 @@ function plot_global_Atkinson(year_end = 2100)
     append!(Global_Atkinson, Atkinson_NICE)
 
     q = @vlplot(
-        mark = {type=:line, strokeWidth=0.5},
+        mark = {type=:line, strokeWidth=1.5},
         data = Global_Atkinson,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative}
+            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"}
         },
-        color = {field = :model, type = :nominal, title = "Model"}
+        color = {field = :model,
+            type = :nominal,
+            legend = {orient = :bottom},
+        title = nothing
+        }
     )
 
     save("test/figures/Atkinson_Global.svg", q)
 end
 
-function table_Atkinson_regions(m, m_0, year_end = 2100)
+function table_Atkinson_regions!(m, m_0, year_end = 2100)
 
     Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
 
@@ -1252,7 +1344,7 @@ function table_Atkinson_regions(m, m_0, year_end = 2100)
     table_data.Unequal_dam .= round.(table_data.Unequal_dam, digits=3)
 
     header = ["Region", "NICE", "greenNICE",
-              "Proportional dam.", "Unequal Nat Cap"]
+              "E baseline", "E equal share"]
 
     # Write LaTeX table to a .tex file using an IO stream
     open("test/tables/Atkinson_regions.tex", "w") do io
@@ -1270,7 +1362,7 @@ function table_Atkinson_regions(m, m_0, year_end = 2100)
 
 end
 
-function plot_regions_Atkinson!(m, m_0, list_regions, year_end = 2100)
+function plot_Atkinson_regions!(m, m_0, list_regions, year_end = 2100)
 
     Regions_Atkinson = get_Atkinson_dataframe(m, year_end, "region")
     Regions_Atkinson_0 = get_Atkinson_dataframe(m_0, year_end, "region")
@@ -1291,16 +1383,17 @@ function plot_regions_Atkinson!(m, m_0, list_regions, year_end = 2100)
                                     value_name = :Atkinson_index)
 
     p = @vlplot(
-        mark = {type = :line, strokeWidth = 1.0},
+        mark = {type = :line, strokeWidth = 1.5},
         data = Regions_Atkinson_combined,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative},
-            color = {field = :Region, type = :nominal, title = "World_Region"},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            color = {field = :Region, type = :nominal, title = "WPP Region"},
             strokeDash = {
                 field = :model,
                 type = :nominal,
                 scale = {domain = ["greenNICE", "NICE"]},
+                title = "Model"
             }
         },
         title = nothing
@@ -1310,14 +1403,14 @@ function plot_regions_Atkinson!(m, m_0, list_regions, year_end = 2100)
 
 end
 
-function plot_atkinson_region_envdamage!(m, damage_options, list_regions, year_end)
+function plot_Atkinson_region_envdamage!(m, damage_options, list_regions, year_end = 2100)
 
     Atk_damage = []
 
     damage_type_labels = Dict(1 => "GreenNice",
     2 => "Unequal damages",
-    3 => "Unequal natural capital",
-    4 => "Proportional damages"
+    3 => "E Baseline",
+    4 => "E equal share"
     )
 
     for param in damage_options
@@ -1332,15 +1425,34 @@ function plot_atkinson_region_envdamage!(m, damage_options, list_regions, year_e
 
     Atk_damage_long = vcat(Atk_damage...)
     Atk_damage_long = stack(Atk_damage_long, Not(:year, :damage_options), variable_name = :region, value_name = :Atkinson_index)
-
+    Atk_damage_long.region .= replace.(Atk_damage_long.region, "Australia and New Zealand" => "Australia an NZ")
     p = @vlplot(
-        mark = {type=:line, strokeWidth=0.5},
+        mark = {type = :line, strokeWidth = 1.0},
         data = Atk_damage_long,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative},
-            color = {field = :region, type = :nominal, title = "Region"},
-            strokeDash = {field = :damage_options, type = :nominal}
+            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+
+            color = {
+                field = :region,
+                type = :nominal,
+                title = "Region",
+                legend = {orient = :right}
+            },
+
+            strokeDash = {
+                field = :damage_options,
+                type = :nominal,
+                scale = {
+                    domain = ["GreenNice", "E baseline", "E equal share"],
+                    range = [[], [1, 3], [5, 5]]
+                },
+                legend = {
+                    title = "Damage Type",
+                    orient = :bottom,
+                    columns = 3
+                }
+            }
         }
     )
 
@@ -1378,8 +1490,8 @@ function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, yea
 
     damage_type_labels = Dict(1 => "GreenNice",
     2 => "Unequal damages",
-    3 => "Unequal natural capital",
-    4 => "Proportional damages"
+    3 => "E Baseline",
+    4 => "E equal share"
     )
 
     for damage in damage_options
@@ -1394,13 +1506,18 @@ function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, yea
     end
 
     p = @vlplot(
-        mark = {type=:line, strokeWidth=0.5},
+        mark = {type=:line, strokeWidth=1.0},
         data = atk_dataframe,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
             color = {field = :country, type = :nominal, title = "Country"},
-            strokeDash = {field = :damage_type, type = :nominal}
+            strokeDash = {field = :damage_type,
+                        type = :nominal,
+                        scale = {
+                            domain = ["GreenNice", "E baseline", "E equal share"],
+                            range = [[], [1, 3], [5, 5]]}
+        }
         }
     )
 

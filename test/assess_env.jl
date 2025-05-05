@@ -49,16 +49,90 @@ maps_env_pc = map_env_pc(m, year_vector)
 ### plot map faceted
 map_env_pc_faceted!(m, year_vector)
 
-# Plot EDE
+# Analysis parameters
 
 alpha_params = 0.0:0.1:0.3
-theta_params = 0.5:0.5:1.0
+theta_params = 0.1:0.1:1.0
 eta_params = 0.6:0.2:2.0
 damage_options = [4, 3, 1]
 emissions_scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
 list_regions = ["Eastern Africa", "South America", "Southern Asia",
                 "Australia and New Zealand"]
 list_countries = ["IND", "USA", "CHN", "RUS", "BRA", "ZAF"]
+
+
+
+# Atkinson Index
+
+m = GreenNICE.create()
+run(m)
+
+m_0 = GreenNICE.create()
+update_param!(m_0, :α, 0.0)
+run(m_0)
+
+Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
+
+long_df = stack(Regions_Atkinson, Not(:year), variable_name = :Region, value_name = :Atkinson_index)
+
+p = @vlplot(
+    mark = {type=:line, strokeWidth=0.5},
+    data = long_df,
+    encoding = {
+        x = {field = :year, type = :quantitative},
+        y = {field = :Atkinson_index, type = :quantitative},
+        color = {field = :Region, type = :nominal, title = "World_Region"}
+    },
+    title = nothing
+)
+save("test/figures/Atkinson_Regions.svg", p)
+
+m = GreenNICE.create()
+run(m)
+
+table_Atkinson_regions!(m, m_0)
+
+plot_Atkinson_global!()
+
+m_at = GreenNICE.create()
+run(m_at)
+
+plot_Atkinson_envdamage!(m_at, damage_options)
+
+## Trajectories under different parameters
+
+m_at = GreenNICE.create()
+run(m_at)
+
+theta_params = 0.1:0.1:1.0
+
+plot_Atkinson_param!(m_at, alpha_params, theta_params, eta_params, 2100)
+
+plot_c_EDE!()
+
+plot_Atkinson_emissionscenario!(emissions_scenarios)
+
+m_at = GreenNICE.create()
+run(m_at)
+
+m_0 = GreenNICE.create()
+update_param!(m_0, :α, 0.0)
+run(m_0)
+
+plot_Atkinson_regions!(m_at, m_0, list_regions, 2100)
+
+m = GreenNICE.create()
+run(m)
+
+plot_Atkinson_region_envdamage!(m, damage_options, list_regions)
+
+m = GreenNICE.create()
+run(m)
+
+plot_Atkinson_country_envdamage!(m, damage_options, list_countries, 2100)
+
+
+# Plot EDE
 
 ## Test α and damage options
 
@@ -100,8 +174,6 @@ plot_EDE_trajectories!(EDE_eta,
 ## Plot EDE for BRICS countries
 reset!(m)
 update_param!(m, :α, 0.3)
-
-
 
 country_damages = Env_damages_EDE_country(m, damage_options, list_countries)
 
@@ -147,60 +219,3 @@ EDE_scenarios_values[1][1][end]
 EDE_scenarios_values[4][1][end]
 ### compare with NICE
 (EDE_scenarios_values[4][2][end] - EDE_scenarios_values[4][1][end]) / EDE_scenarios_values[4][1][end] * 100
-
-# Atkinson Index
-
-m = GreenNICE.create()
-run(m)
-
-m_0 = GreenNICE.create()
-update_param!(m_0, :α, 0.0)
-run(m_0)
-
-Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
-
-long_df = stack(Regions_Atkinson, Not(:year), variable_name = :Region, value_name = :Atkinson_index)
-
-p = @vlplot(
-    mark = {type=:line, strokeWidth=0.5},
-    data = long_df,
-    encoding = {
-        x = {field = :year, type = :quantitative},
-        y = {field = :Atkinson_index, type = :quantitative},
-        color = {field = :Region, type = :nominal, title = "World_Region"}
-    },
-    title = nothing
-)
-save("test/figures/Atkinson_Regions.svg", p)
-
-reset!(m)
-
-table_Atkinson_regions(m, m_0)
-
-plot_global_Atkinson()
-
-m_at = GreenNICE.create()
-run(m_at)
-
-plot_atkinson_envdamage!(m_at, damage_options, 2100)
-
-## Trajectories under different parameters
-
-m_at = GreenNICE.create()
-run(m_at)
-
-plot_Atkinson_param!(m_at, alpha_params, theta_params, eta_params, 2100)
-
-plot_c_EDE!(2100)
-
-plot_Atkinson_emissionscenario!(emissions_scenarios)
-
-plot_regions_Atkinson!(m_at, m_0, list_regions, 2100)
-
-reset!(m)
-
-plot_atkinson_region_envdamage!(m, damage_options, list_regions, 2100)
-
-reset!(m)
-
-plot_Atkinson_country_envdamage!(m, damage_options, list_countries, 2100)

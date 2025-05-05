@@ -1013,7 +1013,7 @@ function plot_Atkinson_envdamage!(m, damage_options, year_end=2100)
                 }
             },
             color = {
-                value = "orange"  # Use default orange color for all lines
+                value = "#ff7f0e"
             }
         }
     )

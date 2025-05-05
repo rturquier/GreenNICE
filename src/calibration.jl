@@ -98,6 +98,9 @@ e0.e0 = e0.e0 .* ((1 - 0.04) / (1 - 0.04^100))
 
 e0.e0 = e0.e0 ./ 1000000
 
+# Update to 2017 values
+e0.e0 = e0.e0 .* 0.94
+
 e0_file_path = "data/e0.csv"
 CSVFiles.save(e0_file_path, e0)
 

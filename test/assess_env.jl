@@ -56,6 +56,7 @@ theta_params = 0.1:0.1:1.0
 eta_params = 0.6:0.2:2.0
 damage_options = [4, 3, 1]
 emissions_scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
+emissions_subgroup = ["ssp126", "ssp245", "ssp585"]
 list_regions = ["Eastern Africa", "South America", "Southern Asia",
                 "Australia and New Zealand"]
 list_countries = ["IND", "USA", "CHN", "RUS", "BRA", "ZAF"]
@@ -107,6 +108,9 @@ run(m_at)
 theta_params = 0.1:0.1:1.0
 
 plot_Atkinson_param!(m_at, alpha_params, theta_params, eta_params, 2100)
+
+
+plot_Atkinson_scenario_param!(alpha_params, theta_params, eta_params, emissions_subgroup)
 
 plot_c_EDE!()
 

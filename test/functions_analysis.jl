@@ -1079,7 +1079,9 @@ function get_Atkinson_lastyear(m, alpha_params, theta_params, eta_params, end_ye
 
 end
 
-function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_year)
+function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_year = 2100)
+
+
 
     Atkinson_end_year = get_Atkinson_lastyear(m,
                                             alpha_params,
@@ -1146,7 +1148,70 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
 
  end
 
- function plot_c_EDE!(end_year = 2100)
+ function plot_Atkinson_scenario_param!(alpha_params,
+    theta_params,
+    eta_params,
+    emissions_scenarios = ["ssp245"],
+    end_year = 2100)
+
+    list_scenarios = []
+
+    for emissions in emissions_scenarios
+
+        m = GreenNICE.create(emissions)
+        run(m)
+
+        Atkinson_end_year = get_Atkinson_lastyear(m,
+                        alpha_params,
+                        theta_params,
+                        eta_params,
+                        end_year)
+
+        for table in Atkinson_end_year
+            rename!(table, names(table)[3] => :value)
+        end
+
+        Atkinson_end_year[1][:, :parameter] .= "α"
+        Atkinson_end_year[2][:, :parameter] .= "θ"
+        Atkinson_end_year[3][:, :parameter] .= "η"
+
+        # Merge the tables into one
+        merged_table = vcat(Atkinson_end_year...)
+        merged_table[:, :scenario] .= emissions
+
+        push!(list_scenarios, merged_table)
+    end
+
+    table_scenarios = vcat(list_scenarios...)
+
+    p_faceted = @vlplot(
+    mark = {type = :line, strokeWidth = 1.0},
+    data = table_scenarios,
+    column = {
+        field = :parameter,
+        title = nothing,
+        header = {labelOrient = "bottom"}
+    },
+    encoding = {
+        x = {field = :value, type = :quantitative, title = nothing},
+        y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index (2100)"},
+        color = {field = :scenario, type = :nominal, title = "Scenario"}
+    },
+    resolve = {
+        scale = {x = "independent"}
+    },
+    config = {
+        header = {
+            labelFontWeight = "bold"
+        }
+    }
+)
+
+save("test/figures/Atkinson_scenario_param_faceted.svg", p_faceted)
+
+end
+
+function plot_c_EDE!(end_year = 2100)
 
     m = GreenNICE.create()
     run(m)

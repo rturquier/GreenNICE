@@ -93,12 +93,12 @@ run(m)
 
 table_Atkinson_regions!(m, m_0)
 
-plot_Atkinson_global!()
+diff_NICE_GreenNICE = plot_Atkinson_global()
 
 m_at = GreenNICE.create()
 run(m_at)
 
-plot_Atkinson_envdamage!(m_at, damage_options)
+diff_damage = plot_Atkinson_envdamage(m_at, damage_options)
 
 ## Trajectories under different parameters
 
@@ -109,12 +109,11 @@ theta_params = 0.1:0.1:1.0
 
 plot_Atkinson_param!(m_at, alpha_params, theta_params, eta_params, 2100)
 
-
 plot_Atkinson_scenario_param!(alpha_params, theta_params, eta_params, emissions_subgroup)
 
 plot_c_EDE!()
 
-plot_Atkinson_emissionscenario!(emissions_scenarios)
+diff_senarios = plot_Atkinson_emissionscenario(emissions_scenarios)
 
 m_at = GreenNICE.create()
 run(m_at)
@@ -123,12 +122,12 @@ m_0 = GreenNICE.create()
 update_param!(m_0, :α, 0.0)
 run(m_0)
 
-plot_Atkinson_regions!(m_at, m_0, list_regions, 2100)
+diff_regions = plot_Atkinson_regions(m_at, m_0, list_regions, 2100)
 
 m = GreenNICE.create()
 run(m)
 
-plot_Atkinson_region_envdamage!(m, damage_options, list_regions)
+diff_regions_damage = plot_Atkinson_region_envdamage(m, damage_options, list_regions)
 
 m = GreenNICE.create()
 run(m)

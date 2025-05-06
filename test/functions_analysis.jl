@@ -977,7 +977,7 @@ function get_Atkinson_dataframe(m, year_end, region_level)
     return Atkinson_dataframe
 end
 
-function plot_Atkinson_envdamage!(m, damage_options, year_end=2100)
+function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
 
     Atk_damage = []
 
@@ -1017,9 +1017,12 @@ function plot_Atkinson_envdamage!(m, damage_options, year_end=2100)
             }
         }
     )
-
-    display(p)
     save("test/figures/Atkinson_Env_damages.svg", p)
+
+    differences = Atk_damage_long[(Atk_damage_long.damage_options .== "GreenNice") .& (Atk_damage_long.year .== year_end), :Atkinson_index] .-
+                  Atk_damage_long[(Atk_damage_long.damage_options .== "E equal share") .& (Atk_damage_long.year .== year_end), :Atkinson_index]
+
+    return differences
 end
 
 function get_Atkinson_trajectories(m, alpha_params, theta_params, eta_params, end_year)
@@ -1195,7 +1198,10 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
     encoding = {
         x = {field = :value, type = :quantitative, title = nothing},
         y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index (2100)"},
-        color = {field = :scenario, type = :nominal, title = "Scenario"}
+        color = {field = :scenario,
+                type = :nominal,
+                title = "Scenario",
+                legend = {orient = "bottom"}}
     },
     resolve = {
         scale = {x = "independent"}
@@ -1277,7 +1283,7 @@ display(p)
 
 end
 
-function plot_Atkinson_emissionscenario!(emissions_scenarios, year_end = 2100)
+function plot_Atkinson_emissionscenario(emissions_scenarios, year_end = 2100)
 
     Atkinson_scenario_list = []
 
@@ -1330,11 +1336,17 @@ function plot_Atkinson_emissionscenario!(emissions_scenarios, year_end = 2100)
 
     save("test/figures/Atkinson_Emissions_Scenarios.svg", p)
 
+    difference_table =
+        filter(row -> row[:year] == year_end, combined_df_long)[!, [:scenario, :Difference]]
+
+
+    return difference_table
+
 end
 
 
 
-function plot_Atkinson_global!(year_end = 2100)
+function plot_Atkinson_global(year_end = 2100)
     m= GreenNICE.create()
     run(m)
 
@@ -1346,7 +1358,7 @@ function plot_Atkinson_global!(year_end = 2100)
 
     Atkinson_NICE = get_Atkinson_dataframe(m_0, year_end, "global")
 
-    insertcols!(Global_Atkinson, :model => "greenNICE")
+    insertcols!(Global_Atkinson, :model => "GreenNICE")
     insertcols!(Atkinson_NICE, :model => "NICE")
 
     append!(Global_Atkinson, Atkinson_NICE)
@@ -1366,6 +1378,11 @@ function plot_Atkinson_global!(year_end = 2100)
     )
 
     save("test/figures/Atkinson_Global.svg", q)
+
+    difference = Global_Atkinson[Global_Atkinson.year .== 2100, :Atkinson_index][1] -
+                 Global_Atkinson[Global_Atkinson.year .== 2100, :Atkinson_index][2]
+
+    return difference
 end
 
 function table_Atkinson_regions!(m, m_0, year_end = 2100)
@@ -1427,7 +1444,7 @@ function table_Atkinson_regions!(m, m_0, year_end = 2100)
 
 end
 
-function plot_Atkinson_regions!(m, m_0, list_regions, year_end = 2100)
+function plot_Atkinson_regions(m, m_0, list_regions, year_end = 2100)
 
     Regions_Atkinson = get_Atkinson_dataframe(m, year_end, "region")
     Regions_Atkinson_0 = get_Atkinson_dataframe(m_0, year_end, "region")
@@ -1457,7 +1474,7 @@ function plot_Atkinson_regions!(m, m_0, list_regions, year_end = 2100)
             strokeDash = {
                 field = :model,
                 type = :nominal,
-                scale = {domain = ["greenNICE", "NICE"]},
+                scale = {domain = ["GreenNICE", "NICE"]},
                 title = "Model"
             }
         },
@@ -1466,9 +1483,15 @@ function plot_Atkinson_regions!(m, m_0, list_regions, year_end = 2100)
 
     save("test/figures/Atkinson_NICEgreenNICE_regions.svg", p)
 
+    Regions_Atkinson_diff = Regions_Atkinson_combined[Regions_Atkinson_combined.year .== year_end, :]
+    Regions_Atkinson_diff = unstack(Regions_Atkinson_diff, :model, :Atkinson_index)
+    Regions_Atkinson_diff[:, :Difference] .= Regions_Atkinson_diff.GreenNICE .- Regions_Atkinson_diff.NICE
+
+    return Regions_Atkinson_diff
+
 end
 
-function plot_Atkinson_region_envdamage!(m, damage_options, list_regions, year_end = 2100)
+function plot_Atkinson_region_envdamage(m, damage_options, list_regions, year_end = 2100)
 
     Atk_damage = []
 
@@ -1521,9 +1544,19 @@ function plot_Atkinson_region_envdamage!(m, damage_options, list_regions, year_e
         }
     )
 
-
-    display(p)
     save("test/figures/Atkinson_region_Env_damages.svg", p)
+
+    # Calculate the difference in Atkinson index for each region
+    Atk_diff = Atk_damage_long[(Atk_damage_long.damage_options .== "GreenNice") .& (Atk_damage_long.year .== year_end), :]
+    Atk_diff_4 = Atk_damage_long[(Atk_damage_long.damage_options .== "E equal share") .& (Atk_damage_long.year .== year_end), :]
+
+    diff_table = DataFrame(
+        region = Atk_diff.region,
+        difference = Atk_diff.Atkinson_index .- Atk_diff_4.Atkinson_index
+    )
+
+    return diff_table
+
 end
 
 function get_Atkinson_country(m, list_countries, year_end = 2100)

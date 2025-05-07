@@ -22,10 +22,10 @@ run(m)
 
 # Map damages
 
-Damages_2200 = get_env_damages_year(m, 2200)
+Damages_2100 = get_env_damages_year(m, 2100)
 
-map_damage!(Damages_2200,
-                    "Percent change in non-market natural capital by 2200",
+map_damage!(Damages_2100,
+                    "Percent change in non-market natural capital by 2100",
                     "Percentage_loss_env")
 
 Damages_1c = get_env_damage_temp(m, 1)
@@ -35,7 +35,7 @@ map_damage!(Damages_1c,
                     "Percentage_loss_1c")
 
 # Scatter Plot GDP and Env (both per capita)
-year_vector = [2020, 2200]
+year_vector = [2020, 2100]
 
 ## Both plots no trend line.
 plot_env_gdp_faceted!(m, year_vector)

@@ -1006,7 +1006,7 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
                 field = :damage_options,
                 type = :nominal,
                 title = "Damage Type",
-                legend = {orient = :bottom},
+                #legend = {orient = :bottom},
                 scale = {
                     domain = ["GreenNice", "E baseline", "E equal share"],
                     range = [[], [1, 3], [5, 5]]
@@ -1267,8 +1267,8 @@ function plot_c_EDE!(end_year = 2100)
                     range = ["#1f77b4", "#ff7f0e", "#d62728"]
                 },
                 legend = {
-                    orient = :bottom,
-                    direction = "vertical"
+                    orient = :bottom#,
+                    #direction = "vertical"
                 }
             },
             strokeDash = {

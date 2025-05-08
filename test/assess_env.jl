@@ -25,8 +25,8 @@ run(m)
 Damages_2100 = get_env_damages_year(m, 2100)
 
 map_damage!(Damages_2100,
-                    "Percent change in non-market natural capital by 2100",
-                    "Percentage_loss_env")
+                    "",
+                    "map_percentage_loss_env")
 
 Damages_1c = get_env_damage_temp(m, 1)
 
@@ -34,7 +34,7 @@ map_damage!(Damages_1c,
                     "Percentage changes in non-market natural capital with a 1C increase",
                     "Percentage_loss_1c")
 
-# Scatter Plot GDP and Env (both per capita)
+## Scatter Plot GDP and Env (both per capita)
 year_vector = [2020, 2100]
 
 ## Both plots no trend line.
@@ -48,6 +48,15 @@ maps_env_pc = map_env_pc(m, year_vector)
 
 ### plot map faceted
 map_env_pc_faceted!(m, year_vector)
+
+## Damages distribution
+
+# Load environmental damage coefficients
+coef_env_damage = CSV.read("data/coef_env_damage.csv", DataFrame)
+
+plot_density!()
+
+plot_scatter_e_coeff!(m)
 
 # Analysis parameters
 

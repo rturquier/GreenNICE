@@ -1,6 +1,7 @@
 using DataFrames, RCall, CSV, Downloads
 using VegaLite, VegaDatasets
 using PrettyTables
+using StatsPlots
 
 function get_e0(m)
 
@@ -93,7 +94,8 @@ function map_damage!(damages, title, save_name)
         encoding = {
             color = {
                 field = "percent_change",
-                type = "quantitative"
+                type = "quantitative",
+                title = "E percentage change"
             }
         }
     )
@@ -375,11 +377,11 @@ function plot_scatter_env_y(Env_table, GDP_table, year)
     {
         :point,
         x = {:GDP,
-            axis={title="GDP per capita ($year)"},
-            scale = {domain=[0, 250000]}},
+            axis={title="GDP per capita ($year)"}
+            },
         y = {:Env,
-            axis={title="Env per capita ($year)"},
-            scale = {domain=[0, 20]}}#,
+            axis={title="Env per capita ($year)"}
+            }#,
         #text = {:iso3, title="Country"}
     },
     {
@@ -389,10 +391,8 @@ function plot_scatter_env_y(Env_table, GDP_table, year)
                     }],
 
         mark = {:line, color = "firebrick"},
-        x = {:GDP,
-            scale={domain=[0, 250000]}},
-        y = {:Env,
-            scale = {domain=[0, 20]}}
+        x = {:GDP},
+        y = {:Env}
     }
     ]
     )
@@ -447,6 +447,31 @@ function plot_env_gdp_faceted!(m, year_vector)
 
 end
 
+function plot_scatter_e_coeff!(m)
+
+    Env_table = get_Env_pc(m, [2020])
+    coef_env_damage = CSV.read("data/coef_env_damage.csv", DataFrame)
+    rename!(coef_env_damage, :countrycode => :iso3)
+
+    Env_table = leftjoin(Env_table, coef_env_damage, on=:iso3)
+
+    scatter_data = Env_table[:, [:iso3, Symbol("2020"), :coef]]
+
+    p_scatter = @vlplot(
+        mark = :point,
+        data = scatter_data,
+        encoding = {
+            y = {field = Symbol("2020"), type = :quantitative, title = "E (k USD / per capita)"},
+            x = {field = :coef, type = :quantitative, title = "Coefficient"},
+            tooltip = {field = :iso3, type = :nominal, title = "Country"}
+        },
+        title = nothing
+    )
+
+
+    save("test/figures/scatter_E_coef.svg", p_scatter)
+end
+
 function map_env_pc(m, year_vector)
 
     world110m = dataset("world-110m")
@@ -483,7 +508,7 @@ function map_env_pc(m, year_vector)
             mark = :geoshape,
             color = {field = Symbol(string(year)),
                      type = "quantitative",
-                     title = "million USD",
+                     title = "",
                      scale = {domain = [0, 20]}}
         )
 
@@ -1009,7 +1034,8 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
                 #legend = {orient = :bottom},
                 scale = {
                     domain = ["GreenNice", "E baseline", "E equal share"],
-                    range = [[], [1, 3], [5, 5]]
+                    range = [[], [1, 3], [5, 5]],
+                    color = ["#1f77b4", "#ff7f0e", "#2ca02c"]
                 }
             },
             color = {
@@ -1621,4 +1647,15 @@ function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, yea
 
     display(p)
     save("test/figures/Atkinson_country_Env_damages.svg", p)
+end
+
+function plot_density!()
+    coef_env_damage = CSV.read("data/coef_env_damage.csv", DataFrame)
+
+   p = @df coef_env_damage density(:coef,
+                            xlabel="Damage coefficient",
+                            ylabel="Density",
+                            legend=false)
+
+    savefig(p, "test/figures/density_coefficient_damage.svg")
 end

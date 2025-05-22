@@ -93,9 +93,13 @@ function map_damage!(damages, title, save_name)
         mark = :geoshape,
         encoding = {
             color = {
-                field = "percent_change",
-                type = "quantitative",
-                title = "E percentage change"
+            field = "percent_change",
+            type = "quantitative",
+            title = "e percentage change",
+            scale = {
+                scheme = "redblue",
+                domainMid = 0
+            }
             }
         }
     )
@@ -447,6 +451,66 @@ function plot_env_gdp_faceted!(m, year_vector)
 
 end
 
+function plot_env_gdp_evo!(m, year_vector)
+
+    GDP_table = get_Y_pc(m, year_vector)
+
+    Env_table = get_Env_pc(m, year_vector)
+
+    merged_table = DataFrame(iso3 = String[], GDP = Float64[], Env = Float64[], year = Int[])
+
+    for year in year_vector
+        gdp_data = GDP_table[:, [:iso3, Symbol(year)]]
+        env_data = Env_table[:, [:iso3, Symbol(year)]]
+        rename!(gdp_data, Symbol(year) => :GDP)
+        rename!(env_data, Symbol(year) => :Env)
+        gdp_data.year .= year
+        env_data.year .= year
+        combined_data = innerjoin(gdp_data, env_data, on = [:iso3, :year])
+        append!(merged_table, combined_data)
+    end
+
+    plot = @vlplot(
+        :point,
+        data = merged_table,
+        encoding = {
+            x = {:GDP, axis={title="GDP per capita (k USD)"}},
+            y = {:Env, axis={title="e per capita (k USD)"}},
+            color = {
+            :year,
+            type = :ordinal,
+            title = "Year",
+            scale = {scheme = "viridis"}  # Use a color scheme for better visualization
+            }
+        },
+        layer = [
+            {
+            :point  # Scatter points
+            },
+            {
+            :line,  # Trend line
+            transform = [{
+            regression = "Env",
+            on = "GDP",
+            groupby = ["year"]
+            }],
+            encoding = {
+            color = {
+            :year,
+            type = :ordinal,
+            title = "Year",
+            scale = {scheme = "viridis"},
+            legend = {orient = :bottom}  # Place legend below the chart
+            }
+            }
+            }
+        ]
+    )
+
+    save("test/figures/env_gdp_evolution.svg", plot)
+
+end
+
 function plot_scatter_e_coeff!(m)
 
     Env_table = get_Env_pc(m, [2020])
@@ -461,8 +525,8 @@ function plot_scatter_e_coeff!(m)
         mark = :point,
         data = scatter_data,
         encoding = {
-            y = {field = Symbol("2020"), type = :quantitative, title = "E (k USD / per capita)"},
-            x = {field = :coef, type = :quantitative, title = "Coefficient"},
+            x = {field = Symbol("2020"), type = :quantitative, title = "E (k USD / per capita)"},
+            y = {field = :coef, type = :quantitative, title = "Coefficient (1 / °C)"},
             tooltip = {field = :iso3, type = :nominal, title = "Country"}
         },
         title = nothing
@@ -470,6 +534,32 @@ function plot_scatter_e_coeff!(m)
 
 
     save("test/figures/scatter_E_coef.svg", p_scatter)
+end
+
+function plot_scatter_gdp_coeff!(m)
+
+    GDP_table = get_Y_pc(m, [2020])
+
+    coef_env_damage = CSV.read("data/coef_env_damage.csv", DataFrame)
+    rename!(coef_env_damage, :countrycode => :iso3)
+
+    GDP_table = leftjoin(GDP_table, coef_env_damage, on=:iso3)
+
+    scatter_data = GDP_table[:, [:iso3, Symbol("2020"), :coef]]
+
+    p_scatter = @vlplot(
+        mark = :point,
+        data = scatter_data,
+        encoding = {
+            x = {field = Symbol("2020"), type = :quantitative, title = "GDP per capita (k USD)"},
+            y = {field = :coef, type = :quantitative, title = "Coefficient (1/°C)"},
+            tooltip = {field = :iso3, type = :nominal, title = "Country"}
+        },
+        title = nothing
+    )
+
+    save("test/figures/scatter_GDP_coef.svg", p_scatter)
+
 end
 
 function map_env_pc(m, year_vector)
@@ -1021,28 +1111,34 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
         push!(Atk_damage, Atk_df)
     end
     Atk_damage_long = vcat(Atk_damage...)
-    p = @vlplot(
-        mark = {type=:line, strokeWidth=1.5},
-        data = Atk_damage_long,
-        encoding = {
-            x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
-            strokeDash = {
-                field = :damage_options,
-                type = :nominal,
-                title = "Damage Type",
-                #legend = {orient = :bottom},
-                scale = {
-                    domain = ["GreenNice", "E baseline", "E equal share"],
-                    range = [[], [1, 3], [5, 5]],
-                    color = ["#1f77b4", "#ff7f0e", "#2ca02c"]
-                }
+
+ p = @vlplot(
+    mark = {type = :line, strokeWidth = 1.5},
+    data = Atk_damage_long,
+    encoding = {
+        x = {field = :year, type = :quantitative},
+        y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+        color = {
+            field = :damage_options,
+            type = :nominal,
+            title = "Damage Type",
+            scale = {
+                domain = ["GreenNice", "E baseline", "E equal share"],
+                range = ["#ff7f0e", "#2ca02c", "#1f77b4"]
             },
-            color = {
-                value = "#ff7f0e"
+            legend = {orient = :bottom}
+        },
+        strokeDash = {
+            field = :damage_options,
+            type = :nominal,
+            title = "Damage Type",
+            scale = {
+                domain = ["GreenNice", "E baseline", "E equal share"],
+                range = [[], [1, 3], [5, 5]]
             }
         }
-    )
+    }
+)
     save("test/figures/Atkinson_Env_damages.svg", p)
 
     differences = Atk_damage_long[(Atk_damage_long.damage_options .== "GreenNice") .& (Atk_damage_long.year .== year_end), :Atkinson_index] .-
@@ -1051,7 +1147,7 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
     return differences
 end
 
-function get_Atkinson_trajectories(m, alpha_params, theta_params, eta_params, end_year)
+function get_Atkinson_trajectories(m, alpha_params, theta_params, eta_params, end_year = 2100)
 
     parameter_list = ["α", "θ", "η"]
     output = []
@@ -1394,13 +1490,18 @@ function plot_Atkinson_global(year_end = 2100)
         data = Global_Atkinson,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"}
+            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            color = {
+                field = :model,
+                type = :nominal,
+                scale = {
+                    domain = ["GreenNICE", "NICE"],
+                    range = ["#ff7f0e", "#1f77b4"]
+                },
+                legend = {orient = :bottom}
+            }
         },
-        color = {field = :model,
-            type = :nominal,
-            legend = {orient = :bottom},
         title = nothing
-        }
     )
 
     save("test/figures/Atkinson_Global.svg", q)
@@ -1452,7 +1553,7 @@ function table_Atkinson_regions!(m, m_0, year_end = 2100)
     table_data.Unequal_dam .= round.(table_data.Unequal_dam, digits=3)
 
     header = ["Region", "NICE", "greenNICE",
-              "E baseline", "E equal share"]
+              "E Equal share", "E baseline"]
 
     # Write LaTeX table to a .tex file using an IO stream
     open("test/tables/Atkinson_regions.tex", "w") do io
@@ -1640,7 +1741,12 @@ function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, yea
                         type = :nominal,
                         scale = {
                             domain = ["GreenNice", "E baseline", "E equal share"],
-                            range = [[], [1, 3], [5, 5]]}
+                            range = [[], [1, 3], [5, 5]]},
+                            legend = {
+                                title = "Damage Type",
+                                orient = :bottom,
+                                columns = 3
+                            }
         }
         }
     )
@@ -1658,4 +1764,65 @@ function plot_density!()
                             legend=false)
 
     savefig(p, "test/figures/density_coefficient_damage.svg")
+end
+
+function plot_rel_price(alpha_params, theta_params, year_end = 2100)
+
+    m = GreenNICE.create()
+
+    alpha_vector = minimum(alpha_params):0.05:maximum(alpha_params)
+    theta_vector = minimum(theta_params):0.05:maximum(theta_params)
+
+    Table = DataFrame(Atkinson_Index = Float64[], α = Float64[], θ = Float64[])
+
+    for i in alpha_vector
+        for j in theta_vector
+            try
+                update_param!(m, :α, i)
+                update_param!(m, :θ, j)
+                run(m)
+
+                c_EDE = m[:welfare, :cons_EDE_global]
+                c = m[:quantile_recycle, :CPC_post_global]
+
+                Atkinson = 1 .- (c_EDE ./ c)
+
+                Atkinson = Atkinson[year_end-2019, :]
+                Atkinson = Atkinson[1]
+
+                push!(Table, (Atkinson, i, j))
+            catch e
+                Atkinson = NaN
+                push!(Table, (Atkinson, i, j))
+                continue
+            end
+        end
+    end
+
+    Table = DataFrame([replace(col, NaN => missing) for col in eachcol(Table)], names(Table))
+
+    plot =  @vlplot(
+    width = 400,  # wider
+    height = 400,
+    mark = {type = :rect},
+    data = Table,
+    encoding = {
+        y = {field = :α, type = :ordinal, title = "α", sort = "descending"},
+        x = {field = :θ, type = :ordinal, title = "θ"},
+        color = {
+            field = :Atkinson_Index,
+            type = :quantitative,
+            title = "Atkinson Index",
+            scale = {
+                scheme = "viridis",
+                nullValue = "lightgray"
+            }
+        }
+    }
+)
+
+    save("test/figures/Atkinson_alpha_theta.svg", plot)
+
+    return Table
+
 end

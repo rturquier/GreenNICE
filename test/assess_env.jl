@@ -17,7 +17,7 @@ m = GreenNICE.create()
 run(m)
 
 #############
-# Make plots
+# Make plots and maps
 ############
 
 # Map damages
@@ -40,6 +40,8 @@ year_vector = [2020, 2100]
 ## Both plots no trend line.
 plot_env_gdp_faceted!(m, year_vector)
 
+plot_env_gdp_evo!(m, year_vector)
+
 ### Separate plots with trend line
 scater_plots = make_env_gdp_plots(m, year_vector)
 
@@ -48,6 +50,7 @@ maps_env_pc = map_env_pc(m, year_vector)
 
 ### plot map faceted
 map_env_pc_faceted!(m, year_vector)
+plot_scatter_gdp_coeff!(m)
 
 ## Damages distribution
 
@@ -114,8 +117,6 @@ diff_damage = plot_Atkinson_envdamage(m_at, damage_options)
 m_at = GreenNICE.create()
 run(m_at)
 
-theta_params = 0.1:0.1:1.0
-
 plot_Atkinson_param!(m_at, alpha_params, theta_params, eta_params, 2100)
 
 plot_Atkinson_scenario_param!(alpha_params, theta_params, eta_params, emissions_subgroup)
@@ -143,6 +144,10 @@ run(m)
 
 plot_Atkinson_country_envdamage!(m, damage_options, list_countries, 2100)
 
+
+aux_theta = -1.0:0.1:1.0
+
+Table = plot_rel_price(alpha_params, aux_theta)
 
 # Plot EDE
 

@@ -15,11 +15,11 @@
 
     θ_env              = Parameter(index=[country]) #Linear damage coeficient Natural capital loss
 
-    LOCAL_DAMFRAC_KW  = Variable(index=[time, country]) # Country-level damages based on local temperatures and on Kalkuhl & Wenz (share of net output)
-    DAMFRAC           = Variable(index=[time, country]) # Country-level damages based on global temperatures (share of net outpu)
+    LOCAL_DAMFRAC_KW   = Variable(index=[time, country]) # Country-level damages based on local temperatures and on Kalkuhl & Wenz (share of net output)
+    DAMFRAC            = Variable(index=[time, country]) # Country-level damages based on global temperatures (share of net outpu)
 
-    LOCAL_DAM_ENV     = Variable(index=[time, country]) #Country-level damages based on local tempertures and on Bastien-Olvera et al parameters ()
-    temp_anomaly_N = Variable(index=[time, country]) # 2020 temperature anomaly (°C above year 2020)
+    LOCAL_DAM_ENV      = Variable(index=[time, country]) #Country-level damages based on local tempertures and on Bastien-Olvera et al parameters ()
+    temp_anomaly_N     = Variable(index=[time, country]) # 2020 temperature anomaly (°C above year 2020)
 
     function run_timestep(p, v, d, t)
 

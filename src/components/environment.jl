@@ -19,14 +19,17 @@
     Env_rwpp        = Variable(index=[time, regionwpp])
     Env_global      = Variable(index=[time])
     N               = Variable(index=[time, country])                  # Natural capital stock (million)
+    Env0            = Variable(index=[country])                            # Initial level of stock Natural capital (million)
 
     function run_timestep(p, v, d, t)
 
         # Note that the country dimension is defined in d and parameters and variables are indexed by 'c'
-        E0 = p.N0 .* p.flow
-        v.E_bar = sum(E0[:]) / sum(p.l[TimestepIndex(1), :])
+        e0 = p.N0 .* p.flow
+        v.E_bar = sum(e0[:]) / sum(p.l[TimestepIndex(1), :])
 
         for c in d.country, q in d.quantile
+
+            v.Env0[c] = p.N0[c] * p.flow
 
             if p.dam_assessment == 4                    # same N per capita, equal damages
 

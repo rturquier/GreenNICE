@@ -28,13 +28,21 @@
 
         for c in d.country, q in d.quantile
 
-            if p.dam_assessment == 4                    # samel E per capita, equal damages
-                v.Env[t, c, q] = is_first(t) ?
-                (v.E_bar * p.l[t,c] / p.nb_quantile) : v.Env[t - 1, c, q] * (1-p.damage)
+            if p.dam_assessment == 4                    # same N per capita, equal damages
+
+                v.N[t,c] = is_first(t) ?
+                ( (sum(p.N0[:])) / sum(p.l[TimestepIndex(1), :]) ) :
+                (v.N[t-1,c] * (1-p.damage))
+
+                v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
 
             elseif p.dam_assessment == 3                # different E, equal damages
-                v.Env[t, c, q] = is_first(t) ?
-                (p.N0[c] / p.nb_quantile) : v.Env[t - 1, c, q] * (1-p.damage)
+
+                v.N[t,c] = is_first(t) ?
+                (p.N0[c]) :
+                (v.N[t-1,c] * (1-p.damage))
+
+                v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
 
             elseif p.dam_assessment == 2                #same E, different damages
                 v.Env[t, c, q] = is_first(t) ?          ###PROBLEM

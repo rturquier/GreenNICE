@@ -37,10 +37,6 @@ HTTP.download(file_url, file_path)
 
 #1.2 Create a data frame file with the data from the "country" sheet
 
-country_e0 = XLSX.readtable(file_path, "country"; header=2) |> DataFrame
-
-
-
 country_df = XLSX.openxlsx(file_path) do xf
     sheet = xf["country"]
     data = sheet[:]
@@ -116,7 +112,7 @@ N0[N0.countrycode .== "MAC", :N0] .= 0
 
 # Scale down the values by dividing by 1,000,000 to get the units in million USD
 
-#N0.N0 = N0.N0 ./ 1000000
+N0.N0 = N0.N0 ./ 1000000
 
 # Update to 2017 values
 N0.N0 = N0.N0 .* 0.94

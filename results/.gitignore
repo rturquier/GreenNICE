@@ -1,5 +1,0 @@
-# Tells git to ignore all contents of the results subfolder, but to keep the folder
-
-*
-!.gitignore
-

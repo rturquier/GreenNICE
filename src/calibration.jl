@@ -37,29 +37,45 @@ HTTP.download(file_url, file_path)
 
 #1.2 Create a data frame file with the data from the "country" sheet
 
-country_e0 = XLSX.readtable(file_path, "country"; first_row=2) |> DataFrame
+country_df = XLSX.openxlsx(file_path) do xf
+    sheet = xf["country"]
+    data = sheet[:]
+
+    header = data[2, :]              # second row is the header
+    content = data[3:end, :]         # data starts from third row
+
+    df = DataFrame(content, Symbol.(header))
+
+    # Drop fully empty rows
+    df = filter(row -> any(!ismissing, row), df)
+
+    # Drop fully empty columns
+    non_empty_cols = [!all(ismissing, df[!, col]) for col in names(df)]
+    df = df[:, non_empty_cols]
+
+    return df
+end
 
 # Filter data for the year 2020 and select columns of interest
+country_N0 = filter(row -> row[:year] == 2020, country_df)
 
-country_e0 = filter(row -> row[:year] == 2020, country_e0)
-
-country_e0 = select(
-    country_e0,
+country_N0 = select(
+    country_N0,
     [:countrycode, :torn_real_forest_es1, :torn_real_forest_es2, :torn_real_forest_es3],
 )
 
-country_e0[!, :e0] =
-    country_e0.torn_real_forest_es1 .+ country_e0.torn_real_forest_es2 .+
-    country_e0.torn_real_forest_es3
+country_N0[!, :N0] =
+    country_N0.torn_real_forest_es1 .+ country_N0.torn_real_forest_es2 .+
+    country_N0.torn_real_forest_es3
 
-country_e0 = select(country_e0, [:countrycode, :e0])
+country_N0 = select(country_N0, [:countrycode, :N0])
 
 #1.3 Create a CSV file with initial natural capital values
 
-e0 = CSVFiles.load(country_list_file_path) |> DataFrame
+N0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
-e0 = leftjoin(e0, country_e0; on=:countrycode, makeunique=true)
-sort!(e0, :countrycode)
+N0 = leftjoin(N0, country_N0; on=:countrycode, makeunique=true)
+sort!(N0, :countrycode)
 
 # Define a dictionary with country codes and their corresponding replacement country codes
 # Used world bank data to find country in vecinity with similar forest surface (year 2020)
@@ -74,13 +90,13 @@ replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "MNE", "BR
 
 
 
-# Update the values of e0 based on the replacement_countries dictionary
+# Update the values of N0 based on the replacement_countries dictionary
 for (country, replacement) in replacement_countries
-    if country in e0.countrycode
-        replacement_row = e0[e0.countrycode .== replacement, :e0]
+    if country in N0.countrycode
+        replacement_row = N0[N0.countrycode .== replacement, :N0]
         if !isempty(replacement_row)
             replacement_value = replacement_row[1]
-            e0[e0.countrycode .== country, :e0] .= replacement_value
+            N0[N0.countrycode .== country, :N0] .= replacement_value
         else
             println("No replacement value found for country: $replacement")
         end
@@ -88,21 +104,21 @@ for (country, replacement) in replacement_countries
 end
 
 # Set MAC = 0
-e0[e0.countrycode .== "MAC", :e0] .= 0
+N0[N0.countrycode .== "MAC", :N0] .= 0
 
 #Get the flow of the nat cap stock. r = 4%. t = 100 years
 
-e0.e0 = e0.e0 .* ((1 - 0.04) / (1 - 0.04^100))
+#e0.e0 = e0.e0 .* ((1 - 0.04) / (1 - 0.04^100))
 
 # Scale down the values by dividing by 1,000,000 to get the units in million USD
 
-e0.e0 = e0.e0 ./ 1000000
+N0.N0 = N0.N0 ./ 1000000
 
 # Update to 2017 values
-e0.e0 = e0.e0 .* 0.94
+N0.N0 = N0.N0 .* 0.94
 
-e0_file_path = "data/e0.csv"
-CSVFiles.save(e0_file_path, e0)
+N0_file_path = "data/N0.csv"
+CSVFiles.save(N0_file_path, N0)
 
 # 2. Get environmental damage function parameters from Bastien-Olvera et al. 2024
 

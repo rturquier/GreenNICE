@@ -128,9 +128,10 @@ function create(scenario = "ssp245")
     connect_param!(m, :environment, :nb_quantile, :nb_quantile)
     connect_param!(m, :environment, :mapcrwpp,  :mapcrwpp)
 
-	update_param!(m, :environment, :Env0, Env0)
+	update_param!(m, :environment, :N0, N0)
     update_param!(m, :environment, :damage, 0.000278)
     update_param!(m, :environment, :dam_assessment, 1)
+    update_param!(m, :environment, :flow, ((1 - 0.04) / (1 - 0.04^100)))
 
 	# --------------------------------
 	# Abatement

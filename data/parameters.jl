@@ -211,9 +211,9 @@ cmip_pattern = raw_patterns[!, pattern_type]
 # Load-country level environment starting values
 #-------------------------------------------------------
 
-Env0_data = DataFrame(load("data/e0.csv",  header_exists=true))
-filter!(:countrycode => in(countries), Env0_data)
-Env0 = Env0_data[:, :e0]
+N0_data = DataFrame(load("data/N0.csv",  header_exists=true))
+filter!(:countrycode => in(countries), N0_data)
+N0 = N0_data[:, :N0]
 
 #-------------------------------------------------------
 # Load-country level environmental damage parameters

@@ -1,3 +1,5 @@
+/outputs
+
 # LaTeX
 *.toc
 *.aux
@@ -7,7 +9,3 @@
 # macOS
 .DS_Store
 **/.DS_Store
-
-# Folders
-figures/
-maps/

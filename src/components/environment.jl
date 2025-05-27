@@ -5,7 +5,9 @@
     l               = Parameter(index=[time, country])      # Labor - population (thousands)
     nb_quantile     = Parameter()                           # Number of quantiles
     damage          = Parameter()                           # percetage loss of E over time
+
     N0              = Parameter(index=[country])            # Initial level of stock Natural capital (million)
+
     mapcrwpp        = Parameter(index=[country])
     dam_assessment  = Parameter()                           #Switch to determine type of assessment
 
@@ -39,6 +41,7 @@
 
                 v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
 
+
             elseif p.dam_assessment == 3                # different E, equal damages
 
                 v.N[t,c] = is_first(t) ?
@@ -53,12 +56,14 @@
                 (v.Env[TimestepIndex(1),c,q] * p.LOCAL_DAM_ENV[t,c])
                 #((v.E_bar * p.l[TimestepIndex(1),c] / p.nb_quantile) * p.LOCAL_DAM_ENV[t,c])
 
+
             else
                 v.N[t,c] = is_first(t) ?
                 (p.N0[c]) :
                 (p.N0[c] * p.LOCAL_DAM_ENV[t,c])
 
                 v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
+
 
             end
 

@@ -104,7 +104,7 @@ function map_damage!(damages, title, save_name)
         }
     )
 
-    save("test/maps/$(save_name).svg", map)
+    save("outputs/maps/$(save_name).svg", map)
 
 end
 
@@ -248,7 +248,7 @@ function plot_EDE_trajectories!(EDE_estimates,
     display(p)
 
     # Optionally, save the plot to a file (e.g., as SVG)
-    save("test/figures/$(save_name).svg", p)
+    save("outputs/figures/$(save_name).svg", p)
 end
 
 function get_EDE_country(m, iso3_list, country_list)
@@ -330,7 +330,7 @@ function plot_EDE_country!(EDE_estimates, iso3_list,  damage_params, end_year, s
 
     display(p)
 
-    save("test/figures/$(save_name).svg", p)
+    save("outputs/figures/$(save_name).svg", p)
 
 end
 
@@ -413,7 +413,7 @@ function make_env_gdp_plots(m, year_vector)
     for year in year_vector
         scat_plot = plot_scatter_env_y(Env_table, GDP_table, year)
         push!(scatter_plots, scat_plot)
-        save("test/figures/scatter_env_gdp_$(year).svg", scat_plot)
+        save("outputs/figures/scatter_env_gdp_$(year).svg", scat_plot)
     end
 
     return scatter_plots
@@ -447,7 +447,7 @@ function plot_env_gdp_faceted!(m, year_vector)
         #text = {:iso3, title="Country"}
     )
 
-    save("test/figures/env_gdp_faceted.svg", plot)
+    save("outputs/figures/env_gdp_faceted.svg", plot)
 
 end
 
@@ -507,7 +507,7 @@ function plot_env_gdp_evo!(m, year_vector)
         ]
     )
 
-    save("test/figures/env_gdp_evolution.svg", plot)
+    save("outputs/figures/env_gdp_evolution.svg", plot)
 
 end
 
@@ -533,7 +533,7 @@ function plot_scatter_e_coeff!(m)
     )
 
 
-    save("test/figures/scatter_E_coef.svg", p_scatter)
+    save("outputs/figures/scatter_E_coef.svg", p_scatter)
 end
 
 function plot_scatter_gdp_coeff!(m)
@@ -558,7 +558,7 @@ function plot_scatter_gdp_coeff!(m)
         title = nothing
     )
 
-    save("test/figures/scatter_GDP_coef.svg", p_scatter)
+    save("outputs/figures/scatter_GDP_coef.svg", p_scatter)
 
 end
 
@@ -603,7 +603,7 @@ function map_env_pc(m, year_vector)
         )
 
         push!(map_env_list, map_env)
-        save("test/maps/map_env_pc_$(year).svg", map_env)
+        save("outputs/maps/map_env_pc_$(year).svg", map_env)
     end
 
     return map_env_list
@@ -653,7 +653,7 @@ function map_env_pc_faceted!(m, year_vector)
         }
     )
 
-    save("test/maps/map_env_faceted.svg", map)
+    save("outputs/maps/map_env_faceted.svg", map)
 end
 
 function EDE_GreenNICE_NICE(emissions_scenarios)
@@ -717,7 +717,7 @@ function plot_EDE_GreenNICE_NICE!(emissions_scenario, end_year, save_name)
     title = nothing
     )
 
-    save("test/figures/$(save_name).svg", p)
+    save("outputs/figures/$(save_name).svg", p)
 end
 
 
@@ -1045,7 +1045,7 @@ legend = nothing
 display(p)
 
 # Optionally, save the plot to a file (e.g., as SVG)
-save("test/figures/TESTING.svg", p)
+save("outputs/figures/TESTING.svg", p)
 
 end
 
@@ -1139,7 +1139,7 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
         }
     }
 )
-    save("test/figures/Atkinson_Env_damages.svg", p)
+    save("outputs/figures/Atkinson_Env_damages.svg", p)
 
     differences = Atk_damage_long[(Atk_damage_long.damage_options .== "GreenNice") .& (Atk_damage_long.year .== year_end), :Atkinson_index] .-
                   Atk_damage_long[(Atk_damage_long.damage_options .== "E equal share") .& (Atk_damage_long.year .== year_end), :Atkinson_index]
@@ -1230,11 +1230,11 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
 
          display(p)
          if names(Atk_df)[3] == "α"
-             save("test/figures/Atkinson_alpha.svg", p)
+             save("outputs/figures/Atkinson_alpha.svg", p)
          elseif names(Atk_df)[3] == "θ"
-             save("test/figures/Atkinson_theta.svg", p)
+             save("outputs/figures/Atkinson_theta.svg", p)
          elseif names(Atk_df)[3] == "η"
-             save("test/figures/Atkinson_eta.svg", p)
+             save("outputs/figures/Atkinson_eta.svg", p)
         end
     end
 
@@ -1269,7 +1269,7 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
         }
     )
 
-    save("test/figures/Atkinson_param_faceted.svg", p_faceted)
+    save("outputs/figures/Atkinson_param_faceted.svg", p_faceted)
 
  end
 
@@ -1335,7 +1335,7 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
     }
 )
 
-save("test/figures/Atkinson_scenario_param_faceted.svg", p_faceted)
+save("outputs/figures/Atkinson_scenario_param_faceted.svg", p_faceted)
 
 end
 
@@ -1401,7 +1401,7 @@ function plot_c_EDE!(end_year = 2100)
     )
 
 display(p)
-    save("test/figures/c_EDE.svg", p)
+    save("outputs/figures/c_EDE.svg", p)
 
 end
 
@@ -1456,7 +1456,7 @@ function plot_Atkinson_emissionscenario(emissions_scenarios, year_end = 2100)
         }
     )
 
-    save("test/figures/Atkinson_Emissions_Scenarios.svg", p)
+    save("outputs/figures/Atkinson_Emissions_Scenarios.svg", p)
 
     difference_table =
         filter(row -> row[:year] == year_end, combined_df_long)[!, [:scenario, :Difference]]
@@ -1504,7 +1504,7 @@ function plot_Atkinson_global(year_end = 2100)
         title = nothing
     )
 
-    save("test/figures/Atkinson_Global.svg", q)
+    save("outputs/figures/Atkinson_Global.svg", q)
 
     difference = Global_Atkinson[Global_Atkinson.year .== 2100, :Atkinson_index][1] -
                  Global_Atkinson[Global_Atkinson.year .== 2100, :Atkinson_index][2]
@@ -1556,7 +1556,7 @@ function table_Atkinson_regions!(m, m_0, year_end = 2100)
               "E Equal share", "E baseline"]
 
     # Write LaTeX table to a .tex file using an IO stream
-    open("test/tables/Atkinson_regions.tex", "w") do io
+    open("outputs/tables/Atkinson_regions.tex", "w") do io
         pretty_table(
             io,
             table_data;
@@ -1608,7 +1608,7 @@ function plot_Atkinson_regions(m, m_0, list_regions, year_end = 2100)
         title = nothing
     )
 
-    save("test/figures/Atkinson_NICEgreenNICE_regions.svg", p)
+    save("outputs/figures/Atkinson_NICEgreenNICE_regions.svg", p)
 
     Regions_Atkinson_diff = Regions_Atkinson_combined[Regions_Atkinson_combined.year .== year_end, :]
     Regions_Atkinson_diff = unstack(Regions_Atkinson_diff, :model, :Atkinson_index)
@@ -1671,7 +1671,7 @@ function plot_Atkinson_region_envdamage(m, damage_options, list_regions, year_en
         }
     )
 
-    save("test/figures/Atkinson_region_Env_damages.svg", p)
+    save("outputs/figures/Atkinson_region_Env_damages.svg", p)
 
     # Calculate the difference in Atkinson index for each region
     Atk_diff = Atk_damage_long[(Atk_damage_long.damage_options .== "GreenNice") .& (Atk_damage_long.year .== year_end), :]
@@ -1752,7 +1752,7 @@ function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, yea
     )
 
     display(p)
-    save("test/figures/Atkinson_country_Env_damages.svg", p)
+    save("outputs/figures/Atkinson_country_Env_damages.svg", p)
 end
 
 function plot_density!()
@@ -1763,7 +1763,7 @@ function plot_density!()
                             ylabel="Density",
                             legend=false)
 
-    savefig(p, "test/figures/density_coefficient_damage.svg")
+    savefig(p, "outputs/figures/density_coefficient_damage.svg")
 end
 
 function plot_rel_price(alpha_params, theta_params, year_end = 2100)
@@ -1821,7 +1821,7 @@ function plot_rel_price(alpha_params, theta_params, year_end = 2100)
     }
 )
 
-    save("test/figures/Atkinson_alpha_theta.svg", plot)
+    save("outputs/figures/Atkinson_alpha_theta.svg", plot)
 
     return Table
 

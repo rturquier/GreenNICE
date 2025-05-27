@@ -33,8 +33,7 @@
             v.LOCAL_DAMFRAC_KW[t,c] = p.β1_KW[c] * p.local_temp_anomaly[t,c] + p.β2_KW[c] *(p.local_temp_anomaly[t,c])^2
 
             v.temp_anomaly_N[t, c] = is_first(t) ?
-            (p.local_temp_anomaly[t,c] - p.local_temp_anomaly[t,c]) :
-            (p.local_temp_anomaly[t,c] - p.local_temp_anomaly[TimestepIndex(1),c])
+            0 : (p.local_temp_anomaly[t,c] - p.local_temp_anomaly[TimestepIndex(1),c])
 
             #Calculate country-level damages on nat cap using Bastien-Olvera et al.'s coefficients.
             v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.temp_anomaly_N[t,c]

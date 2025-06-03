@@ -1807,8 +1807,8 @@ function plot_rel_price(alpha_params, theta_params, year_end = 2100)
     mark = {type = :rect},
     data = Table,
     encoding = {
-        y = {field = :α, type = :ordinal, title = "α", sort = "descending"},
-        x = {field = :θ, type = :ordinal, title = "θ"},
+        x = {field = :α, type = :ordinal, title = "α", sort = "ascending"},
+        y = {field = :θ, type = :ordinal, title = "θ", sort = "descending"},
         color = {
             field = :Atkinson_Index,
             type = :quantitative,

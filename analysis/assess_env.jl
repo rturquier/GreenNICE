@@ -98,7 +98,7 @@ p = @vlplot(
     },
     title = nothing
 )
-save("test/figures/Atkinson_Regions.svg", p)
+save("outputs/figures/Atkinson_Regions.svg", p)
 
 m = GreenNICE.create()
 run(m)
@@ -123,7 +123,7 @@ plot_Atkinson_scenario_param!(alpha_params, theta_params, eta_params, emissions_
 
 plot_c_EDE!()
 
-diff_senarios = plot_Atkinson_emissionscenario(emissions_scenarios)
+diff_scenarios = plot_Atkinson_emissionscenario(emissions_scenarios)
 
 m_at = GreenNICE.create()
 run(m_at)

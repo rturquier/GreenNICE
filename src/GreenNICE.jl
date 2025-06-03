@@ -127,9 +127,9 @@ function create()
     connect_param!(m, :environment, :mapcrwpp,  :mapcrwpp)
 
 	update_param!(m, :environment, :N0, N0)
-    update_param!(m, :environment, :damage, 0.000278)
-    update_param!(m, :environment, :dam_assessment, 1)
-    update_param!(m, :environment, :convert_flow, ((1 - 0.04) / (1 - 0.04^100)))
+    update_param!(m, :environment, :damage, 0.000278) # Parameter for equal damages. This is the average across countries.
+    update_param!(m, :environment, :dam_assessment, 1) # 1: GreenNICE, 3: Equal damages, 4: Equal damages and equal N per capita.
+    update_param!(m, :environment, :convert_flow, ((1 - 0.04) / (1 - 0.04^100))) # Flow of natural capital. Services during 100 years at a 4% discount rate.
 
 	# --------------------------------
 	# Abatement

@@ -12,7 +12,7 @@
     dam_assessment  = Parameter()                           #Switch to determine type of assessment
 
     LOCAL_DAM_ENV   = Parameter(index=[time,country])
-    flow            = Parameter()                           # Flow of natural capital stock (million)
+    convert_flow     = Parameter()                           # Flow of natural capital stock (million)
 
     Env             = Variable(index=[time, country, quantile])     # Environmental variable
     Env_percapita   = Variable(index=[time, country, quantile])     # E percapita (thousand)
@@ -26,29 +26,30 @@
     function run_timestep(p, v, d, t)
 
         # Note that the country dimension is defined in d and parameters and variables are indexed by 'c'
-        e0 = p.N0 .* p.flow
+        e0 = p.N0 .* p.convert_flow
         v.E_bar = sum(e0[:]) / sum(p.l[TimestepIndex(1), :])
 
         for c in d.country, q in d.quantile
 
-            v.Env0[c] = p.N0[c] * p.flow
+            v.Env0[c] = p.N0[c] * p.convert_flow
 
             if p.dam_assessment == 4                    # same N per capita, equal damages
+                if is_first(t)
+                    v.N[t,c] = (sum(p.N0[:])) / sum(p.l[TimestepIndex(1), :])
+                else
+                    v.N[t,c] = v.N[t-1,c] * (1-p.damage)
+                end
 
-                v.N[t,c] = is_first(t) ?
-                ( (sum(p.N0[:])) / sum(p.l[TimestepIndex(1), :]) ) :
-                (v.N[t-1,c] * (1-p.damage))
-
-                v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
-
+                v.Env[t, c, q] = v.N[t,c] * p.convert_flow * (1 / p.nb_quantile)
 
             elseif p.dam_assessment == 3                # different E, equal damages
+                if is_first(t)
+                    v.N[t,c] = p.N0[c]
+                else
+                    v.N[t,c] = v.N[t-1,c] * (1-p.damage)
+                end
 
-                v.N[t,c] = is_first(t) ?
-                (p.N0[c]) :
-                (v.N[t-1,c] * (1-p.damage))
-
-                v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
+                v.Env[t, c, q] = v.N[t,c] * p.convert_flow * (1 / p.nb_quantile)
 
             elseif p.dam_assessment == 2                #same E, different damages
                 v.Env[t, c, q] = is_first(t) ?          ###PROBLEM
@@ -58,12 +59,14 @@
 
 
             else
-                v.N[t,c] = is_first(t) ?
-                (p.N0[c]) :
-                (p.N0[c] * p.LOCAL_DAM_ENV[t,c])
 
-                v.Env[t, c, q] = v.N[t,c] * p.flow * (1 / p.nb_quantile)
+                if is_first(t)
+                    v.N[t,c] = p.N0[c]
+                else
+                    v.N[t,c] = p.N0[c] * p.LOCAL_DAM_ENV[t,c]
+                end
 
+                v.Env[t, c, q] = v.N[t,c] * p.convert_flow * (1 / p.nb_quantile)
 
             end
 

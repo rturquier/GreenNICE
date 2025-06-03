@@ -129,7 +129,7 @@ function create()
 	update_param!(m, :environment, :N0, N0)
     update_param!(m, :environment, :damage, 0.000278)
     update_param!(m, :environment, :dam_assessment, 1)
-    update_param!(m, :environment, :flow, ((1 - 0.04) / (1 - 0.04^100)))
+    update_param!(m, :environment, :convert_flow, ((1 - 0.04) / (1 - 0.04^100)))
 
 	# --------------------------------
 	# Abatement

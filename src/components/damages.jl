@@ -19,7 +19,7 @@
     DAMFRAC            = Variable(index=[time, country]) # Country-level damages based on global temperatures (share of net outpu)
 
     LOCAL_DAM_ENV      = Variable(index=[time, country]) #Country-level damages based on local tempertures and on Bastien-Olvera et al parameters ()
-    temp_anomaly_N     = Variable(index=[time, country]) # 2020 temperature anomaly (°C above year 2020)
+    temp_anomaly_N    = Variable(index=[time]) # 2020 temperature anomaly (°C above year 2020)
 
     function run_timestep(p, v, d, t)
 
@@ -32,11 +32,15 @@
             # Calculate country level damages based on country level temperature anomaly and Kalkuhl & Wenz coefficients
             v.LOCAL_DAMFRAC_KW[t,c] = p.β1_KW[c] * p.local_temp_anomaly[t,c] + p.β2_KW[c] *(p.local_temp_anomaly[t,c])^2
 
-            v.temp_anomaly_N[t, c] = is_first(t) ?
-            0 : (p.local_temp_anomaly[t,c] - p.local_temp_anomaly[TimestepIndex(1),c])
+            # Calculate changes in temperature with respect to year 2020 (N Damage function).
+            if is_first(t)
+                v.temp_anomaly_N[t] = 0
+            else
+                v.temp_anomaly_N[t] = p.temp_anomaly[t] - p.temp_anomaly[TimestepIndex(1)]
+            end
 
-            #Calculate country-level damages on nat cap using Bastien-Olvera et al.'s coefficients.
-            v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.temp_anomaly_N[t,c]
+            #Calculate country-level damages on nat cap using Bastien-Olvera et al.'s (2024) coefficients.
+            v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.temp_anomaly_N[t]
 
         end
 

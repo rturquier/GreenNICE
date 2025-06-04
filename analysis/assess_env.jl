@@ -93,7 +93,7 @@ p = @vlplot(
     data = long_df,
     encoding = {
         x = {field = :year, type = :quantitative},
-        y = {field = :Atkinson_index, type = :quantitative},
+        y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
         color = {field = :Region, type = :nominal, title = "World_Region"}
     },
     title = nothing

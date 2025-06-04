@@ -95,7 +95,7 @@ function map_damage!(damages, title, save_name)
             color = {
             field = "percent_change",
             type = "quantitative",
-            title = "e percentage change",
+            title = "percentage change",
             scale = {
                 scheme = "redblue",
                 domainMid = 0
@@ -475,7 +475,7 @@ function plot_env_gdp_evo!(m, year_vector)
         data = merged_table,
         encoding = {
             x = {:GDP, axis={title="GDP per capita (k USD)"}},
-            y = {:Env, axis={title="e per capita (k USD)"}},
+            y = {:Env, axis={title="E per capita (k USD)"}},
             color = {
             :year,
             type = :ordinal,
@@ -1117,7 +1117,7 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
     data = Atk_damage_long,
     encoding = {
         x = {field = :year, type = :quantitative},
-        y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+        y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
         color = {
             field = :damage_options,
             type = :nominal,
@@ -1224,7 +1224,7 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
                  y = {field = :Atkinson_index,
                         type = :quantitative,
                         scale = {domain = [0, 0.6]},
-                        title = "Atkinson index"},
+                        title = "Inequality (Iₜ)"},
              }
          )
 
@@ -1257,7 +1257,7 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
             x = {field = :value, type = :quantitative, title = nothing},
             y = {field = :Atkinson_index,
                     type = :quantitative,
-                    title = "Atkinson Index (2100)"},
+                    title = "Inequality (Iₜ)"},
         },
         resolve = {
             scale = {x = "independent"}
@@ -1319,7 +1319,7 @@ function plot_Atkinson_param!(m, alpha_params, theta_params, eta_params, end_yea
     },
     encoding = {
         x = {field = :value, type = :quantitative, title = nothing},
-        y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index (2100)"},
+        y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
         color = {field = :scenario,
                 type = :nominal,
                 title = "Scenario",
@@ -1490,7 +1490,7 @@ function plot_Atkinson_global(year_end = 2100)
         data = Global_Atkinson,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
             color = {
                 field = :model,
                 type = :nominal,
@@ -1596,7 +1596,7 @@ function plot_Atkinson_regions(m, m_0, list_regions, year_end = 2100)
         data = Regions_Atkinson_combined,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
             color = {field = :Region, type = :nominal, title = "WPP Region"},
             strokeDash = {
                 field = :model,
@@ -1646,7 +1646,7 @@ function plot_Atkinson_region_envdamage(m, damage_options, list_regions, year_en
         data = Atk_damage_long,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
 
             color = {
                 field = :region,
@@ -1735,7 +1735,7 @@ function plot_Atkinson_country_envdamage!(m, damage_options, list_countries, yea
         data = atk_dataframe,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Atkinson Index"},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
             color = {field = :country, type = :nominal, title = "Country"},
             strokeDash = {field = :damage_type,
                         type = :nominal,
@@ -1812,7 +1812,7 @@ function plot_rel_price(alpha_params, theta_params, year_end = 2100)
         color = {
             field = :Atkinson_Index,
             type = :quantitative,
-            title = "Atkinson Index",
+            title = "Inequality (Iₜ)",
             scale = {
                 scheme = "viridis",
                 nullValue = "lightgray"

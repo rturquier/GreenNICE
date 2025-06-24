@@ -84,28 +84,14 @@ m_0 = GreenNICE.create()
 update_param!(m_0, :α, 0.0)
 run(m_0)
 
-Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
-
-long_df = stack(Regions_Atkinson, Not(:year), variable_name = :Region, value_name = :Atkinson_index)
-
-p = @vlplot(
-    mark = {type=:line, strokeWidth=0.5},
-    data = long_df,
-    encoding = {
-        x = {field = :year, type = :quantitative},
-        y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
-        color = {field = :Region, type = :nominal, title = "World_Region"}
-    },
-    title = nothing
-)
-save("outputs/figures/Atkinson_Regions.svg", p)
-
 m = GreenNICE.create()
 run(m)
 
 table_Atkinson_regions!(m, m_0)
 
 diff_NICE_GreenNICE = plot_Atkinson_global()
+
+plot_Atkinson_all_regions!()
 
 m_at = GreenNICE.create()
 run(m_at)

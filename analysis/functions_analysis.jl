@@ -1117,7 +1117,10 @@ function plot_Atkinson_envdamage(m, damage_options, year_end=2100)
     data = Atk_damage_long,
     encoding = {
         x = {field = :year, type = :quantitative},
-        y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
+        y = {field = :Atkinson_index,
+             type = :quantitative,
+             title = "Inequality (Iₜ)",
+             scale = {zero = false}},
         color = {
             field = :damage_options,
             type = :nominal,
@@ -1490,7 +1493,10 @@ function plot_Atkinson_global(year_end = 2100)
         data = Global_Atkinson,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
+            y = {field = :Atkinson_index,
+                 type = :quantitative,
+                 title = "Inequality (Iₜ)",
+                 scale = {zero = false}},
             color = {
                 field = :model,
                 type = :nominal,
@@ -1646,7 +1652,10 @@ function plot_Atkinson_region_envdamage(m, damage_options, list_regions, year_en
         data = Atk_damage_long,
         encoding = {
             x = {field = :year, type = :quantitative},
-            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
+            y = {field = :Atkinson_index,
+                 type = :quantitative,
+                 title = "Inequality (Iₜ)",
+                 scale = {zero = false}},
 
             color = {
                 field = :region,
@@ -1825,4 +1834,26 @@ function plot_rel_price(alpha_params, theta_params, year_end = 2100)
 
     return Table
 
+end
+
+function plot_Atkinson_all_regions!()
+
+    m = GreenNICE.create()
+    run(m)
+
+    Regions_Atkinson = get_Atkinson_dataframe(m, 2100, "region")
+
+    long_df = stack(Regions_Atkinson, Not(:year), variable_name = :Region, value_name = :Atkinson_index)
+
+    p = @vlplot(
+        mark = {type=:line, strokeWidth=0.5},
+        data = long_df,
+        encoding = {
+            x = {field = :year, type = :quantitative},
+            y = {field = :Atkinson_index, type = :quantitative, title = "Inequality (Iₜ)"},
+            color = {field = :Region, type = :nominal, title = "World_Region"}
+        },
+        title = nothing
+    )
+    save("outputs/figures/Atkinson_Regions.svg", p)
 end

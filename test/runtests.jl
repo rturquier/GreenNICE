@@ -15,7 +15,7 @@ end
 
 @testset "Welfare tests" begin
     include("../src/components/welfare.jl")
-    for η = [0, 0.5, 1, 2], θ = [-1, 0.5, 1], α = [0, 0.5]
+    for η = [0, 0.5, 1, 2], θ = [-1, 0, 0.5, 1], α = [0, 0.5]
         c = 2
         E = 2
         u = utility(c, E, η, θ, α)

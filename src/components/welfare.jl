@@ -80,14 +80,25 @@ Calculate utility of consumption and environmental goods.
 - `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
 """
 function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
-    if η == 1
-        utility = log(
-            ((1 - α) * consumption^θ + α * environment^θ)^(1 / θ)
-        )
+    # function that combines consumption and environment
+    if θ ≠ 0
+        # CES general case
+        v = (c, E) -> ((1 - α) * c^θ + α * E^θ)^(1 / θ)
     else
-        utility = ((1 - α) * consumption^θ + α * environment^θ)^((1 - η) / θ) / (1 - η)
+        # Cobb-Douglas special case
+        v = (c, E) -> c^(1 - α) * E^α
     end
 
+    # concave transformation
+    if η ≠ 1
+        # CRRA general case
+        φ = x -> x^(1 - η) / (1 - η)
+    else
+        # logarithm special case
+        φ = x -> log(x)
+    end
+
+    utility = φ(v(consumption, environment))
     return utility
 end
 

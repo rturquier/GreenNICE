@@ -84,7 +84,7 @@ function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::R
     if θ ≠ 0
         # CES general case
         v = (c, E) -> ((1 - α) * c^θ + α * E^θ)^(1 / θ)
-    else
+    elseif θ == 0
         # Cobb-Douglas special case
         v = (c, E) -> c^(1 - α) * E^α
     end
@@ -93,7 +93,7 @@ function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::R
     if η ≠ 1
         # CRRA general case
         φ = x -> x^(1 - η) / (1 - η)
-    else
+    elseif η == 1
         # logarithm special case
         φ = x -> log(x)
     end

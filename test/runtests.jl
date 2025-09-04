@@ -20,7 +20,7 @@ end
         E = 2
         u = utility(c, E, η, θ, α)
 
-        # Test that utility in increasing in consumption
+        # Test that utility is increasing in consumption
         @test utility(c + 1, E, η, θ, α) > u
 
         # Test that inverse_utility is the inverse of utility

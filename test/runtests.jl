@@ -15,12 +15,12 @@ end
 
 @testset "Welfare tests" begin
     include("../src/components/welfare.jl")
-    for η = [0, 0.5, 1, 2], θ = [-1, 0.5, 1], α = [0, 0.5]
+    for η = [0, 0.5, 1, 2], θ = [-1, 0, 0.5, 1], α = [0, 0.5]
         c = 2
         E = 2
         u = utility(c, E, η, θ, α)
 
-        # Test that utility in increasnig in consumption
+        # Test that utility is increasing in consumption
         @test utility(c + 1, E, η, θ, α) > u
 
         # Test that inverse_utility is the inverse of utility

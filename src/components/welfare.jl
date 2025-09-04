@@ -80,14 +80,25 @@ Calculate utility of consumption and environmental goods.
 - `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
 """
 function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
-    if η == 1
-        utility = log(
-            ((1 - α) * consumption^θ + α * environment^θ)^(1 / θ)
-        )
-    else
-        utility = ((1 - α) * consumption^θ + α * environment^θ)^((1 - η) / θ) / (1 - η)
+    # function that combines consumption and environment
+    if θ ≠ 0
+        # CES general case
+        v = (c, E) -> ((1 - α) * c^θ + α * E^θ)^(1 / θ)
+    elseif θ == 0
+        # Cobb-Douglas special case
+        v = (c, E) -> c^(1 - α) * E^α
     end
 
+    # concave transformation
+    if η ≠ 1
+        # CRRA general case
+        φ = x -> x^(1 - η) / (1 - η)
+    elseif η == 1
+        # logarithm special case
+        φ = x -> log(x)
+    end
+
+    utility = φ(v(consumption, environment))
     return utility
 end
 
@@ -98,15 +109,25 @@ end
 Calculate the consumption that would give utility `u` and reference environment level `E`.
 """
 function inverse_utility(u::Real, E::Real, η::Real, θ::Real, α::Real)
-    if η == 1
-        consumption = (
-            (1 / (1 - α)) * (exp(u)^θ - α * E^θ)
-        )^(1 / θ)
-    else
-        consumption = (
-            (1 / (1 - α)) * ( ((1 - η) * u)^(θ / (1 - η)) - α * E^θ)
-        )^(1 / θ)
+    # inverse of CES function
+    if θ ≠ 0
+        # general case
+        v_inverse = x -> ((x^θ - α * E^θ) / (1 - α))^(1 / θ)
+    elseif θ == 0
+        # Cobb-Douglas special case
+        v_inverse = x -> (x / E^α)^(1 / (1 - α))
     end
+
+    # inverse of concave transformation
+    if η ≠ 1
+        # CRRA general case
+        φ_inverse = x -> ((1 - η) * x)^(1 / (1 - η))
+    elseif η == 1
+        # logarithm special case
+        φ_inverse = x -> exp(x)
+    end
+
+    consumption = v_inverse(φ_inverse(u))
 
     try
         @assert utility(consumption, E, η, θ, α) ≈ u

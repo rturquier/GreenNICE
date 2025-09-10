@@ -146,8 +146,9 @@
     end # timestep
 end
 
+
 """
-change_inequality(consumption_shares::matrix, γ::Real)
+    change_inequality(consumption_shares::matrix, γ::Real)
 
 Change income distribution by a given γ
 
@@ -155,7 +156,6 @@ Change income distribution by a given γ
 - quantile_consumption_shares::Matrix: matrix with consumption shares (3-dimensional)
 - γ::Real: parameter that controls the change in inequality.
 """
-
 function change_inequality(quantile_consumption_shares::Vector, γ::Real)
 
     average_consumption = mean(quantile_consumption_shares)

@@ -24,6 +24,7 @@
     recycle_share           	= Parameter(index=[country, quantile]) 		    # Share of carbon tax revenue recycled back to each quantile
     γ                           = Parameter()                                   # Change in income distribution parameter
 
+    adjusted_consumption_shares = Variable(index=[time, country, quantile])     # Adjusted shares of deciles (equals `quantile_consumption_shares` for γ == 1)
     CO2_income_elasticity    	= Variable(index=[time, country])             	# Elasticity of CO2 price exposure with respect to income
     abatement_cost_dist		 	= Variable(index=[time, country, quantile]) 	# Quantile distribution shares of mitigation costs
     carbon_tax_dist		     	= Variable(index=[time, country, quantile]) 	# Quantile distribution shares of CO2 tax burden
@@ -45,7 +46,6 @@
 	mu_cons				        = Variable(index=[time, country])				# Parameter mu of the lognormal distribution of consumption
 	sigma_cons			        = Variable(index=[time, country])				# Parameter sigma of the lognormal distribution of consumption
 
-    new_consumption_shares      = Variable(index=[time, country, quantile])     # New consumption shares after change in inequality
 
     function run_timestep(p, v, d, t)
 
@@ -78,19 +78,19 @@
 
            #Update consumption shares for a given γ
 
-           v.new_consumption_shares[t,c,:] = change_inequality(p.quantile_consumption_shares[t,c,:], p.γ)
+           v.adjusted_consumption_shares[t,c,:] = adjust_inequality(p.quantile_consumption_shares[t,c,:], p.γ)
 
             # Calculate quantile distribution shares of CO2 tax burden and mitigation costs (assume both distributions are equal) and climate damages.
-			v.abatement_cost_dist[t,c,:] = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.new_consumption_shares[t,c,:], p.nb_quantile)
-			v.carbon_tax_dist[t,c,:]     = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.new_consumption_shares[t,c,:], p.nb_quantile)
-			v.damage_dist[t,c,:]         = country_quantile_distribution(p.damage_elasticity, v.new_consumption_shares[t,c,:], p.nb_quantile)
+			v.abatement_cost_dist[t,c,:] = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
+			v.carbon_tax_dist[t,c,:]     = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
+			v.damage_dist[t,c,:]         = country_quantile_distribution(p.damage_elasticity, v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
 
 			# Create a temporary variable used to calculate NICE baseline quantile consumption (just for convenience).
 			temp_qcpc = p.nb_quantile * p.CPC[t,c] * (1.0 + p.LOCAL_DAMFRAC_KW[t,c]) / (1.0 - p.ABATEFRAC[t,c])
 			for q in d.quantile
 
 				# Calculate pre-damage, pre-abatement cost quantile consumption.
-				v.qcpc_base[t,c,q] = temp_qcpc * v.new_consumption_shares[t,c,q]
+				v.qcpc_base[t,c,q] = temp_qcpc * v.adjusted_consumption_shares[t,c,q]
 
 				# Calculate post-damage, post-abatement cost per capita quantile consumption (bounded below to ensure consumptions don't collapse to zero or go negative).
 				# Note, this differs from standard NICE equation because quantile CO2 abatement cost and climate damage shares can now vary over time.
@@ -148,21 +148,24 @@ end
 
 
 """
-    change_inequality(consumption_shares::Vector, γ::Real)
+    adjust_inequality(consumption_shares::Vector, γ::Real)
 
-Change income distribution by a given γ
+Adjust income distribution in a given country and time by a given γ.
+
+For γ = 1, there is no change. For γ = 0, the consumption of every quantile is set to
+average consumption.
 
 # Arguments
 - quantile_consumption_shares::Vector: consumption deciles in a given country and year
-- γ::Real: parameter that controls the change in inequality.
+- γ::Real: parameter that controls the degree of inequality.
 """
-function change_inequality(quantile_consumption_shares::Vector, γ::Real)
+function adjust_inequality(quantile_consumption_shares::Vector, γ::Real)
 
     average_consumption = mean(quantile_consumption_shares)
 
     δ = (quantile_consumption_shares .- average_consumption) ./ average_consumption
 
-    new_quantile_consumption_shares = average_consumption .* (1 .+ δ .* γ)
+    adjusted_quantile_consumption_shares = average_consumption .* (1 .+ δ .* γ)
 
-    return new_quantile_consumption_shares
+    return adjusted_quantile_consumption_shares
 end

@@ -148,12 +148,12 @@ end
 
 
 """
-    change_inequality(consumption_shares::matrix, γ::Real)
+    change_inequality(consumption_shares::Vector, γ::Real)
 
 Change income distribution by a given γ
 
 # Arguments
-- quantile_consumption_shares::Matrix: matrix with consumption shares (3-dimensional)
+- quantile_consumption_shares::Vector: consumption deciles in a given country and year
 - γ::Real: parameter that controls the change in inequality.
 """
 function change_inequality(quantile_consumption_shares::Vector, γ::Real)

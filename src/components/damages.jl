@@ -6,6 +6,7 @@
 
     country      = Index() # Set country index
 
+    temp_anomaly       = Parameter(index=[time]) # Global average surface temperature anomaly (°C above pre-industrial [year 1750]).
     local_temp_anomaly = Parameter(index=[time, country]) # Country-level average surface temperature anomaly (°C above pre-industrial [year 1750]).
     β1_KW              = Parameter(index=[country]) # Linear damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
     β2_KW              = Parameter(index=[country])  # Quadratic damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function

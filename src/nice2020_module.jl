@@ -148,8 +148,6 @@ function create_nice2020()
 	# Damages
 	# --------------------------------
 
-	update_param!(m, :damages, :β1, 0.00236)
-	update_param!(m, :damages, :β2, 2.0)
 	update_param!(m, :damages, :β1_KW, beta1_KW)
 	update_param!(m, :damages, :β2_KW, beta2_KW)
 
@@ -177,9 +175,9 @@ function create_nice2020()
 	# --------------------------------
 
 	update_param!(m, :quantile_recycle, :min_study_gdp, 		meta_min_study_gdp) #minimum(elasticity_studies.pcGDP)
-    update_param!(m, :quantile_recycle, :max_study_gdp, 		meta_max_study_gdp)  #maximum(elasticity_studies.pcGDP)
-    update_param!(m, :quantile_recycle, :elasticity_intercept, 	meta_intercept)
-    update_param!(m, :quantile_recycle, :elasticity_slope, 		meta_slope)
+	update_param!(m, :quantile_recycle, :max_study_gdp, 		meta_max_study_gdp)  #maximum(elasticity_studies.pcGDP)
+	update_param!(m, :quantile_recycle, :elasticity_intercept, 	meta_intercept)
+	update_param!(m, :quantile_recycle, :elasticity_slope, 		meta_slope)
 	update_param!(m, :quantile_recycle, :damage_elasticity, 		0.6) #Gilli et al. (2024), estimate based on SSP2 projection
 	update_param!(m, :quantile_recycle, :quantile_consumption_shares,  consumption_distribution_2020_2300)
 	#update_param!(m, :quantile_recycle, :quantile_consumption_shares, 	consumption_distribution) Static version
@@ -210,12 +208,11 @@ function create_nice2020()
 	connect_param!(m, :emissions 	   	=> :μ, 					:abatement 			=> :μ)
 	connect_param!(m, :co2_cycle 	  	=> :E_co2, 				:emissions 			=> :E_Global_gtc)
 	connect_param!(m, :pattern_scale   	=> :global_temperature,	:temperature 		=> :T)
-	connect_param!(m, :damages 		   	=> :temp_anomaly, 		:temperature 		=> :T)
 	connect_param!(m, :damages 	 	   	=> :local_temp_anomaly, :pattern_scale 		=> :local_temperature)
 	connect_param!(m, :neteconomy 	   	=> :ABATEFRAC, 			:abatement 			=> :ABATEFRAC)
 	connect_param!(m, :neteconomy 	  	=> :LOCAL_DAMFRAC_KW, 	:damages 			=> :LOCAL_DAMFRAC_KW)
 	connect_param!(m, :neteconomy 	   	=> :YGROSS, 			:grosseconomy 		=> :YGROSS )
-    connect_param!(m, :revenue_recycle 	=> :E_gtco2, 			:emissions			=> :E_gtco2)
+	connect_param!(m, :revenue_recycle 	=> :E_gtco2, 			:emissions			=> :E_gtco2)
 	connect_param!(m, :revenue_recycle 	=> :LOCAL_DAMFRAC_KW,	:damages 			=> :LOCAL_DAMFRAC_KW)
 	connect_param!(m, :revenue_recycle 	=> :country_carbon_tax,	:abatement 			=> :country_carbon_tax)
 	connect_param!(m, :revenue_recycle  => :Y, 					:neteconomy 		=> :Y)

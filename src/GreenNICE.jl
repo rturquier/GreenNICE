@@ -201,6 +201,7 @@ function create()
 	update_param!(m, :quantile_recycle, :quantile_consumption_shares,  consumption_distribution_2020_2300)
 	#update_param!(m, :quantile_recycle, :quantile_consumption_shares, 	consumption_distribution) Static version
 	update_param!(m, :quantile_recycle, :recycle_share, 			ones(nb_country, nb_quantile).*1/nb_quantile)
+    update_param!(m, :quantile_recycle, :γ, 1.0) #change in income distribution
 
 	connect_param!(m, :quantile_recycle, :switch_recycle, :switch_recycle)
 	connect_param!(m, :quantile_recycle, :l, 			:l)

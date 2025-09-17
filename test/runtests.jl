@@ -55,3 +55,14 @@ end
     @test_throws DomainError inverse_utility(-2, 2, 0.8, -2, 0.5)
     @test_throws DomainError inverse_utility(8, 2, 0.8, -2.3, 0.5)
 end
+
+@testset "Quantile tests" begin
+    using Statistics
+    include("../src/components/quantile_recycle.jl")
+
+    n_quantiles = 10
+    quantiles = rand(1:1000, n_quantiles) |> sort
+
+    @test adjust_inequality(quantiles, 1) ≈ quantiles
+    @test adjust_inequality(quantiles, 0) ≈ mean(quantiles) * ones(n_quantiles)
+end

@@ -46,12 +46,14 @@
             elseif (p.control_regime==2) #country_carbon_tax
 
                 # Expression to compute carbon tax of every country from carbon tax of reference country
+                # Follows a simple rule for optimally differentiated taxes (see SI in Young-Brun et al. (2025))
+                # tax_it =  tax_ref,t * (1-savings_ref,t)/(1-savings_it) * u'(c_ref,t) / u'(c_it)
+                # Using (1-s_it)Y_it/N_it instead of c_it
                 # Carbon tax is bounded above by the global backstop price
 
-                v.country_carbon_tax[t,c] = min(p.pbacktime[t], p.reference_carbon_tax[t] *
-                                            ((1 - p.s[t,p.reference_country_index])/ (1 - p.s[t,c]) ) *
-                                            (p.YGROSS[t,c]/p.YGROSS[t,p.reference_country_index] *
-                                            p.l[t,p.reference_country_index]/p.l[t,c] )^p.η )
+                v.country_carbon_tax[t,c] = min(p.pbacktime[t], 
+                p.reference_carbon_tax[t] * ((1 - p.s[t,p.reference_country_index])/ (1 - p.s[t,c]))^(1-p.η)  *
+                (p.YGROSS[t,c]/p.YGROSS[t,p.reference_country_index] * p.l[t,p.reference_country_index]/p.l[t,c] )^p.η )
 
                 # Find abatement rate from inversion of the expression (tax = marginal abatement cost), bound between 0 and 1
                 #v.μ[t,c] = min( max((v.country_carbon_tax[t,c] / p.pbacktime[t,region_index] ) ^ (1 / (p.θ2 - 1.0)), 0.0), 1.0)

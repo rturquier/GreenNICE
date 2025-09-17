@@ -427,8 +427,8 @@ Each country's carbon tax is calculated from the reference carbon tax,
 adjusted according to the country's economic and demographic parameters.
 
 \begin{multline}
-country\_carbon\_tax[t,c] = reference\_carbon\_tax[t] \times \frac{1 - s[t,reference\_country\_index]}{1 - s[t,c]} \\
-\times \biggl(\frac{YGROSS[t,c]l[t,c]}{YGROSS[t,reference\_country\_index]l[t,reference\_country\_index]}\biggr)^\eta
+country\_carbon\_tax[t,c] = reference\_carbon\_tax[t]\\ \times \left(\frac{1 - s[t,reference\_country\_index]}{1 - s[t,c]} \right)^{1-\eta}\\
+\times \left(\frac{YGROSS[t,c]  }{YGROSS[t,reference\_country\_index] } \frac{l[t,reference\_country\_index]}{l[t,c]} \right)^\eta
 \end{multline}
 
 
@@ -487,28 +487,6 @@ anomalies, as a share of GDP.
 
 \subsection{Parameters}\label{parameters-1}
 
-\subsubsection{Independent}\label{independent-1}
-
-\begin{itemize}
-\tightlist
-\item
-  \(\beta1\) : Linear damage coefficient on temperature. This parameter
-  represents the direct impact of the temperature anomaly on the
-  economy.
-\item
-  \(\beta2\) : Power damage coefficient on temperature. This parameter
-  captures the non-linear effects of temperature anomalies on the
-  economy..
-\end{itemize}
-
-\subsubsection{Time-dependent}\label{time-dependent-2}
-
-\begin{itemize}
-\tightlist
-\item
-  \texttt{temp\_anomaly}: Global average surface temperature anomaly (°C
-  above pre-industrial {[}year 1750{]}).
-\end{itemize}
 
 \subsubsection{Time and country
 dependent}\label{time-and-country-dependent-2}
@@ -536,23 +514,20 @@ dependent}\label{time-and-country-dependent-3}
 \item
   \texttt{LOCAL\_DAMFRAC\_KW}: Country-level damages as a share of net
   GDP based on local temperatures and on Kalkuhl \& Wenz.
-\item
-  \texttt{DAMFRAC}: Country-level damages as a share of net GDP based on
-  global temperatures.
+
 \end{itemize}
 
 \subsection{Equations}\label{equations-1}
 
-\begin{equation}
- DAMFRAC[t,c] = \beta1 \times temp\_anomaly^ {\beta2}[t] 
-\end{equation}
-
 
 \begin{multline}
- LOCAL\_DAMFRAC\_KW[t,c] = \beta1\_KW[c] \times local\_temp\_anomaly[t,c] \\
+ temp\_LOCAL\_DAMFRAC\_KW\_GROSS[t,c] = \beta1\_KW[c] \times local\_temp\_anomaly[t,c] \\
  + \beta2\_KW[c] \times local\_temp\_anomaly^2[t,c]
 \end{multline}
 
+\begin{multline}
+ LOCAL\_DAMFRAC\_KW[t,c] = temp\_LOCAL\_DAMFRAC\_KW\_GROSS[t,c] / \\(1-temp\_LOCAL\_DAMFRAC\_KW\_GROSS[t,c])
+\end{multline}
 
 \section{emissions.jl}\label{emissions.jl}
 

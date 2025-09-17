@@ -60,6 +60,9 @@ end
     using Statistics
     include("../src/components/quantile_recycle.jl")
 
-    quantiles = [1, 2, 3]
+    n_quantiles = 10
+    quantiles = rand(1:1000, n_quantiles) |> sort
+
     @test adjust_inequality(quantiles, 1) ≈ quantiles
+    @test adjust_inequality(quantiles, 0) ≈ mean(quantiles) * ones(n_quantiles)
 end

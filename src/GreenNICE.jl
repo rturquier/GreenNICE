@@ -1,7 +1,7 @@
 module GreenNICE
 
 # Load required packages.
-using Mimi, MimiFAIRv2, Statistics, Random, Distributions, Inequality
+using Mimi, MimiFAIRv2, Statistics, Random, Distributions
 
 # Load economic data country by country
 include("../data/parameters.jl")

@@ -169,3 +169,67 @@ function adjust_inequality(quantile_consumption_shares::Vector, γ::Real)
 
     return adjusted_quantile_consumption_shares
 end
+
+
+"""
+    gini(v)
+
+Compute the Gini Coefficient of a vector `v` .
+
+This function and its documentation is taken from JosepER's Inequality package, available at
+https://github.com/JosepER/Inequality.jl under the MIT licence. The package is not imported
+in the project because it is no longer maintained, and prevented updating other packages.
+If we don't use the Gini index in the end, we can remove this function.
+
+# Examples
+```julia
+julia> using Inequality
+julia> gini([8, 5, 1, 3, 5, 6, 7, 6, 3])
+0.2373737373737374
+```
+"""
+function gini(v::AbstractVector{<:Real})::Float64
+    (
+        2 * sum([x*i for (i,x) in enumerate(sort(v))])
+          / sum(sort(v))
+        - (length(v)+1)
+    ) / (length(v))
+end
+
+
+"""
+    gini(v, w)
+
+Compute the weighted Gini Coefficient of a vector `v` using weights given by a weight vector `w`.
+
+Weights must not be negative, missing or NaN. The weights and data vectors must have the same length.
+
+# Examples
+```julia
+julia> gini([8, 5, 1, 3, 5, 6, 7, 6, 3], collect(0.1:0.1:0.9))
+0.20652395514780775
+```
+"""
+function gini(v::AbstractVector{<:Real}, w::AbstractVector{<:Real})::Float64
+
+    checks_weights(v, w)
+
+    w = w[sortperm(v)]/sum(w)
+    v = sort(v)
+    p = cumsum(w)
+    nᵤ = cumsum(w .* v)/cumsum(w .* v)[end]
+    sum(nᵤ[2:end] .* p[1:(end-1)]) - sum(nᵤ[1:(end-1)] .* p[2:end])
+
+end
+
+
+"""
+    checks_weights(v::AbstractVector{<:Real}, w::AbstractVector{<:Real})
+
+Check weights used in [`gini`](@gini). Copied from the Inequality package.
+"""
+function checks_weights(v::AbstractVector{<:Real}, w::AbstractVector{<:Real})
+    length(v) == length(w) ? nothing : throw(ArgumentError("`v` and `w` vectors must be the same size, got $(length(v)) and $(length(w))"))
+    any([isnan(x) for x in w]) ? throw(ArgumentError("`w` vector cannot contain NaN values")) : nothing
+    all(w .>= 0) ? nothing : throw(ArgumentError("`w` vector cannot contain negative entries"))
+ end

@@ -69,27 +69,48 @@
 end
 
 
+
+
+"""
+    v(consumption::Real, environment::Real, θ::Real, α::Real)
+
+Combine consumption and environment with a constant elasticity of substitution.
+
+This is an intermediate function to the `utility` function.
+
+# Arguments
+- `c::Real`: consumption of market goods.
+- `E::Real`: consumption of non-market environmental goods.
+- `θ::Real`: substitutability parameter. Accepts value between -∞ and 1.
+- `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
+"""
+function v(c::Real, E::Real, θ::Real, α::Real)
+    if θ ≠ 0
+        # CES general case
+        value = ((1 - α) * c^θ + α * E^θ)^(1 / θ)
+    elseif θ == 0
+        # Cobb-Douglas special case
+        value = c^(1 - α) * E^α
+    end
+
+    return value
+end
+
+
 """
     utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
 
 Calculate utility of consumption and environmental goods.
 
 # Arguments
+- `c::Real`: consumption of market goods.
+- `E::Real`: consumption of non-market environmental goods.
 - `η::Real`: inequality aversion (coefficient of relative risk aversion).
-- `θ::Real`: substitutability parameter. Accepts value between -∞ and 1, and cannot be null.
+- `θ::Real`: substitutability parameter. Accepts value between -∞ and 1.
 - `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
 """
-function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
-    # function that combines consumption and environment
-    if θ ≠ 0
-        # CES general case
-        v = (c, E) -> ((1 - α) * c^θ + α * E^θ)^(1 / θ)
-    elseif θ == 0
-        # Cobb-Douglas special case
-        v = (c, E) -> c^(1 - α) * E^α
-    end
-
-    # concave transformation
+function utility(c::Real, E::Real, η::Real, θ::Real, α::Real)
+    # define concave (CRRA) transformation to be applied to function `v`
     if η ≠ 1
         # CRRA general case
         φ = x -> x^(1 - η) / (1 - η)
@@ -98,7 +119,7 @@ function utility(consumption::Real, environment::Real, η::Real, θ::Real, α::R
         φ = x -> log(x)
     end
 
-    utility = φ(v(consumption, environment))
+    utility = φ(v(c, E, θ, α))
     return utility
 end
 

@@ -10,6 +10,7 @@
     YGROSS     = Parameter(index=[time, country])   # Gross output (million USD2017 per year)
     μ          = Parameter(index=[time, country])   # Emissions control rate
     mapcrwpp  = Parameter(index=[country])          # Map from country index to WPP region index
+    co2_pulse  = Parameter(index=[time])            # Exogenous pulse(s) of CO2, in tons
 
     E_gtco2            = Variable(index=[time, country])   # Country level CO₂ emissions (GtCO2 per year)
     E_Global_gtco2     = Variable(index=[time])            # Global CO₂ emissions (sum of all country emissions) (GtCO2 per year)
@@ -23,8 +24,7 @@
             v.E_gtco2[t,c] = p.YGROSS[t,c] * p.σ[t,c] * (1-p.μ[t,c])
         end
 
-        # Define an equation for E_Global.
-        v.E_Global_gtco2[t] = sum(v.E_gtco2[t,:])
+        v.E_Global_gtco2[t] = sum(v.E_gtco2[t,:]) + p.co2_pulse[t] / 10^9
 
         # Convert emissions to GtC units (required by FAIR).
         v.E_Global_gtc[t] = v.E_Global_gtco2[t] * 12.01/44.01

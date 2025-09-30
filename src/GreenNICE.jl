@@ -40,8 +40,10 @@ function create()
 
 	# Set quantile dimension
 	set_dimension!(m, :quantile, ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"])
+
 	nb_quantile = length(dim_keys(m, :quantile))
 	nb_country = length(dim_keys(m, :country))
+    nb_year = length(dim_keys(m, :time))
 
 	# Add emissions and gross economy components before FAIR carbon cycle
 	add_comp!(m, emissions, before = :co2_cycle)
@@ -136,10 +138,10 @@ function create()
 	# --------------------------------
 
 	update_param!(m, :abatement, :control_regime, 3)  #  1:"global_carbon_tax", 2:"country_carbon_tax", 3:"country_abatement_rate"
-	update_param!(m, :abatement, :global_carbon_tax, zeros(length(dim_keys(m, :time))))
-	update_param!(m, :abatement, :reference_carbon_tax, zeros(length(dim_keys(m, :time))))
+	update_param!(m, :abatement, :global_carbon_tax, zeros(nb_year))
+	update_param!(m, :abatement, :reference_carbon_tax, zeros(nb_year))
 	update_param!(m, :abatement, :reference_country_index, findfirst(x -> x == "USA", countries))
-	update_param!(m, :abatement, :μ_input, zeros(length(dim_keys(m, :time)), length(dim_keys(m, :country))))
+	update_param!(m, :abatement, :μ_input, zeros(nb_year, nb_country))
 	update_param!(m, :abatement, :θ2, 2.6)
 	update_param!(m, :abatement, :pbacktime, full_pbacktime)
 
@@ -147,9 +149,12 @@ function create()
 	connect_param!(m, :abatement, :l, :l)
 	connect_param!(m, :abatement, :η, :η)
 	connect_param!(m, :abatement, :σ, :σ)
-	# --------------------------------
+
+    # --------------------------------
 	# CO2 Emissions
 	# --------------------------------
+
+	update_param!(m, :emissions, :co2_pulse, zeros(nb_year))
 
 	connect_param!(m, :emissions, :mapcrwpp,  :mapcrwpp)
 	connect_param!(m, :emissions, :σ, :σ)

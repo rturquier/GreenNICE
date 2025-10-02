@@ -4,34 +4,6 @@
 # #------------------------------------------------------------------------------------------------------------------
 # #------------------------------------------------------------------------------------------------------------------
 
-#####################################################################################################################
-# CALCULATE DAMAGE, CO₂ MITIGATION COST, OR CO₂ TAX BURDEN DISTRIBUTIONS ACROSS A COUNTRY'S QUANTILES.
-#####################################################################################################################
-# Description: This function will calculate quantile distribution shares for a country based
-#              on a provided income elasticity.
-#
-# Function Arguments:
-#
-#       elasticity    = Income elasticity of climate damages, CO₂ mitigation costs, CO₂ tax burdens, etc.
-#       income_shares = A vector of quantile income shares for a given country.
-#--------------------------------------------------------------------------------------------------------------------
-
-function country_quantile_distribution(elasticity, income_shares, nb_quantile)
-
-    # Apply elasticity to quantile income shares.
-    scaled_shares = income_shares .^ elasticity
-
-    # Allocate empty array for distribution across quantiles resulting from the elasticity.
-    updated_quantile_distribution = zeros(nb_quantile)
-
-    # Loop through each quantile to calculate updated distribution.
-    for q in 1:nb_quantile
-        updated_quantile_distribution[q] = scaled_shares[q] ./ sum(scaled_shares[:])
-    end
-
-    return updated_quantile_distribution
-end
-
 
 #######################################################################################################################
 # CALCULATE A LINEAR CARBON TAX TRAJECTORY

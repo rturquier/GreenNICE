@@ -172,6 +172,40 @@ end
 
 
 """
+    country_quantile_distribution(
+    elasticity::Vector{<:Real}, income_shares::Vector{<:Real}, nb_quantile::Int
+)
+
+Calculate quantile distribution shares for a country based on a provided elasticity.
+
+The function is used to calculate distributions of damages, CO₂ mitigation cost,
+or CO₂ tax burden, across a country's quantiles.
+
+# Arguments
+- elasticity::Vector{<:Real}: Income elasticity of climate damages, CO₂ mitigation costs,
+    CO₂ tax burdens, etc.
+- income_shares::Vector{<:Real}: a vector of quantile income shares for a given country.
+"""
+function country_quantile_distribution(
+    elasticity::Real, income_shares::Vector, nb_quantile::Int
+)
+    # Apply elasticity to quantile income shares.
+    scaled_shares = income_shares .^ elasticity
+
+    # Allocate empty array for distribution across quantiles resulting from the elasticity.
+    updated_quantile_distribution = zeros(nb_quantile)
+
+    # Loop through each quantile to calculate updated distribution.
+    for q in 1:nb_quantile
+        updated_quantile_distribution[q] = scaled_shares[q] ./ sum(scaled_shares[:])
+    end
+
+    return updated_quantile_distribution
+end
+
+
+
+"""
     gini(v)
 
 Compute the Gini Coefficient of a vector `v` .

@@ -167,6 +167,7 @@ function apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::Data
             cost_of_damages_to_E = sum(a .* p.* marginal_damage_to_E),
         )
         @mutate(B = (1 / (1 + $ρ))^t * ∂_cW_global_average / ∂_cW_global_average[t == 0])
+        @filter(t >= 0)
         @summarize(
             present_cost_of_damages_to_c = sum(B .* cost_of_damages_to_c),
             present_cost_of_damages_to_E = sum(B .* cost_of_damages_to_E),

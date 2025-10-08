@@ -222,6 +222,32 @@ function get_SCC_decomposition(
 end
 
 
+"""
+        get_SCC_decomposition(
+        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+    )::DataFrame
+
+    Get SCC decomposition for a vector of γ values.
+
+    Apply `get_SCC_decomposition` for each value of γ provided in `γ_list`.
+    Return a Dataframe with as many rows as values in `γ_list`, with three columns:
+    - `γ`, equal to `γ_list`,
+    - `present_cost_of_damages_to_c`,
+    - `present_cost_of_damages_to_E`.
+"""
+function get_SCC_decomposition(
+    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+)::DataFrame
+    df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...), γ_list)
+    concatenated_df = reduce(vcat, df_list)
+    SCC_decomposition_df = @eval @chain $concatenated_df begin
+        @mutate(γ = $γ_list)
+        @relocate(γ)
+    end
+    return SCC_decomposition_df
+end
+
+
 # Testing...
 η = 2
 θ = 0.5
@@ -229,3 +255,7 @@ end
 ρ = 0.001
 γ = 0
 get_SCC_decomposition(η, θ, α, γ, ρ)
+
+
+γ_list = [0., 1.]
+get_SCC_decomposition(η, θ, α, γ_list, ρ)

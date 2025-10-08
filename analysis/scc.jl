@@ -61,11 +61,35 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
 end
 
 
+@doc raw"""
+        marginal_welfare_of_consumption(c, E, l, η, θ, α)
+
+    First derivative of welfare with respect to consumption.
+
+    ```math
+    \partial_{c_i} W  =
+        l_i
+        \cdot (1 - \alpha) c_i^{\theta - 1}
+        \cdot v(c_i, E_i)^{1 - \eta - \theta}
+    ```
+"""
 function marginal_welfare_of_consumption(c, E, l, η, θ, α)
     return l * (1 - α) * c^(θ - 1) * v(c, E, θ, α)^(1 - η - θ)
 end
 
 
+@doc raw"""
+        marginal_welfare_of_environment(c, E, l, η, θ, α)
+
+    First derivative of welfare with respect to environment.
+
+    ```math
+    \partial_{E_i} W  =
+        l_i
+        \cdot \alpha E_i^{\theta - 1}
+        \cdot v(c_i, E_i)^{1 - \eta - \theta}
+    ```
+"""
 function marginal_welfare_of_environment(c, E, l, η, θ, α)
     return l * α * E^(θ - 1) * v(c, E, θ, α)^(1 - η - θ)
 end
@@ -88,6 +112,49 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
 end
 
 
+@doc raw"""
+        apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::DataFrame
+
+    Get present value of equity-weighted, money-metric damages to `c` and `E`.
+
+    The social cost of carbon (SCC) is equal to the sum of the present cost of marginal
+    damages to consumption `c`, and to environment `E`:
+    ```math
+    \sum_t B_t \sum_{i} a_{i, t} \frac{dc_i}{de}
+    + \sum_t B_t \sum_{i} a_{i, t} p_{i, t} \frac{dE_i}{de}.
+    ```
+
+    **Discount factor** ``B_t`` (column `B` in the dataframe) is calculated as:
+    ```math
+    B(t) = \beta^t
+        \frac{
+            \frac{1}{n} \sum_{i} \partial_{c_{i, t}}{W_t}
+        }{
+            \frac{1}{n} \sum_{i} \partial_{c_{i, 0}}{W_0}
+    },
+    ```
+
+    where index ``i`` represents a group (a certain decile in a certain country), and
+    ``W_t`` is global welfare at time ``t``.
+
+    **Equity weight** ``a_{i, t}`` (column `a`) is defined as:
+    ```math
+    a_{i, t} = \frac{
+        \partial_{c_{i, t}} W_t
+    }{
+        \frac{1}{n} \sum_{i}\partial_{c_{i, t}} W_t
+    }
+    ```
+
+    **Relative price** ``p_{i, t}`` (column `p`) is defined as:
+    ```math
+    p_{i, t} = \frac{\partial_{E_i}{W_t}}{\partial_{c_i}{W_t}}.
+    ```
+
+    Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in
+    the dataframe, and marginal damages to the environment, ``\frac{dE_i}{de}``, are coded
+    as `marginal_damage_to_E`.
+"""
 function apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::DataFrame
     SCC_df = @eval @chain $prepared_df begin
         @group_by(year)
@@ -107,6 +174,37 @@ function apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::Data
 end
 
 
+"""
+        get_SCC_decomposition(
+            η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
+            pulse_year::Int=2025, pulse_size::Real=1.
+        )::DataFrame
+
+    Get social cost of carbon as damages to consumption and damages to the environment.
+
+    Run a version of GreenNICE with the parameters supplied to the function, as well as an
+    identical model with an additional `pulse_size` tons of CO2 in year `pulse_year`.
+    Compare consumption and environment between the two models, and compute the present
+    value of damages analytically.
+
+    Return a one-line `Dataframe` with two `Float64` columns:
+    - `present_cost_of_damages_to_c`,
+    - `present_cost_of_damages_to_E`.
+
+    The sum of these two numbers is the social cost of carbon (SCC). See function
+    `apply_SCC_decomposition_formula` for mathematical details.
+
+    # Arguments
+    - `η::Real`: inequality aversion (coefficient of relative risk aversion).
+    - `θ::Real`: substitutability parameter. Accepts value between -∞ and 1.
+    - `α::Real`: share of `environment` the utility function. Must be in ``[0, 1]``.
+    - `γ::Real`: within-country inequality parameter. 0 means no within-country inequality.
+        1 is the standard calibration.
+    - `ρ::Real`: rate of pure time preference (utility discount rate).
+    - `pulse_year::Int`: year where the CO2 marginal pulse is emmitted, and year of
+        reference for the SCC.
+    - `pulse_size::Real`: size of the CO2 pulse, in tons.
+"""
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ::Real, ρ::Real; pulse_year::Int=2025, pulse_size::Real=1.
 )::DataFrame

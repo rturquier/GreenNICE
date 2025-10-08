@@ -58,6 +58,14 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             l = l / 10, # population in a decile is a tenth of the country's population
         )
         @relocate(year, t)
+        # convert from thousand dollars and thousand people to dollars and people
+        @mutate(
+            marginal_damage_to_c = marginal_damage_to_c * 10^3,
+            marginal_damage_to_E = marginal_damage_to_E * 10^3,
+            c = c * 10^3,
+            E = E * 10^3,
+            l = l * 10^3,
+        )
     end
 
     return clean_df

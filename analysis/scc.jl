@@ -53,7 +53,10 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             c = qcpc_post_recycle,
             E = Env_percapita,
         )
-        @mutate(t = year - $pulse_year)  # t = 0 at pulse year. Used later to discount.
+        @mutate(
+            t = year - $pulse_year, # t = 0 at pulse year. Used later to discount.
+            l = l / 10, # population in a decile is a tenth of the country's population
+        )
         @relocate(year, t)
     end
 
@@ -98,7 +101,6 @@ end
 function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFrame
     prepared_df = @eval @chain $df begin
         @mutate(
-            l = l / 10,  # population in a decile is a tenth of the country's population
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
             ∂_cE = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
         )

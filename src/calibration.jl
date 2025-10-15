@@ -105,11 +105,11 @@ end
 # Set MAC = 0
 E_stock0[E_stock0.countrycode .== "MAC", :E_stock0] .= 0
 
-# Scale down the values by dividing by 1,000,000 to get the units in million USD
+# Adjust values to million USD (data is USD). This is consistent with K0 input.
 
 E_stock0.E_stock0 = E_stock0.E_stock0 ./ 1000000
 
-# Update to 2017 values
+# Update to 2017 values. Consistent with Young-Brun et al.
 E_stock0.E_stock0 = E_stock0.E_stock0 .* 0.94
 
 E_stock0_file_path = "data/E_stock0.csv"

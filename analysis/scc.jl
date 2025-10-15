@@ -258,16 +258,3 @@ function get_SCC_decomposition(
     end
     return SCC_decomposition_df
 end
-
-
-# Testing...
-η = 2
-θ = 0.5
-α = 0.1
-ρ = 0.001
-γ = 0
-get_SCC_decomposition(η, θ, α, γ, ρ)
-
-
-γ_list = [0., 1.]
-get_SCC_decomposition(η, θ, α, γ_list, ρ)

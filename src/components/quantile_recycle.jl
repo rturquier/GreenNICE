@@ -31,6 +31,7 @@
     damage_dist					= Variable(index=[time, country, quantile]) 	# Quantile distribution shares of climate damages
 
 	qcpc_base                  	= Variable(index=[time, country, quantile])  	# Pre-damage, pre-abatement cost, pre-tax quantile consumption per capita (thousand USD2017 per person per year)
+	qcpc_damages             	= Variable(index=[time, country, quantile])  	# Damages to per-capita consumption in each quantile
     qcpc_post_damage_abatement 	= Variable(index=[time, country, quantile])  	# Post-damage, post-abatement cost per capita quantile consumption (thousand USD2017 per person per year)
     qcpc_post_tax              	= Variable(index=[time, country, quantile])  	# Quantile per capita consumption after subtracting out carbon tax (thousand USD2017 per person per year)
     qcpc_post_recycle          	= Variable(index=[time, country, quantile])  	# Quantile per capita consumption after recycling tax back to quantiles (thousand USD2017 per person per year)
@@ -94,7 +95,18 @@
 
 				# Calculate post-damage, post-abatement cost per capita quantile consumption (bounded below to ensure consumptions don't collapse to zero or go negative).
 				# Note, this differs from standard NICE equation because quantile CO2 abatement cost and climate damage shares can now vary over time.
-				v.qcpc_post_damage_abatement[t,c,q] = max(v.qcpc_base[t,c,q] - (p.nb_quantile* p.CPC[t,c] * p.LOCAL_DAMFRAC_KW[t,c] * v.damage_dist[t,c,q]) - (temp_qcpc * p.ABATEFRAC[t,c] * v.abatement_cost_dist[t,c,q]), 1e-8)
+                v.qcpc_damages[t, c, q] = (
+                    p.nb_quantile
+                    * p.CPC[t,c]
+                    * p.LOCAL_DAMFRAC_KW[t,c]
+                    * v.damage_dist[t,c,q]
+                )
+				v.qcpc_post_damage_abatement[t,c,q] = max(
+                    v.qcpc_base[t,c,q]
+                    - v.qcpc_damages[t, c, q]
+                    - (temp_qcpc * p.ABATEFRAC[t,c] * v.abatement_cost_dist[t,c,q]),
+                    1e-8
+                )
 
 				# Subtract tax revenue from each quantile based on quantile CO2 tax burden distributions.
 				# Note, per capita tax revenue and consumption should both be in $1000/person.

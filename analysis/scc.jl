@@ -33,16 +33,16 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :Env_percapita))
     population_df = getdataframe(mm.base, :welfare => :l)
     damages_df = @chain begin
-        getdataframe(mm, :welfare => (:qcpc_post_recycle, :Env_percapita))
+        getdataframe(
+            mm,
+            :welfare => :Env_percapita,
+            :quantile_recycle => :qcpc_damages,
+        )
         # The marginal model gives changes per ton of CO2:
         # `(modified_model_value - base_model_value) / pulse_size`.
-        # So marginal *damages* are the additive inverse of the changes in consumption and
-        # environment.
-        @mutate(
-            marginal_damage_to_c = -qcpc_post_recycle,
-            marginal_damage_to_E = -Env_percapita,
-        )
-        @select(-(qcpc_post_recycle, Env_percapita))
+        # So marginal *damages* are the additive inverse of the changes in environment.
+        @mutate(marginal_damage_to_E = -Env_percapita)
+        @select(-(Env_percapita))
     end
 
     clean_df = @eval @chain $base_df begin
@@ -52,14 +52,15 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             year = time,
             c = qcpc_post_recycle,
             E = Env_percapita,
+            marginal_damage_to_c = qcpc_damages,
         )
         @mutate(
             t = year - $pulse_year, # t = 0 at pulse year. Used later to discount.
             l = l / 10, # population in a decile is a tenth of the country's population
         )
         @relocate(year, t)
-        # convert from thousand dollars and thousand people to dollars and people
         @mutate(
+            # convert from thousand dollars and thousand people to dollars and people
             marginal_damage_to_c = marginal_damage_to_c * 10^3,
             marginal_damage_to_E = marginal_damage_to_E * 10^3,
             c = c * 10^3,

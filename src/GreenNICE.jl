@@ -126,10 +126,10 @@ function create()
     connect_param!(m, :environment, :nb_quantile, :nb_quantile)
     connect_param!(m, :environment, :mapcrwpp,  :mapcrwpp)
 
-	update_param!(m, :environment, :N0, N0)
-    update_param!(m, :environment, :damage, 0.000278)
+	update_param!(m, :environment, :E_stock0, E_stock0)
+    update_param!(m, :environment, :Δ_E, 0.000278) #Average damage coeficient from Bastien-Olvera et al. 2024
     update_param!(m, :environment, :dam_assessment, 1)
-    update_param!(m, :environment, :flow, ((1 - 0.04) / (1 - 0.04^100)))
+    update_param!(m, :environment, :E_discount_rate, 0.04)
 
 	# --------------------------------
 	# Abatement

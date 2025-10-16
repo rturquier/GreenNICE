@@ -14,7 +14,6 @@
     LOCAL_DAMFRAC_KW    = Variable(index=[time, country]) # Country-level damages based on local temperatures and on Kalkuhl & Wenz (share of net output)
 
     θ_env               = Parameter(index=[country]) # Linear damage coeficient Natural capital loss (Bastien-Olvera et al. 2025)
-    mean_θ_env          = Variable()        # Mean of θ_env across countries, used in LOCAL_DAM_ENV_EQUAL
 
     E_stock_temp_anomaly    = Variable(index=[time]) # Temperature anomaly with respect to year 2020 (°C above year 2020)
 
@@ -24,7 +23,8 @@
 
 
     function run_timestep(p, v, d, t)
-        v.mean_θ_env = mean(p.θ_env[:])
+
+        mean_θ_env = mean(p.θ_env[:]) # Mean of θ_env across countries, used in LOCAL_DAM_ENV_EQUAL
 
         # Loop through countries.
         for c in d.country
@@ -45,7 +45,7 @@
 
             #Calculate country-level damages on nat cap using Bastien-Olvera et al.'s (2024) coefficients.
             v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.E_stock_temp_anomaly[t]
-            v.LOCAL_DAM_ENV_EQUAL[t,c] = 1 + v.mean_θ_env * v.E_stock_temp_anomaly[t]
+            v.LOCAL_DAM_ENV_EQUAL[t,c] = 1 + mean_θ_env * v.E_stock_temp_anomaly[t]
         end
 
 

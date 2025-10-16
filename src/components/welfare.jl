@@ -20,7 +20,7 @@
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     E_flow_percapita        = Parameter(index=[time, country, quantile])    # Flow of non-market environmental good per capita (thousand USD2017 per person per year)
-    E_bar                   = Parameter()                                   # Reference level of environment
+    E_bar                   = Parameter()                                   # Average E_flow per capita in 2020 (thousand USD2017 per person)
 
     function run_timestep(p, v, d, t)
 

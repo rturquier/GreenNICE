@@ -11,39 +11,41 @@
     β1_KW               = Parameter(index=[country]) # Linear damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
     β2_KW               = Parameter(index=[country])  # Quadratic damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
 
-    θ_env               = Parameter(index=[country]) # Linear damage coeficient Natural capital loss
-
     LOCAL_DAMFRAC_KW    = Variable(index=[time, country]) # Country-level damages based on local temperatures and on Kalkuhl & Wenz (share of net output)
 
-    LOCAL_DAM_ENV       = Variable(index=[time, country]) # Country-level damages based on local tempertures and on Bastien-Olvera et al parameters
-    LOCAL_DAM_ENV_EQUAL = Variable(index=[time, country]) # Country-level damages based equal for all countries based on Bastien-Olvera et al parameters
-    temp_anomaly_N      = Variable(index=[time]) # 2020 temperature anomaly (°C above year 2020)
-    mean_θ_env         = Variable()        # Mean of θ_env across countries
+    θ_env               = Parameter(index=[country]) # Linear damage coeficient Natural capital loss (Bastien-Olvera et al. 2025)
+    mean_θ_env          = Variable()        # Mean of θ_env across countries, used in LOCAL_DAM_ENV_EQUAL
+
+    E_stock_temp_anomaly    = Variable(index=[time]) # Temperature anomaly with respect to year 2020 (°C above year 2020)
+
+    LOCAL_DAM_ENV       = Variable(index=[time, country]) # Country-level damage function at country level. Based on Bastien-Olvera et al (2025))
+    LOCAL_DAM_ENV_EQUAL = Variable(index=[time, country]) # Equal country-level damage function.  Average of Bastien-Olvera et al (2025) estimates
+
+
+
     function run_timestep(p, v, d, t)
         v.mean_θ_env = mean(p.θ_env[:])
 
         # Loop through countries.
         for c in d.country
 
-        	# Calculate country level damages (as share of GROSS output) based on country level temperature anomaly and Kalkuhl & Wenz coefficients, and store in temporary variable
+        # Calculate country level damages (as share of GROSS output) based on country level temperature anomaly and Kalkuhl & Wenz coefficients, and store in temporary variable
 		temp_LOCAL_DAMFRAC_KW_GROSS = p.β1_KW[c] * p.local_temp_anomaly[t,c] + p.β2_KW[c] *(p.local_temp_anomaly[t,c])^2
 
 		# Convert the country level damages based Kalkuhl & Wenz coefficients from a share of GROSS output to a share of NET output, for use in other components
 		# Y_net_of_damages = Y_gross/(1+DAMFRAC_net) = (1-DAMFRAC_gross)*Y_gross , so DAMFRAC_net = DAMFRAC_gross / (1-DAMFRAC_gross)
 		v.LOCAL_DAMFRAC_KW[t,c] = temp_LOCAL_DAMFRAC_KW_GROSS / (1-temp_LOCAL_DAMFRAC_KW_GROSS)
 
-            # Calculate changes in temperature with respect to year 2020 (N Damage function).
+            # Calculate changes in temperature with respect to year 2020 for damage function
             if is_first(t)
-                v.temp_anomaly_N[t] = 0
+                v.E_stock_temp_anomaly[t] = 0
             else
-                v.temp_anomaly_N[t] = p.temp_anomaly[t] - p.temp_anomaly[TimestepIndex(1)]
+                v.E_stock_temp_anomaly[t] = p.temp_anomaly[t] - p.temp_anomaly[TimestepIndex(1)]
             end
 
             #Calculate country-level damages on nat cap using Bastien-Olvera et al.'s (2024) coefficients.
-            v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.temp_anomaly_N[t]
-            v.LOCAL_DAM_ENV_EQUAL[t,c] = 1 + v.mean_θ_env * v.temp_anomaly_N[t]
-
-
+            v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.E_stock_temp_anomaly[t]
+            v.LOCAL_DAM_ENV_EQUAL[t,c] = 1 + v.mean_θ_env * v.E_stock_temp_anomaly[t]
         end
 
 

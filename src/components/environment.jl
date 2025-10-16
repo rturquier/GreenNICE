@@ -9,35 +9,35 @@
     E_stock0        = Parameter(index=[country])            # Initial level of stock Natural capital (2017 million USD)
     E_discount_rate = Parameter()                           # Discount rate to calculate stock of E (from CWON)
 
-    LOCAL_DAM_ENV       = Parameter(index=[time,country])       # Temperature change by country
-    LOCAL_DAM_ENV_EQUAL = Parameter(index=[time,country])  # Temperature change by country, equal for all countries
+    LOCAL_DAM_ENV       = Parameter(index=[time,country])  # Damage factor by country
+    LOCAL_DAM_ENV_EQUAL = Parameter(index=[time,country])  # Damage factor by country, assuming equal damages
 
     dam_assessment  = Parameter()                           #Switch to determine type of assessment
 
-
+    E_stock             = Variable(index=[time, country])               # Stock of Natural capital (2017 million usd)
     E_flow              = Variable(index=[time, country, quantile])     # Flow of natural capital (2017 million usd per quantile per year)
-    E_flow_percapita    = Variable(index=[time, country, quantile])     # Flow of natural capital per capita (2017 thousand usd per capita)
     E_bar               = Variable()                                    # Average level of environment per capita at time 0 (thousand usd per capita)
+    E_flow_percapita    = Variable(index=[time, country, quantile])     # Flow of natural capital per capita (2017 thousand usd per capita)
     E_flow_country      = Variable(index=[time,country])                # Flow of natural capital per country (2017 million usd per year)
     E_flow_rwpp         = Variable(index=[time, regionwpp])             # Flow of natural capital per WPP region (2017 million usd per year)
     E_flow_global       = Variable(index=[time])                        # Flow of natural capital globally (2017 million usd per year)
-    E_stock             = Variable(index=[time, country])               # Stock of Natural capital (2017 million usd)
 
     function run_timestep(p, v, d, t)
 
         # Note that the country dimension is defined in d and parameters and variables are indexed by 'c'
+
         stock_to_flow_factor = (1 - p.E_discount_rate) / (1 - p.E_discount_rate^100)
 
-        E_flow0 = p.E_stock0 .* stock_to_flow_factor
+        E_stock0_percapita = (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :])
 
-        v.E_bar = sum(E_flow0[:]) / sum(p.l[TimestepIndex(1), :])
+        v.E_bar = E_stock0_percapita * stock_to_flow_factor
 
         for c in d.country, q in d.quantile
 
             if p.dam_assessment == 4                    # same E stock per capita, equal damages
 
                 v.E_stock[t,c] = is_first(t) ?
-                ( (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :]) * p.l[t,c] ) :
+                (E_stock0_percapita * p.l[t,c]) :
                 (v.E_stock[TimestepIndex(1),c] * p.LOCAL_DAM_ENV_EQUAL[t,c])
 
             elseif p.dam_assessment == 3                # different E stock per capita, equal damages
@@ -49,10 +49,11 @@
             elseif p.dam_assessment == 2                #same E, different damages
 
                 v.E_stock[t,c] = is_first(t) ?
-                ( (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :]) * p.l[t,c] ) :
+                (E_stock0_percapita * p.l[t,c]) :
                 (v.E_stock[TimestepIndex(1),c] * p.LOCAL_DAM_ENV[t,c])
 
             else
+
                 v.E_stock[t,c] = is_first(t) ?
                 (p.E_stock0[c]) :
                 (p.E_stock0[c] * p.LOCAL_DAM_ENV[t,c])

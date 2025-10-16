@@ -4,21 +4,23 @@
 
 @defcomp damages begin
 
-    country      = Index() # Set country index
+    country             = Index() # Set country index
 
-    temp_anomaly       = Parameter(index=[time]) # Global average surface temperature anomaly (°C above pre-industrial [year 1750]).
-    local_temp_anomaly = Parameter(index=[time, country]) # Country-level average surface temperature anomaly (°C above pre-industrial [year 1750]).
-    β1_KW              = Parameter(index=[country]) # Linear damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
-    β2_KW              = Parameter(index=[country])  # Quadratic damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
+    temp_anomaly        = Parameter(index=[time]) # Global average surface temperature anomaly (°C above pre-industrial [year 1750]).
+    local_temp_anomaly  = Parameter(index=[time, country]) # Country-level average surface temperature anomaly (°C above pre-industrial [year 1750]).
+    β1_KW               = Parameter(index=[country]) # Linear damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
+    β2_KW               = Parameter(index=[country])  # Quadratic damage coefficient on local temperature anomaly for Kalkuhl and Wenz based damage function
 
-    θ_env              = Parameter(index=[country]) # Linear damage coeficient Natural capital loss
+    θ_env               = Parameter(index=[country]) # Linear damage coeficient Natural capital loss
 
-    LOCAL_DAMFRAC_KW   = Variable(index=[time, country]) # Country-level damages based on local temperatures and on Kalkuhl & Wenz (share of net output)
+    LOCAL_DAMFRAC_KW    = Variable(index=[time, country]) # Country-level damages based on local temperatures and on Kalkuhl & Wenz (share of net output)
 
-    LOCAL_DAM_ENV      = Variable(index=[time, country]) # Country-level damages based on local tempertures and on Bastien-Olvera et al parameters
-    temp_anomaly_N    = Variable(index=[time]) # 2020 temperature anomaly (°C above year 2020)
-
+    LOCAL_DAM_ENV       = Variable(index=[time, country]) # Country-level damages based on local tempertures and on Bastien-Olvera et al parameters
+    LOCAL_DAM_ENV_EQUAL = Variable(index=[time, country]) # Country-level damages based equal for all countries based on Bastien-Olvera et al parameters
+    temp_anomaly_N      = Variable(index=[time]) # 2020 temperature anomaly (°C above year 2020)
+    mean_θ_env         = Variable()        # Mean of θ_env across countries
     function run_timestep(p, v, d, t)
+        v.mean_θ_env = mean(p.θ_env[:])
 
         # Loop through countries.
         for c in d.country
@@ -39,6 +41,8 @@
 
             #Calculate country-level damages on nat cap using Bastien-Olvera et al.'s (2024) coefficients.
             v.LOCAL_DAM_ENV[t,c] = 1 + p.θ_env[c] * v.temp_anomaly_N[t]
+            v.LOCAL_DAM_ENV_EQUAL[t,c] = 1 + v.mean_θ_env * v.temp_anomaly_N[t]
+
 
         end
 

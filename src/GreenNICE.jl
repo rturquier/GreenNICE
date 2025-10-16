@@ -127,7 +127,6 @@ function create()
     connect_param!(m, :environment, :mapcrwpp,  :mapcrwpp)
 
 	update_param!(m, :environment, :E_stock0, E_stock0)
-    update_param!(m, :environment, :Δ_E, 0.000278) #Average damage coeficient from Bastien-Olvera et al. 2024
     update_param!(m, :environment, :dam_assessment, 1)
     update_param!(m, :environment, :E_discount_rate, 0.04)
 
@@ -246,6 +245,7 @@ function create()
 	connect_param!(m, :quantile_recycle => :country_pc_dividend,:revenue_recycle	=> :country_pc_dividend)
 	connect_param!(m, :quantile_recycle => :tax_pc_revenue,		:revenue_recycle	=> :tax_pc_revenue)
     connect_param!(m, :environment      => :LOCAL_DAM_ENV,      :damages            => :LOCAL_DAM_ENV)
+    connect_param!(m, :environment      => :LOCAL_DAM_ENV_EQUAL,:damages            => :LOCAL_DAM_ENV_EQUAL)
 	connect_param!(m, :welfare 			=> :E_flow_percapita, 	:environment		=> :E_flow_percapita)
 	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)

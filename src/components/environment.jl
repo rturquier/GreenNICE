@@ -6,11 +6,11 @@
     nb_quantile     = Parameter()                           # Number of quantiles
     mapcrwpp        = Parameter(index=[country])
 
-    Δ_E             = Parameter()                           # Average damage coeficient from Bastien-Olvera et al. 2024
     E_stock0        = Parameter(index=[country])            # Initial level of stock Natural capital (2017 million USD)
     E_discount_rate = Parameter()                           # Discount rate to calculate stock of E (from CWON)
 
-    LOCAL_DAM_ENV   = Parameter(index=[time,country])       # Temperature change by country
+    LOCAL_DAM_ENV       = Parameter(index=[time,country])       # Temperature change by country
+    LOCAL_DAM_ENV_EQUAL = Parameter(index=[time,country])  # Temperature change by country, equal for all countries
 
     dam_assessment  = Parameter()                           #Switch to determine type of assessment
 
@@ -38,34 +38,28 @@
 
                 v.E_stock[t,c] = is_first(t) ?
                 ( (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :]) * p.l[t,c] ) :
-                (v.E_stock[t-1,c] * (1-p.Δ_E))
-
-                v.E_flow[t, c, q] = v.E_stock[t,c] * stock_to_flow_factor * (1 / p.nb_quantile)
-
+                (v.E_stock[TimestepIndex(1),c] * p.LOCAL_DAM_ENV_EQUAL[t,c])
 
             elseif p.dam_assessment == 3                # different E stock per capita, equal damages
 
                 v.E_stock[t,c] = is_first(t) ?
                 (p.E_stock0[c]) :
-                (v.E_stock[t-1,c] * (1-p.Δ_E))
-
-                v.E_flow[t, c, q] = v.E_stock[t,c] * stock_to_flow_factor * (1 / p.nb_quantile)
+                (p.E_stock0[c] * p.LOCAL_DAM_ENV_EQUAL[t,c])
 
             elseif p.dam_assessment == 2                #same E, different damages
-                v.E_stock[t, c] = is_first(t) ?          ###PROBLEM
-                ( (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :]) * p.l[t,c] ) :
-                (p.E_stock0[c] * p.LOCAL_DAM_ENV[t,c])
 
-                v.E_flow[t, c, q] = v.E_stock[t,c] * stock_to_flow_factor * (1 / p.nb_quantile)
+                v.E_stock[t,c] = is_first(t) ?
+                ( (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :]) * p.l[t,c] ) :
+                (v.E_stock[TimestepIndex(1),c] * p.LOCAL_DAM_ENV[t,c])
 
             else
                 v.E_stock[t,c] = is_first(t) ?
                 (p.E_stock0[c]) :
                 (p.E_stock0[c] * p.LOCAL_DAM_ENV[t,c])
 
-                v.E_flow[t, c, q] = v.E_stock[t,c] * stock_to_flow_factor * (1 / p.nb_quantile)
-
             end
+
+            v.E_flow[t, c, q] = v.E_stock[t,c] * stock_to_flow_factor * (1 / p.nb_quantile)
 
         end
 

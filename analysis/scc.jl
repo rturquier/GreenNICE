@@ -117,7 +117,10 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
         @group_by(year)
         @mutate(∂_cW_global_average = sum(∂_cW) / sum(l))
         @ungroup()
-        @mutate(a = ∂_cW / ∂_cW_global_average)  # equity weights
+        @mutate(
+            a = ∂_cW / ∂_cW_global_average,  # equity weights
+            B = (1 / (1 + $ρ))^t * ∂_cW_global_average / ∂_cW_global_average[t == 0][1],
+        )
     end
     return prepared_df
 end
@@ -171,11 +174,11 @@ function apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::Data
         @group_by(year)
         @summarize(
             t = unique(t),
+            B = unique(B),
             ∂_cW_global_average = unique(∂_cW_global_average),
             cost_of_damages_to_c = sum(a .* marginal_damage_to_c),
             cost_of_damages_to_E = sum(a .* p.* marginal_damage_to_E),
         )
-        @mutate(B = (1 / (1 + $ρ))^t * ∂_cW_global_average / ∂_cW_global_average[t == 0])
         @filter(t >= 0)
         @summarize(
             present_cost_of_damages_to_c = sum(B .* cost_of_damages_to_c),

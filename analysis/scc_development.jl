@@ -5,9 +5,9 @@ include("scc.jl")
 
 
 # %% Set parameters
-η = 1.
+η = 1.5
 θ = 0.5
-α = 0.2
+α = 0.1
 ρ = 0.001
 γ_list = [0., 1.]
 
@@ -53,3 +53,73 @@ EDE_df = @eval @chain begin
     @rename(year = time)
     @filter(year >= $pulse_year)
 end
+
+
+# %% --- Invetigating the role of γ
+# %% Get SCC prepared_df for two values of γ
+γ_0 = 0.
+γ_1 = 1.
+
+mm_0 = set_up_marginal_model(η, θ, α, γ_0, pulse_year, pulse_size)
+run(mm_0)
+
+γ_0_test_df = @chain begin
+    get_model_data(mm_0, pulse_year)
+    prepare_df_for_SCC(_, η, θ, α)
+end
+
+mm_1 = set_up_marginal_model(η, θ, α, γ_1, pulse_year, pulse_size)
+run(mm_1)
+
+γ_1_test_df = @chain begin
+    get_model_data(mm_1, pulse_year)
+    prepare_df_for_SCC(_, η, θ, α)
+end
+
+# %% Compare discount factors
+B_0 = @chain γ_0_test_df begin
+    @group_by(year)
+    @summarize(B_0 = unique(B))
+end
+B_1 = @chain γ_1_test_df begin
+    @group_by(year)
+    @summarize(B_1 = unique(B))
+end
+
+B_comparison_df = @chain begin
+    @left_join(B_0, B_1)
+    @mutate(B_relative_difference = B_1 / B_0 - 1)
+end
+
+# %% Compare undiscounted SCC
+total_cost_of_consumption_damages_0 = @eval @chain $γ_0_test_df begin
+    @group_by(year)
+    @summarize(
+        t = unique(t),
+        ∂_cW_global_average = unique(∂_cW_global_average),
+        cost_of_damages_to_c = sum(a .* marginal_damage_to_c),
+    )
+    @filter(t >= 0)
+    @summarize(
+        total_cost_of_damages_to_c = sum(cost_of_damages_to_c),
+    )
+    @pull(total_cost_of_damages_to_c)
+end
+total_cost_of_consumption_damages_1 = @eval @chain $γ_1_test_df begin
+    @group_by(year)
+    @summarize(
+        t = unique(t),
+        ∂_cW_global_average = unique(∂_cW_global_average),
+        cost_of_damages_to_c = sum(a .* marginal_damage_to_c),
+    )
+    @filter(t >= 0)
+    @summarize(
+        total_cost_of_damages_to_c = sum(cost_of_damages_to_c),
+    )
+    @pull(total_cost_of_damages_to_c)
+end
+
+total_cost_of_consumption_damages_1 - total_cost_of_consumption_damages_0
+
+# %% Let's compare the two dataframes directly
+@select(γ_1_test_df, c:B) .- @select(γ_0_test_df, c:B)

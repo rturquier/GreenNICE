@@ -49,11 +49,11 @@ end
         @test utility(aggregated_equivalent_c, E_bar, η, θ, α) ≈ average_welfare
     end
 
-    # Check that inverse utility throws an error when inverse should be undefined
-    @test_throws DomainError inverse_utility(-4, 2, 2, 0.5, 0.5)
-    @test_throws DomainError inverse_utility(-0.1, 2, 2, -3.3, 0.5)
-    @test_throws DomainError inverse_utility(-2, 2, 0.8, -2, 0.5)
-    @test_throws DomainError inverse_utility(8, 2, 0.8, -2.3, 0.5)
+    # Check that inverse utility returns `NaN` when inverse should be undefined
+    @test inverse_utility(-4, 2, 2, 0.5, 0.5) |> isnan
+    @test inverse_utility(-0.1, 2, 2, -3.3, 0.5) |> isnan
+    @test inverse_utility(-2, 2, 0.8, -2, 0.5) |> isnan
+    @test inverse_utility(8, 2, 0.8, -2.3, 0.5) |> isnan
 end
 
 @testset "Quantile tests" begin

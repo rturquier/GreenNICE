@@ -48,6 +48,5 @@
             v.LOCAL_DAM_ENV_EQUAL[t,c] = 1 + mean_θ_env * v.E_stock_temp_anomaly[t]
         end
 
-
     end
 end

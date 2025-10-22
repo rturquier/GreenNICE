@@ -7,7 +7,6 @@
     mapcrwpp        = Parameter(index=[country])
 
     E_stock0        = Parameter(index=[country])            # Initial level of stock Natural capital (2017 million USD)
-    E_discount_rate = Parameter()                           # Discount rate to calculate stock of E (from CWON)
 
     LOCAL_DAM_ENV       = Parameter(index=[time,country])  # Damage factor by country
     LOCAL_DAM_ENV_EQUAL = Parameter(index=[time,country])  # Damage factor by country, assuming equal damages
@@ -22,11 +21,10 @@
     E_flow_rwpp         = Variable(index=[time, regionwpp])             # Flow of natural capital per WPP region (2017 million usd per year)
     E_flow_global       = Variable(index=[time])                        # Flow of natural capital globally (2017 million usd per year)
 
+    E_discount_rate         = 0.04                                      # Discount rate to calculate stock of E (from CWON)
+    stock_to_flow_factor    = (1 - E_discount_rate) / (1 - E_discount_rate^100)
+
     function run_timestep(p, v, d, t)
-
-        # Note that the country dimension is defined in d and parameters and variables are indexed by 'c'
-
-        stock_to_flow_factor = (1 - p.E_discount_rate) / (1 - p.E_discount_rate^100)
 
         E_stock0_percapita = (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :])
 
@@ -62,11 +60,7 @@
 
             v.E_flow[t, c, q] = v.E_stock[t,c] * stock_to_flow_factor * (1 / p.nb_quantile)
 
-        end
-
-        for c in d.country, q in d.quantile
-            #Assume environmental good is equally distributed
-            v.E_flow_percapita[t, c, q] = (sum(v.E_flow[t, c, :]) / p.l[t, c])
+            v.E_flow_percapita[t, c, q] = v.E_flow[t,c,q] / (p.l[t,c] / p.nb_quantile)
         end
 
         #Evolution of E_flow over time for plots

@@ -59,18 +59,19 @@ end
 # %% Get SCC prepared_df for two values of γ
 γ_0 = 0.
 γ_1 = 1.
+pulse_year = 2021
+pulse_size = 1.
 
 mm_0 = set_up_marginal_model(η, θ, α, γ_0, pulse_year, pulse_size)
+mm_1 = set_up_marginal_model(η, θ, α, γ_1, pulse_year, pulse_size)
+
 run(mm_0)
+run(mm_1)
 
 γ_0_test_df = @chain begin
     get_model_data(mm_0, pulse_year)
     prepare_df_for_SCC(_, η, θ, α)
 end
-
-mm_1 = set_up_marginal_model(η, θ, α, γ_1, pulse_year, pulse_size)
-run(mm_1)
-
 γ_1_test_df = @chain begin
     get_model_data(mm_1, pulse_year)
     prepare_df_for_SCC(_, η, θ, α)
@@ -123,3 +124,18 @@ total_cost_of_consumption_damages_1 - total_cost_of_consumption_damages_0
 
 # %% Let's compare the two dataframes directly
 @select(γ_1_test_df, c:B) .- @select(γ_0_test_df, c:B)
+
+# %% Check that the average equity weight is 1
+function average_equity_weight_is_1(df)
+    average_weight_is_1 = @chain df begin
+        @group_by(year)
+        @summarize(average_weight_is_1 = sum(a) / sum(l) ≈ 1.)
+        @pull(average_weight_is_1)
+    end
+
+    average_weight_is_always_1 = (&)(average_weight_is_1...)
+    return average_weight_is_always_1
+end
+
+average_equity_weight_is_1(γ_0_test_df) & average_equity_weight_is_1(γ_1_test_df)
+

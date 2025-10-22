@@ -82,9 +82,9 @@
            v.adjusted_consumption_shares[t,c,:] = adjust_inequality(p.quantile_consumption_shares[t,c,:], p.γ)
 
             # Calculate quantile distribution shares of CO2 tax burden and mitigation costs (assume both distributions are equal) and climate damages.
-			v.abatement_cost_dist[t,c,:] = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
-			v.carbon_tax_dist[t,c,:]     = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
-			v.damage_dist[t,c,:]         = country_quantile_distribution(p.damage_elasticity, v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
+			v.abatement_cost_dist[t,c,:] = rescale_distribution(v.adjusted_consumption_shares[t,c,:], v.CO2_income_elasticity[t,c])
+			v.carbon_tax_dist[t,c,:]     = rescale_distribution(v.adjusted_consumption_shares[t,c,:], v.CO2_income_elasticity[t,c])
+			v.damage_dist[t,c,:]         = rescale_distribution(v.adjusted_consumption_shares[t,c,:], p.damage_elasticity)
 
 			# Create a temporary variable used to calculate NICE baseline quantile consumption (just for convenience).
 			temp_qcpc = p.nb_quantile * p.CPC[t,c] * (1.0 + p.LOCAL_DAMFRAC_KW[t,c]) / (1.0 - p.ABATEFRAC[t,c])
@@ -184,34 +184,26 @@ end
 
 
 """
-    country_quantile_distribution(
-    elasticity::Vector{<:Real}, income_shares::Vector{<:Real}, nb_quantile::Int
-)
+    rescale_distribution(income_shares::Vector, elasticity::Real)
 
 Calculate quantile distribution shares for a country based on a provided elasticity.
 
-The function is used to calculate distributions of damages, CO₂ mitigation cost,
-or CO₂ tax burden, across a country's quantiles.
+This function returns a vector of the same size as `income_shares`, that sums to 1,
+and contains a rescaled distribution. If `elasticity` is 0, it returns a vector of
+identical values that sum to 1. If `elasticity` is 1, the returned distribution is
+proportional to `income_shares`.
+
+It is used to calculate distributions of damages, CO₂ mitigation cost, or
+CO₂ tax burden, across a country's quantiles.
 
 # Arguments
-- elasticity::Vector{<:Real}: Income elasticity of climate damages, CO₂ mitigation costs,
+- income_shares::Vector: a vector of quantile income shares for a given country.
+- elasticity::Real: Income elasticity of climate damages, CO₂ mitigation costs,
     CO₂ tax burdens, etc.
-- income_shares::Vector{<:Real}: a vector of quantile income shares for a given country.
 """
-function country_quantile_distribution(
-    elasticity::Real, income_shares::Vector, nb_quantile::Int
-)
-    # Apply elasticity to quantile income shares.
+function rescale_distribution(income_shares::Vector, elasticity::Real)
     scaled_shares = income_shares .^ elasticity
-
-    # Allocate empty array for distribution across quantiles resulting from the elasticity.
-    updated_quantile_distribution = zeros(nb_quantile)
-
-    # Loop through each quantile to calculate updated distribution.
-    for q in 1:nb_quantile
-        updated_quantile_distribution[q] = scaled_shares[q] ./ sum(scaled_shares[:])
-    end
-
+    updated_quantile_distribution = scaled_shares / sum(scaled_shares)
     return updated_quantile_distribution
 end
 

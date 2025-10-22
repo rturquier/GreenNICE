@@ -65,4 +65,7 @@ end
 
     @test adjust_inequality(quantiles, 1) ≈ quantiles
     @test adjust_inequality(quantiles, 0) ≈ mean(quantiles) * ones(n_quantiles)
+
+    @test rescale_distribution(quantiles, 1) == quantiles / sum(quantiles)
+    @test rescale_distribution(quantiles, 0) == ones(n_quantiles) / n_quantiles
 end

@@ -139,3 +139,29 @@ end
 
 average_equity_weight_is_1(γ_0_test_df) & average_equity_weight_is_1(γ_1_test_df)
 
+# %% Check that average marginal damages don't change at the country level
+average_damages_γ_0_df = @chain γ_0_test_df begin
+    @group_by(year, country)
+    @summarize(
+        l_γ_0 = sum(l),
+        average_damages_to_c_γ_0 = mean(marginal_damage_to_c),
+    )
+    @ungroup()
+end
+average_damages_γ_1_df = @chain γ_1_test_df begin
+    @group_by(year, country)
+    @summarize(
+        l_γ_1 = sum(l),
+        average_damages_to_c_γ_1 = mean(marginal_damage_to_c),
+    )
+    @ungroup()
+end
+
+average_damages_df = @left_join(average_damages_γ_0_df, average_damages_γ_1_df)
+
+@chain average_damages_df begin
+    @filter(year == 2030)
+    @mutate(relative_difference = average_damages_to_c_γ_0 / average_damages_to_c_γ_1 - 1)
+end
+
+# --> relative difference is around 0.01%. Seems small enough.

@@ -139,6 +139,25 @@ end
 
 average_equity_weight_is_1(γ_0_test_df) & average_equity_weight_is_1(γ_1_test_df)
 
+# %% Check that equity weights shift towards poorer deciles
+average_equity_weight_2030_γ_0 = @chain begin
+    γ_0_test_df
+    @group_by(year, quantile)
+    @summarize(a = sum(a) / sum(l))
+    @ungroup
+    @filter(year == 2030)
+end
+
+average_equity_weight_2030_γ_1 = @chain begin
+    γ_1_test_df
+    @group_by(year, quantile)
+    @summarize(a = sum(a) / sum(l))
+    @ungroup
+    @filter(year == 2030)
+end
+
+# --> equity weights shift towards poorer deciles when γ goes from 0 to 1
+
 # %% Check that average marginal damages don't change at the country level
 average_damages_γ_0_df = @chain γ_0_test_df begin
     @group_by(year, country)

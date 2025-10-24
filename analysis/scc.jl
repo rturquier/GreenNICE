@@ -107,7 +107,7 @@ function marginal_welfare_of_environment(c, E, l, η, θ, α)
 end
 
 
-function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFrame
+function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real, ρ::Real)::DataFrame
     prepared_df = @eval @chain $df begin
         @mutate(
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
@@ -127,7 +127,7 @@ end
 
 
 @doc raw"""
-        apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::DataFrame
+        apply_SCC_decomposition_formula(prepared_df::DataFrame)::DataFrame
 
     Get present value of equity-weighted, money-metric damages to `c` and `E`.
 
@@ -169,7 +169,7 @@ end
     the dataframe, and marginal damages to the environment, ``\frac{dE_i}{de}``, are coded
     as `marginal_damage_to_E`.
 """
-function apply_SCC_decomposition_formula(prepared_df::DataFrame, ρ::Real)::DataFrame
+function apply_SCC_decomposition_formula(prepared_df::DataFrame)::DataFrame
     SCC_df = @eval @chain $prepared_df begin
         @group_by(year)
         @summarize(
@@ -229,8 +229,8 @@ function get_SCC_decomposition(
 
     SCC_decomposition_df = @chain begin
         get_model_data(mm, pulse_year)
-        prepare_df_for_SCC(_, η, θ, α)
-        apply_SCC_decomposition_formula(_, ρ)
+        prepare_df_for_SCC(_, η, θ, α, ρ)
+        apply_SCC_decomposition_formula(_)
     end
 
     return SCC_decomposition_df

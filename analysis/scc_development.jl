@@ -70,11 +70,11 @@ run(mm_1)
 
 γ_0_test_df = @chain begin
     get_model_data(mm_0, pulse_year)
-    prepare_df_for_SCC(_, η, θ, α)
+    prepare_df_for_SCC(_, η, θ, α, ρ)
 end
 γ_1_test_df = @chain begin
     get_model_data(mm_1, pulse_year)
-    prepare_df_for_SCC(_, η, θ, α)
+    prepare_df_for_SCC(_, η, θ, α, ρ)
 end
 
 # %% Compare discount factors

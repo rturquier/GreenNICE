@@ -184,3 +184,42 @@ average_damages_df = @left_join(average_damages_γ_0_df, average_damages_γ_1_df
 end
 
 # --> relative difference is around 0.01%. Seems small enough.
+
+# %% Look at SCC, equity weights and unweighted damages by decile
+function apply_SCC_formula_by_quantile(df::DataFrame)::DataFrame
+    SCC_by_quantile_df = @chain df begin
+        @group_by(quantile, year)
+        @summarize(
+            t = unique(t),
+            B = unique(B),
+            ∂_cW_global_average = unique(∂_cW_global_average),
+            cost_of_damages_to_c = sum(a * marginal_damage_to_c),
+            cost_of_damages_to_E = sum(a * p * marginal_damage_to_E),
+            a = sum(a),
+            c = mean(c),
+            damages_to_c = sum(marginal_damage_to_c),
+        )
+        @filter(t >= 0)
+        @summarize(
+            present_cost_of_damages_to_c = sum(B * cost_of_damages_to_c),
+            present_cost_of_damages_to_E = sum(B * cost_of_damages_to_E),
+            mean_a = mean(a),
+            mean_c = mean(c),
+            present_damages_to_c = sum(B * damages_to_c),
+        )
+    end
+    return SCC_by_quantile_df
+end
+
+γ_0_quantile_df = apply_SCC_formula_by_quantile(γ_0_test_df)
+γ_1_quantile_df = apply_SCC_formula_by_quantile(γ_1_test_df)
+
+@select(γ_1_quantile_df, 2:6) .- @select(γ_0_quantile_df, 2:6)
+
+sum(γ_0_quantile_df.present_cost_of_damages_to_c)
+sum(γ_1_quantile_df.present_cost_of_damages_to_c)
+
+# --> the equity weights increase a lot for the three bottom deciles,
+# and become smaller for the top 70%. This dominates the slight increase
+# in damages to the top deciles (elasticity of 0.6).
+

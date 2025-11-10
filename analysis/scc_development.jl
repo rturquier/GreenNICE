@@ -223,3 +223,54 @@ sum(γ_1_quantile_df.present_cost_of_damages_to_c)
 # and become smaller for the top 70%. This dominates the slight increase
 # in damages to the top deciles (elasticity of 0.6).
 
+# %% Apply initial SCC formula and check that results are the same
+function apply_two_SCC_formulas_by_quantile(df)
+    @eval @chain $df begin
+        @group_by(quantile, year)
+            @summarize(
+                t = unique(t),
+                B = unique(B),
+                ∂_cW_global_average = unique(∂_cW_global_average),
+                welfare_cost_to_c = sum(∂_cW * marginal_damage_to_c),
+                welfare_cost_to_E = sum(∂_cE * marginal_damage_to_E),
+                weighted_cost_to_c = sum(a * marginal_damage_to_c),
+                weighted_cost_to_E = sum(a * p * marginal_damage_to_E),
+                ∂_cW = mean(∂_cW),
+                a = sum(a) / sum(l),
+                c = sum(c),
+                damages_to_c = sum(marginal_damage_to_c),
+            )
+            @filter(t >= 0)
+            @mutate(β = 1 / (1 + $ρ))
+            @summarize(
+                present_welfare_cost_to_c = sum(β^t * welfare_cost_to_c),
+                present_welfare_cost_to_E = sum(β^t * welfare_cost_to_E),
+                present_weighted_cost_to_c = sum(B * weighted_cost_to_c),
+                present_weighted_cost_to_E = sum(B * weighted_cost_to_E),
+                mean_a = mean(a),
+                mean_∂_cW = mean(∂_cW),
+                c = sum(c),
+                discounted_damages_to_c = sum(β^t * damages_to_c),
+            )
+    end
+end
+
+γ_0_quantile_df = apply_two_SCC_formulas_by_quantile(γ_0_test_df)
+γ_1_quantile_df = apply_two_SCC_formulas_by_quantile(γ_1_test_df)
+
+∂_cW_global_average_present_γ_0 = @filter(γ_0_test_df, t==0).∂_cW_global_average[1]
+∂_cW_global_average_present_γ_1 = @filter(γ_1_test_df, t==0).∂_cW_global_average[1]
+
+@eval @mutate(
+    γ_0_quantile_df,
+    present_welfare_cost_to_c = present_welfare_cost_to_c / $∂_cW_global_average_present_γ_0
+)
+@eval @mutate(
+    γ_1_quantile_df,
+    present_welfare_cost_to_c = present_welfare_cost_to_c / $∂_cW_global_average_present_γ_1
+)
+
+# --> The difference comes from the `∂_cW_global_average_present` factor. Because it
+# changes with gamma, it breaks comparability between the two scenarios.
+# --> We have to normalized by something that doesn't change with gamma, like the marginal
+# welfare of average consumption.

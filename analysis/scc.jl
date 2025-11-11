@@ -107,82 +107,71 @@ function marginal_welfare_of_environment(c, E, l, η, θ, α)
 end
 
 
-function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real, ρ::Real)::DataFrame
+function get_marginal_utility_at_present_average(df::DataFrame, η::Real, θ::Real, α::Real)
+    present_average_df = @chain df begin
+        @filter(t == 0)
+        @summarize(
+            c = mean(c),
+            E = mean(E),
+        )
+    end
+    present_average_c = present_average_df.c[1]
+    present_average_E = present_average_df.E[1]
+    marginal_utility_at_present_average = marginal_welfare_of_consumption(
+        present_average_c, present_average_E, 1, η, θ, α
+    )
+    return marginal_utility_at_present_average
+end
+
+
+function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFrame
     prepared_df = @eval @chain $df begin
         @mutate(
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
             ∂_cE = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
         )
-        @mutate(p = ∂_cW / ∂_cE)  # relative price of E
         @group_by(year)
-        @mutate(∂_cW_global_average = sum(∂_cW) / sum(l))
         @ungroup()
-        @mutate(
-            a = ∂_cW / ∂_cW_global_average,  # equity weights
-            B = (1 / (1 + $ρ))^t * ∂_cW_global_average / ∂_cW_global_average[t == 0][1],
-        )
     end
     return prepared_df
 end
 
 
 @doc raw"""
-        apply_SCC_decomposition_formula(prepared_df::DataFrame)::DataFrame
+        apply_SCC_decomposition_formula(
+            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real
+        )::DataFrame
 
     Get present value of equity-weighted, money-metric damages to `c` and `E`.
 
     The social cost of carbon (SCC) is equal to the sum of the present cost of marginal
     damages to consumption `c`, and to environment `E`:
     ```math
-    \sum_t B_t \sum_{i} a_{i, t} \frac{dc_i}{de}
-    + \sum_t B_t \sum_{i} a_{i, t} p_{i, t} \frac{dE_i}{de}.
-    ```
-
-    **Discount factor** ``B_t`` (column `B` in the dataframe) is calculated as:
-    ```math
-    B(t) = \beta^t
-        \frac{
-            \frac{1}{n} \sum_{i} \partial_{c_{i, t}}{W_t}
-        }{
-            \frac{1}{n} \sum_{i} \partial_{c_{i, 0}}{W_0}
-    },
-    ```
-
-    where index ``i`` represents a group (a certain decile in a certain country), and
-    ``W_t`` is global welfare at time ``t``.
-
-    **Equity weight** ``a_{i, t}`` (column `a`) is defined as:
-    ```math
-    a_{i, t} = \frac{
-        \partial_{c_{i, t}} W_t
-    }{
-        \frac{1}{n} \sum_{i}\partial_{c_{i, t}} W_t
-    }
-    ```
-
-    **Relative price** ``p_{i, t}`` (column `p`) is defined as:
-    ```math
-    p_{i, t} = \frac{\partial_{E_i}{W_t}}{\partial_{c_i}{W_t}}.
+      \sum_t \beta^t \sum_{i} \partial_{c_{i,t}}{W_t} \frac{dc_i}{de}
+    + \sum_t \beta^t \sum_{i} \partial_{E_{i,t}}{W_t} \frac{dE_i}{de}.
     ```
 
     Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in
     the dataframe, and marginal damages to the environment, ``\frac{dE_i}{de}``, are coded
     as `marginal_damage_to_E`.
 """
-function apply_SCC_decomposition_formula(prepared_df::DataFrame)::DataFrame
+function apply_SCC_decomposition_formula(
+    prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real
+)::DataFrame
+    β = 1 / (1 + ρ)
     SCC_df = @eval @chain $prepared_df begin
         @group_by(year)
         @summarize(
             t = unique(t),
-            B = unique(B),
-            ∂_cW_global_average = unique(∂_cW_global_average),
-            cost_of_damages_to_c = sum(a .* marginal_damage_to_c),
-            cost_of_damages_to_E = sum(a .* p.* marginal_damage_to_E),
+            welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
+            welfare_loss_E = sum(∂_cE * marginal_damage_to_E),
         )
         @filter(t >= 0)
         @summarize(
-            present_cost_of_damages_to_c = sum(B .* cost_of_damages_to_c),
-            present_cost_of_damages_to_E = sum(B .* cost_of_damages_to_E),
+            present_cost_of_damages_to_c = 1 / $reference_marginal_utility
+                                           * sum($β^t * welfare_loss_c),
+            present_cost_of_damages_to_E = 1 / $reference_marginal_utility
+                                           * sum($β^t * welfare_loss_E),
         )
     end
     return SCC_df
@@ -223,14 +212,15 @@ end
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ::Real, ρ::Real; pulse_year::Int=2025, pulse_size::Real=1.
 )::DataFrame
-
     mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
     run(mm)
+    model_df = get_model_data(mm, pulse_year)
+
+    reference_marginal_utility = get_marginal_utility_at_present_average(model_df, η, θ, α)
 
     SCC_decomposition_df = @chain begin
-        get_model_data(mm, pulse_year)
-        prepare_df_for_SCC(_, η, θ, α, ρ)
-        apply_SCC_decomposition_formula(_)
+        prepare_df_for_SCC(model_df, η, θ, α)
+        apply_SCC_decomposition_formula(_, reference_marginal_utility, ρ)
     end
 
     return SCC_decomposition_df

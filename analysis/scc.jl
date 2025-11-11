@@ -161,6 +161,7 @@ function apply_SCC_decomposition_formula(
     β = 1 / (1 + ρ)
     SCC_df = @eval @chain $prepared_df begin
         @group_by(year)
+        @filter(isfinite(∂_cE))
         @summarize(
             t = unique(t),
             welfare_loss_c = sum(∂_cW * marginal_damage_to_c),

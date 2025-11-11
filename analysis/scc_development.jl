@@ -274,3 +274,58 @@ end
 # changes with gamma, it breaks comparability between the two scenarios.
 # --> We have to normalized by something that doesn't change with gamma, like the marginal
 # welfare of average consumption.
+
+
+# %%
+γ_0 = 0.
+γ_1 = 1.
+pulse_year = 2021
+pulse_size = 1.
+
+mm_0 = set_up_marginal_model(η, θ, α, γ_0, pulse_year, pulse_size)
+mm_1 = set_up_marginal_model(η, θ, α, γ_1, pulse_year, pulse_size)
+
+run(mm_0)
+run(mm_1)
+
+γ_0_test_df = @chain begin
+    get_model_data(mm_0, pulse_year)
+    prepare_df_for_SCC(_, η, θ, α)
+end
+γ_1_test_df = @chain begin
+    get_model_data(mm_1, pulse_year)
+    prepare_df_for_SCC(_, η, θ, α)
+end
+
+# %%
+reference_marginal_utility = get_marginal_utility_at_present_average(γ_1_test_df, η, θ, α)
+apply_SCC_decomposition_formula(γ_1_test_df, reference_marginal_utility, ρ)
+
+# %% What countries have infinite marginal utility of E?
+@chain γ_1_test_df begin
+    @filter(!(isfinite(∂_cE)))
+    @filter(t == 0)
+    @group_by(country)
+    @summarize(l = sum(l))
+end
+
+# %% Test SCC formula with exclusion of these four countries
+β = 1 / (1 + ρ)
+SCC_df = @eval @chain $γ_1_test_df begin
+    @group_by(year)
+    @filter(isfinite(∂_cE))
+    @summarize(
+        t = unique(t),
+        welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
+        ∂_cE_mean = mean(∂_cE),
+        marginal_damage_to_E = sum(marginal_damage_to_E),
+        welfare_loss_E = sum(∂_cE * marginal_damage_to_E),
+    )
+    @filter(t >= 0)
+    @summarize(
+        present_cost_of_damages_to_c = 1 / $reference_marginal_utility
+                                        * sum($β^t * welfare_loss_c),
+        present_cost_of_damages_to_E = 1 / $reference_marginal_utility
+                                        * sum($β^t * welfare_loss_E),
+    )
+end

@@ -1,6 +1,7 @@
 using Mimi
 using TidierData
 using TidierFiles
+using VegaLite
 
 include("../src/GreenNICE.jl")
 using .GreenNICE
@@ -251,4 +252,30 @@ function get_SCC_decomposition(
         @relocate(γ)
     end
     return SCC_decomposition_df
+end
+
+
+function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpec
+    damages_to_E_with_equal_deciles = @chain SCC_decomposition_df begin
+        @filter(γ == 0)
+        @pull(present_cost_of_damages_to_E)
+    end
+
+    # Wrangle and reshape to fit VegaLite requirements
+    plot_df = @eval @chain $SCC_decomposition_df begin
+        @mutate(
+            interaction = present_cost_of_damages_to_E
+                            - $damages_to_E_with_equal_deciles,
+            non_interaction = present_cost_of_damages_to_c
+                                + $damages_to_E_with_equal_deciles,
+        )
+        @pivot_longer(
+            (interaction, non_interaction),
+            names_to="interaction",
+            values_to="SCC_part"
+        )
+    end
+
+    plot = plot_df |> @vlplot(:area, x="γ:q", y="SCC_part:q", color="interaction:N")
+    return plot
 end

@@ -19,15 +19,15 @@
 
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
-    Env_percapita           = Parameter(index=[time, country, quantile])    # Non_market environmental good
-    E_bar                   = Parameter()                                   # Reference level of environment
+    E_flow_percapita        = Parameter(index=[time, country, quantile])    # Flow of non-market environmental good per capita (thousand USD2017 per person per year)
+    E_bar                   = Parameter()                                   # Average E_flow per capita in 2020 (thousand USD2017 per person)
 
     function run_timestep(p, v, d, t)
 
         for c in d.country
             v.cons_EDE_country[t,c] = EDE(
                 p.qcpc_post_recycle[t,c,:],
-                p.Env_percapita[t,c,:],
+                p.E_flow_percapita[t,c,:],
                 p.E_bar,
                 p.η,
                 p.θ,
@@ -37,7 +37,7 @@
 
             v.welfare_country[t,c] = (
                 (p.l[t,c] / p.nb_quantile) * sum(utility.(
-                    p.qcpc_post_recycle[t,c,:], p.Env_percapita[t,c,:], p.η, p.θ, p.α
+                    p.qcpc_post_recycle[t,c,:], p.E_flow_percapita[t,c,:], p.η, p.θ, p.α
                 ))
             )
         end # country loop

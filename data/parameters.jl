@@ -90,7 +90,7 @@ depreciation_unstack = unstack(depreciation_raw, :year, :countrycode, :depreciat
 depreciation = select(depreciation_unstack, countries)
 
 
-## Emissions intensity 
+## Emissions intensity
 # in Gt CO2 per year per US dollar
 # Growth rates determined by regressing year on growth rates predicted from the projected emission using an OLS model at regional level
 
@@ -214,9 +214,9 @@ cmip_pattern = raw_patterns[!, pattern_type]
 # Load-country level environment starting values
 #-------------------------------------------------------
 
-N0_data = DataFrame(load("data/N0.csv",  header_exists=true))
-filter!(:countrycode => in(countries), N0_data)
-N0 = N0_data[:, :N0]
+E_stock0_data = DataFrame(load("data/E_stock0.csv",  header_exists=true))
+filter!(:countrycode => in(countries), E_stock0_data)
+E_stock0 = E_stock0_data[:, :E_stock0]
 
 #-------------------------------------------------------
 # Load-country level environmental damage parameters

@@ -126,10 +126,8 @@ function create()
     connect_param!(m, :environment, :nb_quantile, :nb_quantile)
     connect_param!(m, :environment, :mapcrwpp,  :mapcrwpp)
 
-	update_param!(m, :environment, :N0, N0)
-    update_param!(m, :environment, :damage, 0.000278)
+	update_param!(m, :environment, :E_stock0, E_stock0)
     update_param!(m, :environment, :dam_assessment, 1)
-    update_param!(m, :environment, :flow, ((1 - 0.04) / (1 - 0.04^100)))
 
 	# --------------------------------
 	# Abatement
@@ -246,7 +244,8 @@ function create()
 	connect_param!(m, :quantile_recycle => :country_pc_dividend,:revenue_recycle	=> :country_pc_dividend)
 	connect_param!(m, :quantile_recycle => :tax_pc_revenue,		:revenue_recycle	=> :tax_pc_revenue)
     connect_param!(m, :environment      => :LOCAL_DAM_ENV,      :damages            => :LOCAL_DAM_ENV)
-	connect_param!(m, :welfare 			=> :Env_percapita, 		:environment		=> :Env_percapita)
+    connect_param!(m, :environment      => :LOCAL_DAM_ENV_EQUAL,:damages            => :LOCAL_DAM_ENV_EQUAL)
+	connect_param!(m, :welfare 			=> :E_flow_percapita, 	:environment		=> :E_flow_percapita)
 	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 

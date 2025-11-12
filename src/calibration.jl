@@ -57,26 +57,25 @@ country_df = XLSX.openxlsx(file_path) do xf
 end
 
 # Filter data for the year 2020 and select columns of interest
-country_N0 = filter(row -> row[:year] == 2020, country_df)
+country_E_stock0 = filter(row -> row[:year] == 2020, country_df)
 
-country_N0 = select(
-    country_N0,
+country_E_stock0 = select(
+    country_E_stock0,
     [:countrycode, :torn_real_forest_es1, :torn_real_forest_es2, :torn_real_forest_es3],
 )
 
-country_N0[!, :N0] =
-    country_N0.torn_real_forest_es1 .+ country_N0.torn_real_forest_es2 .+
-    country_N0.torn_real_forest_es3
+country_E_stock0[!, :E_stock0] =
+    country_E_stock0.torn_real_forest_es1 .+ country_E_stock0.torn_real_forest_es2 .+
+    country_E_stock0.torn_real_forest_es3
 
-country_N0 = select(country_N0, [:countrycode, :N0])
+country_E_stock0 = select(country_E_stock0, [:countrycode, :E_stock0])
 
 #1.3 Create a CSV file with initial natural capital values
 
-N0 = CSVFiles.load(country_list_file_path) |> DataFrame
+E_stock0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
-N0 = leftjoin(N0, country_N0; on=:countrycode, makeunique=true)
-sort!(N0, :countrycode)
-
+E_stock0 = leftjoin(E_stock0, country_E_stock0; on=:countrycode, makeunique=true)
+sort!(E_stock0, :countrycode)
 # Define a dictionary with country codes and their corresponding replacement country codes
 # Used world bank data to find country in vecinity with similar forest surface (year 2020)
 # Data for islands does not follow geographic proximity, but size.
@@ -90,13 +89,13 @@ replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "MNE", "BR
 
 
 
-# Update the values of N0 based on the replacement_countries dictionary
+# Update the values of E_stock0 based on the replacement_countries dictionary
 for (country, replacement) in replacement_countries
-    if country in N0.countrycode
-        replacement_row = N0[N0.countrycode .== replacement, :N0]
+    if country in E_stock0.countrycode
+        replacement_row = E_stock0[E_stock0.countrycode .== replacement, :E_stock0]
         if !isempty(replacement_row)
             replacement_value = replacement_row[1]
-            N0[N0.countrycode .== country, :N0] .= replacement_value
+            E_stock0[E_stock0.countrycode .== country, :E_stock0] .= replacement_value
         else
             println("No replacement value found for country: $replacement")
         end
@@ -104,21 +103,17 @@ for (country, replacement) in replacement_countries
 end
 
 # Set MAC = 0
-N0[N0.countrycode .== "MAC", :N0] .= 0
+E_stock0[E_stock0.countrycode .== "MAC", :E_stock0] .= 0
 
-#Get the flow of the nat cap stock. r = 4%. t = 100 years
+# Adjust values to million USD (data is USD). This is consistent with K0 input.
 
-#e0.e0 = e0.e0 .* ((1 - 0.04) / (1 - 0.04^100))
+E_stock0.E_stock0 = E_stock0.E_stock0 ./ 1000000
 
-# Scale down the values by dividing by 1,000,000 to get the units in million USD
+# Update to 2017 values. Consistent with Young-Brun et al.
+E_stock0.E_stock0 = E_stock0.E_stock0 .* 0.94
 
-N0.N0 = N0.N0 ./ 1000000
-
-# Update to 2017 values
-N0.N0 = N0.N0 .* 0.94
-
-N0_file_path = "data/N0.csv"
-CSVFiles.save(N0_file_path, N0)
+E_stock0_file_path = "data/E_stock0.csv"
+CSVFiles.save(E_stock0_file_path, E_stock0)
 
 # 2. Get environmental damage function parameters from Bastien-Olvera et al. 2024
 

@@ -31,6 +31,7 @@
     damage_dist					= Variable(index=[time, country, quantile]) 	# Quantile distribution shares of climate damages
 
 	qcpc_base                  	= Variable(index=[time, country, quantile])  	# Pre-damage, pre-abatement cost, pre-tax quantile consumption per capita (thousand USD2017 per person per year)
+	qcpc_damages             	= Variable(index=[time, country, quantile])  	# Damages to per-capita consumption in each quantile
     qcpc_post_damage_abatement 	= Variable(index=[time, country, quantile])  	# Post-damage, post-abatement cost per capita quantile consumption (thousand USD2017 per person per year)
     qcpc_post_tax              	= Variable(index=[time, country, quantile])  	# Quantile per capita consumption after subtracting out carbon tax (thousand USD2017 per person per year)
     qcpc_post_recycle          	= Variable(index=[time, country, quantile])  	# Quantile per capita consumption after recycling tax back to quantiles (thousand USD2017 per person per year)
@@ -81,9 +82,9 @@
            v.adjusted_consumption_shares[t,c,:] = adjust_inequality(p.quantile_consumption_shares[t,c,:], p.γ)
 
             # Calculate quantile distribution shares of CO2 tax burden and mitigation costs (assume both distributions are equal) and climate damages.
-			v.abatement_cost_dist[t,c,:] = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
-			v.carbon_tax_dist[t,c,:]     = country_quantile_distribution(v.CO2_income_elasticity[t,c], v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
-			v.damage_dist[t,c,:]         = country_quantile_distribution(p.damage_elasticity, v.adjusted_consumption_shares[t,c,:], p.nb_quantile)
+			v.abatement_cost_dist[t,c,:] = rescale_distribution(v.adjusted_consumption_shares[t,c,:], v.CO2_income_elasticity[t,c])
+			v.carbon_tax_dist[t,c,:]     = rescale_distribution(v.adjusted_consumption_shares[t,c,:], v.CO2_income_elasticity[t,c])
+			v.damage_dist[t,c,:]         = rescale_distribution(v.adjusted_consumption_shares[t,c,:], p.damage_elasticity)
 
 			# Create a temporary variable used to calculate NICE baseline quantile consumption (just for convenience).
 			temp_qcpc = p.nb_quantile * p.CPC[t,c] * (1.0 + p.LOCAL_DAMFRAC_KW[t,c]) / (1.0 - p.ABATEFRAC[t,c])
@@ -94,7 +95,18 @@
 
 				# Calculate post-damage, post-abatement cost per capita quantile consumption (bounded below to ensure consumptions don't collapse to zero or go negative).
 				# Note, this differs from standard NICE equation because quantile CO2 abatement cost and climate damage shares can now vary over time.
-				v.qcpc_post_damage_abatement[t,c,q] = max(v.qcpc_base[t,c,q] - (p.nb_quantile* p.CPC[t,c] * p.LOCAL_DAMFRAC_KW[t,c] * v.damage_dist[t,c,q]) - (temp_qcpc * p.ABATEFRAC[t,c] * v.abatement_cost_dist[t,c,q]), 1e-8)
+                v.qcpc_damages[t, c, q] = (
+                    p.nb_quantile
+                    * p.CPC[t,c]
+                    * p.LOCAL_DAMFRAC_KW[t,c]
+                    * v.damage_dist[t,c,q]
+                )
+				v.qcpc_post_damage_abatement[t,c,q] = max(
+                    v.qcpc_base[t,c,q]
+                    - v.qcpc_damages[t, c, q]
+                    - (temp_qcpc * p.ABATEFRAC[t,c] * v.abatement_cost_dist[t,c,q]),
+                    1e-8
+                )
 
 				# Subtract tax revenue from each quantile based on quantile CO2 tax burden distributions.
 				# Note, per capita tax revenue and consumption should both be in $1000/person.
@@ -169,3 +181,93 @@ function adjust_inequality(quantile_consumption_shares::Vector, γ::Real)
 
     return adjusted_quantile_consumption_shares
 end
+
+
+"""
+    rescale_distribution(income_shares::Vector, elasticity::Real)
+
+Calculate quantile distribution shares for a country based on a provided elasticity.
+
+This function returns a vector of the same size as `income_shares`, that sums to 1,
+and contains a rescaled distribution. If `elasticity` is 0, it returns a vector of
+identical values that sum to 1. If `elasticity` is 1, the returned distribution is
+proportional to `income_shares`.
+
+It is used to calculate distributions of damages, CO₂ mitigation cost, or
+CO₂ tax burden, across a country's quantiles.
+
+# Arguments
+- income_shares::Vector: a vector of quantile income shares for a given country.
+- elasticity::Real: Income elasticity of climate damages, CO₂ mitigation costs,
+    CO₂ tax burdens, etc.
+"""
+function rescale_distribution(income_shares::Vector, elasticity::Real)
+    scaled_shares = income_shares .^ elasticity
+    updated_quantile_distribution = scaled_shares / sum(scaled_shares)
+    return updated_quantile_distribution
+end
+
+
+
+"""
+    gini(v)
+
+Compute the Gini Coefficient of a vector `v` .
+
+This function and its documentation is taken from JosepER's Inequality package, available at
+https://github.com/JosepER/Inequality.jl under the MIT licence. The package is not imported
+in the project because it is no longer maintained, and prevented updating other packages.
+If we don't use the Gini index in the end, we can remove this function.
+
+# Examples
+```julia
+julia> using Inequality
+julia> gini([8, 5, 1, 3, 5, 6, 7, 6, 3])
+0.2373737373737374
+```
+"""
+function gini(v::AbstractVector{<:Real})::Float64
+    (
+        2 * sum([x*i for (i,x) in enumerate(sort(v))])
+          / sum(sort(v))
+        - (length(v)+1)
+    ) / (length(v))
+end
+
+
+"""
+    gini(v, w)
+
+Compute the weighted Gini Coefficient of a vector `v` using weights given by a weight vector `w`.
+
+Weights must not be negative, missing or NaN. The weights and data vectors must have the same length.
+
+# Examples
+```julia
+julia> gini([8, 5, 1, 3, 5, 6, 7, 6, 3], collect(0.1:0.1:0.9))
+0.20652395514780775
+```
+"""
+function gini(v::AbstractVector{<:Real}, w::AbstractVector{<:Real})::Float64
+
+    checks_weights(v, w)
+
+    w = w[sortperm(v)]/sum(w)
+    v = sort(v)
+    p = cumsum(w)
+    nᵤ = cumsum(w .* v)/cumsum(w .* v)[end]
+    sum(nᵤ[2:end] .* p[1:(end-1)]) - sum(nᵤ[1:(end-1)] .* p[2:end])
+
+end
+
+
+"""
+    checks_weights(v::AbstractVector{<:Real}, w::AbstractVector{<:Real})
+
+Check weights used in [`gini`](@gini). Copied from the Inequality package.
+"""
+function checks_weights(v::AbstractVector{<:Real}, w::AbstractVector{<:Real})
+    length(v) == length(w) ? nothing : throw(ArgumentError("`v` and `w` vectors must be the same size, got $(length(v)) and $(length(w))"))
+    any([isnan(x) for x in w]) ? throw(ArgumentError("`w` vector cannot contain NaN values")) : nothing
+    all(w .>= 0) ? nothing : throw(ArgumentError("`w` vector cannot contain negative entries"))
+ end

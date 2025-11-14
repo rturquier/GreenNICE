@@ -328,3 +328,17 @@ function get_SCC_decomposition_country(
 
     return SCC_decomposition_df
 end
+
+function get_SCC_decomposition_country(
+    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+)::DataFrame
+    df_list = map(γ -> begin
+        concatenated_df = get_SCC_decomposition_country(η, θ, α, γ, ρ; kwargs...)
+        concatenated_df.γ = fill(γ, nrow(concatenated_df))
+        concatenated_df
+    end, γ_list)
+
+    SCC_decomposition_df = reduce(vcat, df_list)
+
+    return SCC_decomposition_df
+end

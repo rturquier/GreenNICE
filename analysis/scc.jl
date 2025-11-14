@@ -280,24 +280,6 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     return plot
 end
 
-@doc raw"""
-        apply_SCC_decomposition_formula(
-            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real,
-            by_country::Bool=false)::DataFrame
-
-    Get present value of equity-weighted, money-metric damages to `c` and `E` by country.
-
-    The social cost of carbon (SCC) is equal to the sum of the present cost of marginal
-    damages to consumption `c`, and to environment `E`:
-    ```math
-      \sum_t \beta^t \sum_{i} \partial_{c_{i,t}}{W_t} \frac{dc_i}{de}
-    + \sum_t \beta^t \sum_{i} \partial_{E_{i,t}}{W_t} \frac{dE_i}{de}.
-    ```
-
-    Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in
-    the dataframe, and marginal damages to the environment, ``\frac{dE_i}{de}``, are coded
-    as `marginal_damage_to_E`.
-"""
 function apply_SCC_decomposition_formula_country(
     prepared_df::DataFrame,
     reference_marginal_utility::Real,
@@ -328,4 +310,21 @@ function apply_SCC_decomposition_formula_country(
         end
 
     return SCC_df
+end
+
+function get_SCC_decomposition_country(
+    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; pulse_year::Int=2025, pulse_size::Real=1.
+)::DataFrame
+    mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
+    run(mm)
+    model_df = get_model_data(mm, pulse_year)
+
+    reference_marginal_utility = get_marginal_utility_at_present_average(model_df, η, θ, α)
+
+    SCC_decomposition_df = @chain begin
+        prepare_df_for_SCC(model_df, η, θ, α)
+        apply_SCC_decomposition_formula_country(_, reference_marginal_utility, ρ)
+    end
+
+    return SCC_decomposition_df
 end

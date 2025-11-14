@@ -1,6 +1,7 @@
 @defcomp environment begin
     country     = Index()                           #Note that a regional index is defined here
     quantile    = Index()
+    regionwpp   = Index()                           #WPP regions
 
     l               = Parameter(index=[time, country])      # Labor - population (thousands)
     nb_quantile     = Parameter()                           # Number of quantiles
@@ -21,10 +22,13 @@
     E_flow_rwpp         = Variable(index=[time, regionwpp])             # Flow of natural capital per WPP region (2017 million usd per year)
     E_flow_global       = Variable(index=[time])                        # Flow of natural capital globally (2017 million usd per year)
 
-    E_discount_rate         = 0.04                                      # Discount rate to calculate stock of E (from CWON)
-    stock_to_flow_factor    = (1 - E_discount_rate) / (1 - E_discount_rate^100)
+    E_discount_rate         = Parameter()                               # Discount rate to calculate stock of E (from CWON)
+
+
 
     function run_timestep(p, v, d, t)
+
+        stock_to_flow_factor    = (1 - p.E_discount_rate) / (1 - p.E_discount_rate^100)
 
         E_stock0_percapita = (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :])
 

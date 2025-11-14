@@ -22,7 +22,7 @@
     E_flow_rwpp         = Variable(index=[time, regionwpp])             # Flow of natural capital per WPP region (2017 million usd per year)
     E_flow_global       = Variable(index=[time])                        # Flow of natural capital globally (2017 million usd per year)
 
-    E_discount_rate         = Parameter()                                 # Discount rate to calculate stock of E (from CWON)
+    E_discount_rate         = Parameter()                               # Discount rate to calculate stock of E (from CWON)
 
 
 

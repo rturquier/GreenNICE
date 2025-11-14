@@ -180,7 +180,6 @@ function apply_SCC_decomposition_formula(
     return SCC_df
 end
 
-
 """
         get_SCC_decomposition(
             η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
@@ -279,4 +278,54 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
 
     plot = plot_df |> @vlplot(:area, x="γ:q", y="SCC_part:q", color="interaction:N")
     return plot
+end
+
+@doc raw"""
+        apply_SCC_decomposition_formula(
+            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real,
+            by_country::Bool=false)::DataFrame
+
+    Get present value of equity-weighted, money-metric damages to `c` and `E` by country.
+
+    The social cost of carbon (SCC) is equal to the sum of the present cost of marginal
+    damages to consumption `c`, and to environment `E`:
+    ```math
+      \sum_t \beta^t \sum_{i} \partial_{c_{i,t}}{W_t} \frac{dc_i}{de}
+    + \sum_t \beta^t \sum_{i} \partial_{E_{i,t}}{W_t} \frac{dE_i}{de}.
+    ```
+
+    Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in
+    the dataframe, and marginal damages to the environment, ``\frac{dE_i}{de}``, are coded
+    as `marginal_damage_to_E`.
+"""
+function apply_SCC_decomposition_formula_country(
+    prepared_df::DataFrame,
+    reference_marginal_utility::Real,
+    ρ::Real,
+    )::DataFrame
+
+        β = 1 / (1 + ρ)
+        SCC_df = @eval @chain $prepared_df begin
+            @group_by(year, country)
+            # Exclude 4 small countries with E = 0 because the have infinite ∂_cE
+            @filter(E > 0)
+            @summarize(
+                t = first(t),
+                country = first(country),
+
+                welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
+                welfare_loss_E = sum(∂_cE * marginal_damage_to_E),
+            )
+            @filter(t >= 0)
+            @ungroup
+            @group_by(country)
+            @summarize(
+                present_cost_of_damages_to_c = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_c),
+                present_cost_of_damages_to_E = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_E),
+            )
+        end
+
+    return SCC_df
 end

@@ -1,6 +1,7 @@
 @defcomp environment begin
     country     = Index()                           #Note that a regional index is defined here
     quantile    = Index()
+    regionwpp   = Index()                           #WPP regions
 
     l               = Parameter(index=[time, country])      # Labor - population (thousands)
     nb_quantile     = Parameter()                           # Number of quantiles

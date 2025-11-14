@@ -130,6 +130,7 @@ function create()
 
 	update_param!(m, :environment, :E_stock0, E_stock0)
     update_param!(m, :environment, :dam_assessment, 1)
+    update_param!(m, :environment, :E_discount_rate, 0.04)
 
 	# --------------------------------
 	# Abatement

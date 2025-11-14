@@ -31,19 +31,19 @@ function set_up_marginal_model(
 end
 
 function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
-    base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :Env_percapita))
+    base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :E_flow_percapita))
     population_df = getdataframe(mm.base, :welfare => :l)
     damages_df = @chain begin
         getdataframe(
             mm,
-            :welfare => :Env_percapita,
+            :welfare => :E_flow_percapita,
             :quantile_recycle => :qcpc_damages,
         )
         # The marginal model gives changes per ton of CO2:
         # `(modified_model_value - base_model_value) / pulse_size`.
         # So marginal *damages* are the additive inverse of the changes in environment.
-        @mutate(marginal_damage_to_E = -Env_percapita)
-        @select(-(Env_percapita))
+        @mutate(marginal_damage_to_E = -E_flow_percapita)
+        @select(-(E_flow_percapita))
     end
 
     clean_df = @eval @chain $base_df begin
@@ -52,7 +52,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
         @rename(
             year = time,
             c = qcpc_post_recycle,
-            E = Env_percapita,
+            E = E_flow_percapita,
             marginal_damage_to_c = qcpc_damages,
         )
         @mutate(

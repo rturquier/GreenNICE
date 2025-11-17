@@ -376,3 +376,81 @@ function get_SCC_interaction_country(
 
     return interaction_df
 end
+
+function map_SCC_decomposition_country(interaction_df::DataFrame)
+
+    world110m = dataset("world-110m")
+
+    map_interaction = @vlplot(
+        width = 640,
+        height = 360,
+        title = "Interaction effect of within country inequality (USD)",
+        projection = {type = :equirectangular}
+    ) +
+    @vlplot(
+        data = {
+            values = world110m,
+            format = {
+                type = :topojson,
+                feature = :countries
+            }
+        },
+        transform = [{
+            lookup = "id",
+            from = {
+                data = interaction_df,
+                key = :id,
+                fields = ["interaction"]
+            }
+        }],
+        mark = :geoshape,
+        encoding = {
+            color = {
+                field = "interaction",
+                type = "quantitative",
+                title = "Interaction cost",
+                scale = {
+                    domain = [-0.5, 0, 0.5],
+                    scheme = "plasma"
+                }
+            }
+        }
+    )
+
+    map_percentage_interaction = @vlplot(
+        width = 640,
+        height = 360,
+        title = "Interaction effect as percentage of SCC's environmental dimension (%)",
+        projection = {type = :equirectangular}
+    ) +
+    @vlplot(
+        data = {
+            values = world110m,
+            format = {
+                type = :topojson,
+                feature = :countries
+            }
+        },
+        transform = [{
+            lookup = "id",
+            from = {
+                data = interaction_df,
+                key = :id,
+                fields = ["interaction_pct"]
+            }
+        }],
+        mark = :geoshape,
+        encoding = {
+            color = {
+                field = "interaction_pct",
+                type = "quantitative",
+                title = "Percentage",
+                scale = {
+                    scheme = "greenblue"
+                }
+            }
+        }
+    )
+
+    return (map_interaction, map_percentage_interaction)
+end

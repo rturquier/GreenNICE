@@ -344,7 +344,12 @@ function get_SCC_decomposition_country(
     return SCC_decomposition_df
 end
 
-function get_SCC_interaction_country(SCC_decomposition_df::DataFrame)
+function get_SCC_interaction_country(
+    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
+    pulse_year::Int=2025, pulse_size::Real=1.
+    )::DataFrame
+
+    SCC_decomposition_df = get_SCC_decomposition_country(η, θ, α, γ_list, ρ)
 
     no_inequality_df = @chain SCC_decomposition_df begin
         @filter(γ == 0)
@@ -356,21 +361,18 @@ function get_SCC_interaction_country(SCC_decomposition_df::DataFrame)
         @select(country, inequality_damage_E = present_cost_of_damages_to_E)
     end
 
-    interaction_df = @chain innerjoin(inequality_df, no_inequality_df, on = :country) begin
-        @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
-        @mutate(interaction_pct = (interaction) / inequality_damage_E * 100)
-    end
-
     countries_df = @chain begin
         DataFrame(all_countries())
-        @select(
-            country = alpha3,
-            id = numeric
+        @select(country = alpha3, id = numeric
         )
     end
 
-    interaction_df.country = string.(interaction_df.country)
-    interaction_df = leftjoin(interaction_df, countries_df, on = :country)
+    interaction_df = @chain innerjoin(inequality_df, no_inequality_df, on = :country) begin
+        @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
+        @mutate(interaction_pct = (interaction) ./ inequality_damage_E * 100)
+        @mutate(country = string.(country))
+        leftjoin(countries_df, on = :country)
+    end
 
     return interaction_df
 end

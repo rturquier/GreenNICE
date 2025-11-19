@@ -289,19 +289,16 @@ function apply_SCC_decomposition_formula_country(
 
         β = 1 / (1 + ρ)
         SCC_df = @eval @chain $prepared_df begin
-            @group_by(year, country)
+            @group_by(country, year)
             # Exclude 4 small countries with E = 0 because the have infinite ∂_cE
             @filter(E > 0)
             @summarize(
-                t = first(t),
-                country = first(country),
+                t = unique(t),
 
                 welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
                 welfare_loss_E = sum(∂_cE * marginal_damage_to_E),
             )
             @filter(t >= 0)
-            @ungroup
-            @group_by(country)
             @summarize(
                 present_cost_of_damages_to_c = 1 / $reference_marginal_utility
                                             * sum($β^t * welfare_loss_c),
@@ -410,8 +407,9 @@ function map_SCC_decomposition_country(interaction_df::DataFrame)
                 type = "quantitative",
                 title = "Interaction cost",
                 scale = {
-                    domain = [-0.5, 0, 0.5],
-                    scheme = "plasma"
+                    scheme = "blueorange",
+                    domainMid = 0,
+                    domain = [-0.1, 0.1]
                 }
             }
         }

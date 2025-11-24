@@ -221,9 +221,15 @@ function get_SCC_decomposition(
 
     reference_marginal_utility = get_marginal_utility_at_present_average(model_df, η, θ, α)
 
-    SCC_decomposition_df = @chain begin
-        prepare_df_for_SCC(model_df, η, θ, α)
-        apply_SCC_decomposition_formula(_, reference_marginal_utility, ρ)
+    SCC_decomposition_df = @eval @chain begin
+        prepare_df_for_SCC($model_df, $η, $θ, $α)
+        apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ)
+        @mutate(
+            η = $η,
+            θ = $θ,
+            γ = $γ,
+        )
+        @relocate(η, θ, γ)
     end
 
     return SCC_decomposition_df
@@ -248,11 +254,7 @@ function get_SCC_decomposition(
 )::DataFrame
     df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...), γ_list)
     concatenated_df = reduce(vcat, df_list)
-    SCC_decomposition_df = @eval @chain $concatenated_df begin
-        @mutate(γ = $γ_list)
-        @relocate(γ)
-    end
-    return SCC_decomposition_df
+    return concatenated_df
 end
 
 

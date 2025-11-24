@@ -219,7 +219,8 @@ end
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; pulse_year::Int=2025, pulse_size::Real=1.
+    η::Real, θ::Real, α::Real, γ::Real, ρ::Real, country_level::Bool=false;
+    pulse_year::Int=2025, pulse_size::Real=1.
 )::DataFrame
     mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
     run(mm)
@@ -229,7 +230,7 @@ function get_SCC_decomposition(
 
     SCC_decomposition_df = @eval @chain begin
         prepare_df_for_SCC($model_df, $η, $θ, $α)
-        apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ)
+        apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ, $country_level)
         @mutate(
             η = $η,
             θ = $θ,
@@ -240,7 +241,6 @@ function get_SCC_decomposition(
 
     return SCC_decomposition_df
 end
-
 
 """
         get_SCC_decomposition(
@@ -289,22 +289,7 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     return plot
 end
 
-function get_SCC_decomposition_country(
-    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; pulse_year::Int=2025, pulse_size::Real=1.
-)::DataFrame
-    mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
-    run(mm)
-    model_df = get_model_data(mm, pulse_year)
 
-    reference_marginal_utility = get_marginal_utility_at_present_average(model_df, η, θ, α)
-
-    SCC_decomposition_df = @chain begin
-        prepare_df_for_SCC(model_df, η, θ, α)
-        apply_SCC_decomposition_formula_country(_, reference_marginal_utility, ρ)
-    end
-
-    return SCC_decomposition_df
-end
 
 function get_SCC_decomposition_country(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...

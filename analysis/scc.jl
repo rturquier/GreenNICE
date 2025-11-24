@@ -214,6 +214,8 @@ end
     - `γ::Real`: within-country inequality parameter. 0 means no within-country inequality.
         1 is the standard calibration.
     - `ρ::Real`: rate of pure time preference (utility discount rate).
+    - `country_level::Bool`: if true, compute SCC decomposition at the country level.
+        Default is false, which computes global SCC decomposition.
     - `pulse_year::Int`: year where the CO2 marginal pulse is emmitted, and year of
         reference for the SCC.
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
@@ -250,7 +252,9 @@ end
     Get SCC decomposition for a vector of γ values.
 
     Apply `get_SCC_decomposition` for each value of γ provided in `γ_list`.
-    Return a Dataframe with as many rows as values in `γ_list`, with three columns:
+    Return a Dataframe with as many rows as values in `γ_list`, with five columns:
+    - `η`, equal to the input `η`,
+    - `θ`, equal to the input `θ`,
     - `γ`, equal to `γ_list`,
     - `present_cost_of_damages_to_c`,
     - `present_cost_of_damages_to_E`.

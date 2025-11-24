@@ -141,8 +141,8 @@ end
 
 @doc raw"""
         apply_SCC_decomposition_formula(
-            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real
-        )::DataFrame
+            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real,
+            country_level::Bool=false)::DataFrame
 
     Get present value of equity-weighted, money-metric damages to `c` and `E`.
 
@@ -156,13 +156,19 @@ end
     Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in
     the dataframe, and marginal damages to the environment, ``\frac{dE_i}{de}``, are coded
     as `marginal_damage_to_E`.
+
+    country_level == true computes the SCC decomposition at the country level,
 """
 function apply_SCC_decomposition_formula(
-    prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real
-)::DataFrame
+    prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real,
+    country_level::Bool=false)::DataFrame
+
     β = 1 / (1 + ρ)
+
+    group_columns = country_level ? [:country, :year] : [:year]
+
     SCC_df = @eval @chain $prepared_df begin
-        @group_by(year)
+        @group_by($(group_columns...))
         # Exclude 4 small countries with E = 0 because the have infinite ∂_cE
         @filter(E > 0)
         @summarize(
@@ -281,35 +287,6 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
 
     plot = plot_df |> @vlplot(:area, x="γ:q", y="SCC_part:q", color="interaction:N")
     return plot
-end
-
-function apply_SCC_decomposition_formula_country(
-    prepared_df::DataFrame,
-    reference_marginal_utility::Real,
-    ρ::Real,
-    )::DataFrame
-
-        β = 1 / (1 + ρ)
-        SCC_df = @eval @chain $prepared_df begin
-            @group_by(country, year)
-            # Exclude 4 small countries with E = 0 because the have infinite ∂_cE
-            @filter(E > 0)
-            @summarize(
-                t = unique(t),
-
-                welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
-                welfare_loss_E = sum(∂_cE * marginal_damage_to_E),
-            )
-            @filter(t >= 0)
-            @summarize(
-                present_cost_of_damages_to_c = 1 / $reference_marginal_utility
-                                            * sum($β^t * welfare_loss_c),
-                present_cost_of_damages_to_E = 1 / $reference_marginal_utility
-                                            * sum($β^t * welfare_loss_E),
-            )
-        end
-
-    return SCC_df
 end
 
 function get_SCC_decomposition_country(

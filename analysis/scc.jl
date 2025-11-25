@@ -374,7 +374,7 @@ function map_SCC_decomposition_country(interaction_df::DataFrame)
     map_percentage_interaction = @vlplot(
         width = 640,
         height = 360,
-        title = "Interaction effect as percentage of SCC's environmental dimension (%)",
+        title = "",
         projection = {type = :equirectangular}
     ) +
     @vlplot(
@@ -400,7 +400,7 @@ function map_SCC_decomposition_country(interaction_df::DataFrame)
                 type = "quantitative",
                 title = "Percentage",
                 scale = {
-                    scheme = "greenblue"
+                    scheme = "oranges"
                 }
             }
         }

@@ -297,14 +297,12 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     return plot
 end
 
-
-
 function get_SCC_interaction_country(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
     pulse_year::Int=2025, pulse_size::Real=1.
     )::DataFrame
 
-    SCC_decomposition_df = get_SCC_decomposition_country(η, θ, α, γ_list, ρ)
+    SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ, true)
 
     no_inequality_df = @chain SCC_decomposition_df begin
         @filter(γ == 0)

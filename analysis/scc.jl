@@ -160,12 +160,12 @@ end
     country_level == true computes the SCC decomposition at the country level,
 """
 function apply_SCC_decomposition_formula(
-    prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real,
-    country_level::Bool=false)::DataFrame
+    prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real;
+    level_analysis::String="global")::DataFrame
 
     β = 1 / (1 + ρ)
 
-    group_columns = country_level ? [:country, :year] : [:year]
+    group_columns = level_analysis == "country" ? [:country, :year] : [:year]
 
     SCC_df = @eval @chain $prepared_df begin
         @group_by($(group_columns...))
@@ -221,7 +221,7 @@ end
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ::Real, ρ::Real, country_level::Bool=false;
+    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; level_analysis::String="global",
     pulse_year::Int=2025, pulse_size::Real=1.
 )::DataFrame
     mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
@@ -232,7 +232,8 @@ function get_SCC_decomposition(
 
     SCC_decomposition_df = @eval @chain begin
         prepare_df_for_SCC($model_df, $η, $θ, $α)
-        apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ, $country_level)
+        apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ;
+                                        level_analysis = $level_analysis)
         @mutate(
             η = $η,
             θ = $θ,
@@ -260,9 +261,9 @@ end
     - `present_cost_of_damages_to_E`.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real, country_level = false; kwargs...
+    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
 )::DataFrame
-    df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ, country_level; kwargs...), γ_list)
+    df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...), γ_list)
     SCC_decomposition_df = reduce(vcat, df_list)
     return SCC_decomposition_df
 end

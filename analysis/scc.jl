@@ -262,14 +262,9 @@ end
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real, country_level = false; kwargs...
 )::DataFrame
-    df_list = map(γ -> begin
-        concatenated_df = get_SCC_decomposition(η, θ, α, γ, ρ, country_level; kwargs...)
-        if country_level
-            concatenated_df.γ = fill(γ, nrow(concatenated_df))
-        end
-        concatenated_df
-        end, γ_list)
-    return reduce(vcat, df_list)
+    df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ, country_level; kwargs...), γ_list)
+    SCC_decomposition_df = reduce(vcat, df_list)
+    return SCC_decomposition_df
 end
 
 function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpec

@@ -347,7 +347,7 @@ function get_SCC_interaction(
                     no_inequality_damage_E = sum(skipmissing(no_inequality_damage_E))
                 )
                 @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
-                @mutate(interaction_pct = (interaction_rwpp) ./
+                @mutate(interaction_pct = (interaction) ./
                                                 inequality_damage_E * 100)
             end
         interaction_df = leftjoin(rwpp_damage_df, country_codes, on = :WPP_code)
@@ -356,14 +356,14 @@ function get_SCC_interaction(
     return interaction_df
 end
 
-function map_SCC_decomposition_country(interaction_df::DataFrame)
+function map_SCC_decomposition_level(interaction_df::DataFrame)
 
     world110m = dataset("world-110m")
 
     map_interaction = @vlplot(
         width = 640,
         height = 360,
-        title = "Interaction effect of within country inequality (USD)",
+        title = "",
         projection = {type = :equirectangular}
     ) +
     @vlplot(
@@ -396,6 +396,13 @@ function map_SCC_decomposition_country(interaction_df::DataFrame)
             }
         }
     )
+
+    return map_interaction
+end
+
+function map_SCC_decomposition_pct(interaction_df::DataFrame)
+
+    world110m = dataset("world-110m")
 
     map_percentage_interaction = @vlplot(
         width = 640,
@@ -432,5 +439,5 @@ function map_SCC_decomposition_country(interaction_df::DataFrame)
         }
     )
 
-    return (map_interaction, map_percentage_interaction)
+    return map_percentage_interaction
 end

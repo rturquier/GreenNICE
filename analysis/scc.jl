@@ -346,8 +346,8 @@ function get_SCC_interaction(
                     inequality_damage_E = sum(skipmissing(inequality_damage_E)),
                     no_inequality_damage_E = sum(skipmissing(no_inequality_damage_E))
                 )
-                @mutate(interaction_rwpp = inequality_damage_E - no_inequality_damage_E)
-                @mutate(interaction_pct_rwpp = (interaction_rwpp) ./
+                @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
+                @mutate(interaction_pct = (interaction_rwpp) ./
                                                 inequality_damage_E * 100)
             end
         interaction_df = leftjoin(rwpp_damage_df, country_codes, on = :WPP_code)

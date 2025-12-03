@@ -294,7 +294,7 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
 end
 
 function get_SCC_interaction(
-    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; level_analysis::String="country",
+    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
     pulse_year::Int=2025, pulse_size::Real=1.
     )::DataFrame
 
@@ -322,35 +322,6 @@ function get_SCC_interaction(
         @mutate(interaction_pct = (interaction) ./ inequality_damage_E * 100)
         @mutate(country = string.(country))
         leftjoin(countries_df, on = :country)
-    end
-
-    if level_analysis == "region"
-
-        wpp_df = @chain begin CSV.read(joinpath(@__DIR__,
-                                                "..",
-                                                "data",
-                                                "WPP_regions_country_list.csv"), DataFrame)
-            @rename(country = countrycode)
-            @select(country, WPP_code)
-        end
-
-        country_codes = @chain interaction_df begin
-            leftjoin(wpp_df, on = :country)
-            @select(-(interaction, interaction_pct, inequality_damage_E, no_inequality_damage_E))
-        end
-
-         rwpp_damage_df = @chain try_4 begin
-                leftjoin(wpp_df, on = :country)
-                @group_by(WPP_code)
-                @summarize(
-                    inequality_damage_E = sum(skipmissing(inequality_damage_E)),
-                    no_inequality_damage_E = sum(skipmissing(no_inequality_damage_E))
-                )
-                @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
-                @mutate(interaction_pct = (interaction) ./
-                                                inequality_damage_E * 100)
-            end
-        interaction_df = leftjoin(rwpp_damage_df, country_codes, on = :WPP_code)
     end
 
     return interaction_df

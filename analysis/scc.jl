@@ -165,7 +165,11 @@ function apply_SCC_decomposition_formula(
 
     β = 1 / (1 + ρ)
 
-    group_columns = analysis_level == "country" ? [:country, :year] : [:year]
+    if analysis_level == "country"
+        group_columns = [:country, :year]
+    else
+        group_columns = [:year]
+    end
 
     SCC_df = @eval @chain $prepared_df begin
         @group_by($(group_columns...))

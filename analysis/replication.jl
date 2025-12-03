@@ -3,9 +3,6 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 #Pkg.resolve() # To resolve inconsistencies between Manifest.toml and Project.toml
 Pkg.instantiate()
 
-# Load required Julia packages.
-using Mimi, MimiFAIRv2, DataFrames, CSVFiles, Plots, VegaLite
-
 include("../src/GreenNICE.jl")
 include("scc.jl")
 

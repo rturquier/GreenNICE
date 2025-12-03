@@ -15,6 +15,7 @@ using Mimi, MimiFAIRv2, DataFrames, CSVFiles
 println("Load NICE2020 source code.")
 # Load NICE2020 source code.
 include("GreenNICE.jl")
+include("helper_functions.jl")
 
 # ------------------------------------------------------------------------------------------------
 # RETRIEVE NECESSARY PARAMETERS FROM THE BASE MODEL

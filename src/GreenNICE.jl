@@ -1,15 +1,11 @@
 module GreenNICE
 
-# Load required packages.
 using Mimi, MimiFAIRv2, Statistics, Random, Distributions
 
-# Load economic data country by country
+# Calibration
 include("../data/parameters.jl")
 
-# Load helper functions
-include("helper_functions.jl")
-
-# Load additional Mimi model components
+# Model components
 include(joinpath("components", "gross_economy.jl"))
 include(joinpath("components", "abatement.jl"))
 include(joinpath("components", "emissions.jl"))
@@ -22,37 +18,28 @@ include(joinpath("components", "quantile_recycle.jl"))
 include(joinpath("components", "welfare.jl"))
 
 
-function create(; parameters::Dict=Dict())
-
-	# Get an instance of Mimi-FAIRv2 with SSP2-45 emissions and radiative forcing.
-	m = MimiFAIRv2.get_model(
-        emissions_forcing_scenario="ssp245",
-        start_year=2020,
-        end_year=2300,
-        param_type = "Number"
-    )
-
+function _set_dimensions!(m::Model)::Model
     quantiles = [
-        "First",
-        "Second",
-        "Third",
-        "Fourth",
-        "Fifth",
-        "Sixth",
-        "Seventh",
-        "Eighth",
-        "Ninth",
-        "Tenth"
-    ]
+            "First",
+            "Second",
+            "Third",
+            "Fourth",
+            "Fifth",
+            "Sixth",
+            "Seventh",
+            "Eighth",
+            "Ninth",
+            "Tenth"
+        ]
 	set_dimension!(m, :quantile, quantiles)
 	set_dimension!(m, :country, Symbol.(countries))
 	set_dimension!(m, :regionwpp, Symbol.(wpp_regions))  # 20 wpp regions
+    return m
+end
 
-	nb_quantile = length(dim_keys(m, :quantile))
-	nb_country = length(dim_keys(m, :country))
-    nb_year = length(dim_keys(m, :time))
 
-	# Add emissions and gross economy components before FAIR carbon cycle
+function _add_components!(m::Model)::Model
+    # Add emissions and gross economy components before FAIR carbon cycle
 	add_comp!(m, emissions, before = :co2_cycle)
 	add_comp!(m, abatement, before = :emissions)
 	add_comp!(m, grosseconomy, before = :abatement)
@@ -65,21 +52,29 @@ function create(; parameters::Dict=Dict())
 	add_comp!(m, environment, after = :neteconomy)
 	add_comp!(m, quantile_recycle, after = :revenue_recycle)
 	add_comp!(m, welfare, after = :quantile_recycle)
+    return m
+end
 
-	# --- Create Component Connections ---
-    # Add shared parameters
-	add_shared_param!(m, :switch_recycle, 0) # No revenue recycling by default
+
+function _add_shared_parameters!(m::Model)::Model
+    nb_quantile = length(dim_keys(m, :quantile))
+	add_shared_param!(m, :nb_quantile, 	nb_quantile)
+
+    add_shared_param!(m, :switch_recycle, 0) # No revenue recycling by default
 	add_shared_param!(m, :l, Matrix(pop), dims=[:time, :country])
 	add_shared_param!(m, :mapcrwpp, map_country_region_wpp, dims=[:country])
-	add_shared_param!(m, :nb_quantile, 	nb_quantile)
 	add_shared_param!(m, :η, 1.5)
 	add_shared_param!(m, :σ, Matrix(emissionsrate), dims=[:time, :country])
 	add_shared_param!(m, :s, Matrix(srate), dims=[:time, :country])
 	add_shared_param!(m, :α, 0.1)
 	add_shared_param!(m, :θ, 0.5)
 
-    # Connect shared parameters
-	connect_param!(m, :grosseconomy, :l, :l)
+    return m
+end
+
+
+function _connect_shared_parameters!(m::Model)::Model
+    connect_param!(m, :grosseconomy, :l, :l)
 
     connect_param!(m, :environment, :l, :l)
     connect_param!(m, :environment, :nb_quantile, :nb_quantile)
@@ -111,15 +106,21 @@ function create(; parameters::Dict=Dict())
 	connect_param!(m, :welfare, :mapcrwpp,  :mapcrwpp)
 	connect_param!(m, :welfare, :α, :α)
 	connect_param!(m, :welfare, :θ, :θ)
+    return m
+end
 
-    # Connect component parameters
-	# Syntax is:
-    # connect_param!(
-    #     model_name,
-    #     :component_requiring_value => :name_of_required_value,
-    #     :component_calculating_value => :name_of_calculated_value
-    # )
-	connect_param!(m, :grosseconomy    	=> :I, 					:neteconomy 		=> :I )
+
+function _connect_component_parameters!(m::Model)::Model
+    # Syntax is:
+    """
+    connect_param!(
+        model_name,
+        :component_requiring_value => :name_of_required_value,
+        :component_calculating_value => :name_of_calculated_value
+    )
+    """
+
+    connect_param!(m, :grosseconomy    	=> :I, 					:neteconomy 		=> :I )
 	connect_param!(m, :abatement 	   	=> :YGROSS, 			:grosseconomy 		=> :YGROSS)
 	connect_param!(m, :emissions 	   	=> :YGROSS, 			:grosseconomy 		=> :YGROSS)
 	connect_param!(m, :emissions 	   	=> :μ, 					:abatement 			=> :μ)
@@ -148,11 +149,15 @@ function create(; parameters::Dict=Dict())
 	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 
-    # --- Set parameters ---
-    # User-supplied values
-    update_params!(m, parameters)
+    return m
+end
 
-    # Default values
+
+function _set_default_values!(m::Model)::Model
+    nb_quantile = length(dim_keys(m, :quantile))
+	nb_country = length(dim_keys(m, :country))
+    nb_year = length(dim_keys(m, :time))
+
     FAIR_initial_values_2020 = Dict(
         (:aerosol_plus_cycles, :aerosol_plus_0) => init_aerosol[:, :concentration],
         (:aerosol_plus_cycles, :R0_aerosol_plus) => Matrix(init_aerosol[:, [:R1, :R2, :R3, :R4]]),
@@ -224,8 +229,26 @@ function create(; parameters::Dict=Dict())
     all_defaults = merge(FAIR_initial_values_2020, other_defaults)
 
     update_leftover_params!(m, all_defaults)
+    return m
+end
 
-	return m
+function create(; parameters::Dict=Dict())::Model
+	m = MimiFAIRv2.get_model(
+        emissions_forcing_scenario="ssp245",
+        start_year=2020,
+        end_year=2300,
+        param_type = "Number"
+    )
+
+    _set_dimensions!(m)
+    _add_components!(m)
+    _add_shared_parameters!(m)
+    _connect_shared_parameters!(m)
+    _connect_component_parameters!(m)
+    update_params!(m, parameters) # Set user-supplied values
+    _set_default_values!(m)
+
+    return m
 end
 
 end #module

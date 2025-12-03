@@ -13,7 +13,7 @@ include("scc.jl")
 ρ = 0.01
 γ_list = [0.0, 1.0]
 pulse_year = 2025
-pulse_size = 1.0 # GtCO2
+pulse_size = 1.0 # ton CO2
 
 
 ## Make figures showing interaction effect at country and region levels

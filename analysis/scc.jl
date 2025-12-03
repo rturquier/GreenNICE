@@ -161,11 +161,11 @@ end
 """
 function apply_SCC_decomposition_formula(
     prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real;
-    level_analysis::String="global")::DataFrame
+    analysis_level::String="global")::DataFrame
 
     β = 1 / (1 + ρ)
 
-    group_columns = level_analysis == "country" ? [:country, :year] : [:year]
+    group_columns = analysis_level == "country" ? [:country, :year] : [:year]
 
     SCC_df = @eval @chain $prepared_df begin
         @group_by($(group_columns...))
@@ -221,7 +221,7 @@ end
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; level_analysis::String="global",
+    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; analysis_level::String="global",
     pulse_year::Int=2025, pulse_size::Real=1.
 )::DataFrame
     mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
@@ -233,7 +233,7 @@ function get_SCC_decomposition(
     SCC_decomposition_df = @eval @chain begin
         prepare_df_for_SCC($model_df, $η, $θ, $α)
         apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ;
-                                        level_analysis = $level_analysis)
+                                        analysis_level = $analysis_level)
         @mutate(
             η = $η,
             θ = $θ,
@@ -299,7 +299,7 @@ function get_SCC_interaction(
     )::DataFrame
 
     SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ;
-                                                 level_analysis="country")
+                                                 analysis_level="country")
 
     no_inequality_df = @chain SCC_decomposition_df begin
         @filter(γ == 0)

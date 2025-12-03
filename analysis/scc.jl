@@ -331,7 +331,7 @@ function map_SCC_decomposition_level(interaction_df::DataFrame)
 
     world110m = dataset("world-110m")
 
-    map_interaction = @vlplot(
+    interaction_map = @vlplot(
         width = 640,
         height = 360,
         title = "",
@@ -368,14 +368,14 @@ function map_SCC_decomposition_level(interaction_df::DataFrame)
         }
     )
 
-    return map_interaction
+    return interaction_map
 end
 
 function map_SCC_decomposition_pct(interaction_df::DataFrame)
 
     world110m = dataset("world-110m")
 
-    map_percentage_interaction = @vlplot(
+    percentage_interaction_map = @vlplot(
         width = 640,
         height = 360,
         title = "",
@@ -410,5 +410,5 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
         }
     )
 
-    return map_percentage_interaction
+    return percentage_interaction_map
 end

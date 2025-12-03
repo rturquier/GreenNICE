@@ -22,24 +22,31 @@ include(joinpath("components", "quantile_recycle.jl"))
 include(joinpath("components", "welfare.jl"))
 
 
-
-
-# Create a function that couples FAIRv2.0 to the economic model components
-function create()
+function create(; parameters::Dict=Dict())
 
 	# Get an instance of Mimi-FAIRv2 with SSP2-45 emissions and radiative forcing.
-	m = MimiFAIRv2.get_model(emissions_forcing_scenario="ssp245", start_year=2020, end_year=2300, param_type = "Number")
+	m = MimiFAIRv2.get_model(
+        emissions_forcing_scenario="ssp245",
+        start_year=2020,
+        end_year=2300,
+        param_type = "Number"
+    )
 
-	# Set country dimension
-	c = Symbol.(countries)
-	set_dimension!(m, :country, c)
-
-	# Set wpp regions dimension (20 wpp regions)
-	rwpp = Symbol.(wpp_regions)
-	set_dimension!(m, :regionwpp, rwpp )
-
-	# Set quantile dimension
-	set_dimension!(m, :quantile, ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"])
+    quantiles = [
+        "First",
+        "Second",
+        "Third",
+        "Fourth",
+        "Fifth",
+        "Sixth",
+        "Seventh",
+        "Eighth",
+        "Ninth",
+        "Tenth"
+    ]
+	set_dimension!(m, :quantile, quantiles)
+	set_dimension!(m, :country, Symbol.(countries))
+	set_dimension!(m, :regionwpp, Symbol.(wpp_regions))  # 20 wpp regions
 
 	nb_quantile = length(dim_keys(m, :quantile))
 	nb_country = length(dim_keys(m, :country))
@@ -59,159 +66,44 @@ function create()
 	add_comp!(m, quantile_recycle, after = :revenue_recycle)
 	add_comp!(m, welfare, after = :quantile_recycle)
 
-
-	# Set parameters
-
-	# ---------------------------------------------------
-	# Shared parameters (used in more than one component)
-	# ---------------------------------------------------
-
+	# --- Create Component Connections ---
+    # Add shared parameters
 	add_shared_param!(m, :switch_recycle, 0) # No revenue recycling by default
-	add_shared_param!(m, :l, 			Matrix(pop), dims=[:time, :country])
-	add_shared_param!(m, :mapcrwpp,  	map_country_region_wpp, dims = [:country]) # mapping from countries to wpp region
+	add_shared_param!(m, :l, Matrix(pop), dims=[:time, :country])
+	add_shared_param!(m, :mapcrwpp, map_country_region_wpp, dims=[:country])
 	add_shared_param!(m, :nb_quantile, 	nb_quantile)
-	add_shared_param!(m, :η, 	1.5)
-	add_shared_param!(m, :σ, 	Matrix(emissionsrate), dims=[:time, :country])
-	add_shared_param!(m,  :s, Matrix(srate), dims=[:time, :country])
+	add_shared_param!(m, :η, 1.5)
+	add_shared_param!(m, :σ, Matrix(emissionsrate), dims=[:time, :country])
+	add_shared_param!(m, :s, Matrix(srate), dims=[:time, :country])
 	add_shared_param!(m, :α, 0.1)
 	add_shared_param!(m, :θ, 0.5)
 
-
-
-	# --------------------------------
-	# FAIR Initial (2020) Conditions
-	# --------------------------------
-
-	update_param!(m, :aerosol_plus_cycles, :aerosol_plus_0, init_aerosol[:, :concentration])
-	update_param!(m, :aerosol_plus_cycles, :R0_aerosol_plus, Matrix(init_aerosol[:, [:R1, :R2, :R3, :R4]]))
-	update_param!(m, :aerosol_plus_cycles, :GU_aerosol_plus_0, init_aerosol[:, :GU])
-
-	update_param!(m, :ch4_cycle, :ch4_0, init_ch4[1,:concentration])
-	update_param!(m, :ch4_cycle, :R0_ch4, vec(Matrix(init_ch4[!, [:R1, :R2, :R3, :R4]])))
-	update_param!(m, :ch4_cycle, :GU_ch4_0, init_ch4[1,:GU])
-
-	update_param!(m, :co2_cycle, :co2_0, init_co2[1,:concentration])
-	update_param!(m, :co2_cycle, :R0_co2, vec(Matrix(init_co2[!, [:R1, :R2, :R3, :R4]])))
-	update_param!(m, :co2_cycle, :GU_co2_0, init_co2[1,:GU])
-
-	update_param!(m, :flourinated_cycles, :flourinated_0, init_flourinated[!,:concentration])
-	update_param!(m, :flourinated_cycles, :R0_flourinated, Matrix(init_flourinated[!, [:R1, :R2, :R3, :R4]]))
-	update_param!(m, :flourinated_cycles, :GU_flourinated_0, init_flourinated[!,:GU])
-
-	update_param!(m, :montreal_cycles, :montreal_0, init_montreal[!,:concentration])
-	update_param!(m, :montreal_cycles, :R0_montreal, Matrix(init_montreal[!, [:R1, :R2, :R3, :R4]]))
-	update_param!(m, :montreal_cycles, :GU_montreal_0, init_montreal[!,:GU])
-
-	update_param!(m, :n2o_cycle, :n2o_0, init_n2o[1,:concentration])
-	update_param!(m, :n2o_cycle, :R0_n2o, vec(Matrix(init_n2o[!, [:R1, :R2, :R3, :R4]])))
-	update_param!(m, :n2o_cycle, :GU_n2o_0, init_n2o[1,:GU])
-
-	update_param!(m, :temperature, :Tj_0, init_tj[!,:Tj])
-	update_param!(m, :temperature, :T_0, init_temperature[1,:Temperature])
-
-
-	# --------------------------------
-	# Gross Economy
-	# --------------------------------
-
+    # Connect shared parameters
 	connect_param!(m, :grosseconomy, :l, :l)
-	update_param!(m, :grosseconomy, :tfp, Matrix(productivity))
-	update_param!(m, :grosseconomy, :depk, Matrix(depreciation))
-	update_param!(m, :grosseconomy, :k0, k0)
-	update_param!(m, :grosseconomy, :share, 0.3)
-
-	# --------------------------------
-	# Environment
-	# --------------------------------
 
     connect_param!(m, :environment, :l, :l)
     connect_param!(m, :environment, :nb_quantile, :nb_quantile)
     connect_param!(m, :environment, :mapcrwpp,  :mapcrwpp)
-
-	update_param!(m, :environment, :E_stock0, E_stock0)
-    update_param!(m, :environment, :dam_assessment, 1)
-
-	# --------------------------------
-	# Abatement
-	# --------------------------------
-
-	update_param!(m, :abatement, :control_regime, 3)  #  1:"global_carbon_tax", 2:"country_carbon_tax", 3:"country_abatement_rate"
-	update_param!(m, :abatement, :global_carbon_tax, zeros(nb_year))
-	update_param!(m, :abatement, :reference_carbon_tax, zeros(nb_year))
-	update_param!(m, :abatement, :reference_country_index, findfirst(x -> x == "USA", countries))
-	update_param!(m, :abatement, :μ_input, zeros(nb_year, nb_country))
-	update_param!(m, :abatement, :θ2, 2.6)
-	update_param!(m, :abatement, :pbacktime, full_pbacktime)
 
 	connect_param!(m, :abatement, :s, :s)
 	connect_param!(m, :abatement, :l, :l)
 	connect_param!(m, :abatement, :η, :η)
 	connect_param!(m, :abatement, :σ, :σ)
 
-    # --------------------------------
-	# CO2 Emissions
-	# --------------------------------
-
-	update_param!(m, :emissions, :co2_pulse, zeros(nb_year))
-
 	connect_param!(m, :emissions, :mapcrwpp,  :mapcrwpp)
 	connect_param!(m, :emissions, :σ, :σ)
-
-	# --------------------------------
-	# Temperature Pattern Scaling
-	# --------------------------------
-
-	update_param!(m, :pattern_scale, :β_temp, cmip_pattern)
-
-	# --------------------------------
-	# Damages
-	# --------------------------------
-
-	update_param!(m, :damages, :β1_KW, beta1_KW)
-	update_param!(m, :damages, :β2_KW, beta2_KW)
-    update_param!(m, :damages, :θ_env, θ_env)
-
-	# --------------------------------
-	# Net Economy
-	# --------------------------------
 
 	connect_param!(m, :neteconomy, :s, :s)
 	connect_param!(m, :neteconomy, :l, :l)
 	connect_param!(m, :neteconomy, :mapcrwpp,  :mapcrwpp)
-	# --------------------------------
-	# Revenue Recycle
-	# --------------------------------
-
-	update_param!(m, :revenue_recycle, :switch_scope_recycle, 	0)
-	update_param!(m, :revenue_recycle, :switch_global_pc_recycle, 	0)
-	update_param!(m, :revenue_recycle, :global_recycle_share, 	zeros(nb_country))
-	update_param!(m, :revenue_recycle, :lost_revenue_share, 0.0)
 
 	connect_param!(m, :revenue_recycle, :l, :l)
 	connect_param!(m, :revenue_recycle, :switch_recycle, :switch_recycle)
-
-	# --------------------------------
-	# Quantile distribution
-	# --------------------------------
-
-	update_param!(m, :quantile_recycle, :min_study_gdp, 		meta_min_study_gdp) #minimum(elasticity_studies.pcGDP)
-	update_param!(m, :quantile_recycle, :max_study_gdp, 		meta_max_study_gdp)  #maximum(elasticity_studies.pcGDP)
-	update_param!(m, :quantile_recycle, :elasticity_intercept, 	meta_intercept)
-	update_param!(m, :quantile_recycle, :elasticity_slope, 		meta_slope)
-	update_param!(m, :quantile_recycle, :damage_elasticity, 		0.6) #Gilli et al. (2024), estimate based on SSP2 projection
-	update_param!(m, :quantile_recycle, :quantile_consumption_shares,  consumption_distribution_2020_2300)
-	#update_param!(m, :quantile_recycle, :quantile_consumption_shares, 	consumption_distribution) Static version
-	update_param!(m, :quantile_recycle, :recycle_share, 			ones(nb_country, nb_quantile).*1/nb_quantile)
-    update_param!(m, :quantile_recycle, :γ, 1.0) #change in income distribution
 
 	connect_param!(m, :quantile_recycle, :switch_recycle, :switch_recycle)
 	connect_param!(m, :quantile_recycle, :l, 			:l)
 	connect_param!(m, :quantile_recycle, :mapcrwpp,  :mapcrwpp)
 	connect_param!(m, :quantile_recycle, :nb_quantile, 	:nb_quantile)
-
-	# --------------------------------
-	# Welfare
-	# --------------------------------
 
 	connect_param!(m, :welfare, :η, :η)
 	connect_param!(m, :welfare, :nb_quantile, :nb_quantile)
@@ -220,11 +112,13 @@ function create()
 	connect_param!(m, :welfare, :α, :α)
 	connect_param!(m, :welfare, :θ, :θ)
 
-	# --------------------------------
-	# Create Component Connections
-	# --------------------------------
-
-	# Syntax is connect_param!(model_name, :component_requiring_value => :name_of_required_value, :component_calculating_value => :name_of_calculated_value)
+    # Connect component parameters
+	# Syntax is:
+    # connect_param!(
+    #     model_name,
+    #     :component_requiring_value => :name_of_required_value,
+    #     :component_calculating_value => :name_of_calculated_value
+    # )
 	connect_param!(m, :grosseconomy    	=> :I, 					:neteconomy 		=> :I )
 	connect_param!(m, :abatement 	   	=> :YGROSS, 			:grosseconomy 		=> :YGROSS)
 	connect_param!(m, :emissions 	   	=> :YGROSS, 			:grosseconomy 		=> :YGROSS)
@@ -254,7 +148,84 @@ function create()
 	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 
-	# Return model.
+    # --- Set parameters ---
+    # User-supplied values
+    update_params!(m, parameters)
+
+    # Default values
+    FAIR_initial_values_2020 = Dict(
+        (:aerosol_plus_cycles, :aerosol_plus_0) => init_aerosol[:, :concentration],
+        (:aerosol_plus_cycles, :R0_aerosol_plus) => Matrix(init_aerosol[:, [:R1, :R2, :R3, :R4]]),
+        (:aerosol_plus_cycles, :GU_aerosol_plus_0) => init_aerosol[:, :GU],
+
+        (:ch4_cycle, :ch4_0) => init_ch4[1,:concentration],
+        (:ch4_cycle, :R0_ch4) => vec(Matrix(init_ch4[!, [:R1, :R2, :R3, :R4]])),
+        (:ch4_cycle, :GU_ch4_0) => init_ch4[1,:GU],
+
+        (:co2_cycle, :co2_0) => init_co2[1,:concentration],
+        (:co2_cycle, :R0_co2) => vec(Matrix(init_co2[!, [:R1, :R2, :R3, :R4]])),
+        (:co2_cycle, :GU_co2_0) => init_co2[1,:GU],
+
+        (:flourinated_cycles, :flourinated_0) => init_flourinated[!,:concentration],
+        (:flourinated_cycles, :R0_flourinated) => Matrix(init_flourinated[!, [:R1, :R2, :R3, :R4]]),
+        (:flourinated_cycles, :GU_flourinated_0) => init_flourinated[!,:GU],
+
+        (:montreal_cycles, :montreal_0) => init_montreal[!,:concentration],
+        (:montreal_cycles, :R0_montreal) => Matrix(init_montreal[!, [:R1, :R2, :R3, :R4]]),
+        (:montreal_cycles, :GU_montreal_0) => init_montreal[!,:GU],
+
+        (:n2o_cycle, :n2o_0) => init_n2o[1,:concentration],
+        (:n2o_cycle, :R0_n2o) => vec(Matrix(init_n2o[!, [:R1, :R2, :R3, :R4]])),
+        (:n2o_cycle, :GU_n2o_0) => init_n2o[1,:GU],
+
+        (:temperature, :Tj_0) => init_tj[!,:Tj],
+        (:temperature, :T_0) => init_temperature[1,:Temperature],
+    )
+    other_defaults = Dict(
+        (:grosseconomy, :tfp) => Matrix(productivity),
+        (:grosseconomy, :depk) => Matrix(depreciation),
+        (:grosseconomy, :k0) => k0,
+        (:grosseconomy, :share) => 0.3,
+
+        (:environment, :E_stock0) => E_stock0,
+        (:environment, :dam_assessment) => 1,
+
+        (:abatement, :control_regime) => 3,  # 1:"global_carbon_tax", 2:"country_carbon_tax", 3:"country_abatement_rate"
+        (:abatement, :global_carbon_tax) => zeros(nb_year),
+        (:abatement, :reference_carbon_tax) => zeros(nb_year),
+        (:abatement, :reference_country_index) => findfirst(x -> x == "USA", countries),
+        (:abatement, :μ_input) => zeros(nb_year, nb_country),
+        (:abatement, :θ2) => 2.6,
+        (:abatement, :pbacktime) => full_pbacktime,
+
+        (:emissions, :co2_pulse) => zeros(nb_year),
+
+        (:pattern_scale, :β_temp) => cmip_pattern,
+
+        (:damages, :β1_KW) => beta1_KW,
+        (:damages, :β2_KW) => beta2_KW,
+        (:damages, :θ_env) => θ_env,
+
+        (:revenue_recycle, :switch_scope_recycle) => 0,
+        (:revenue_recycle, :switch_global_pc_recycle) => 0,
+        (:revenue_recycle, :global_recycle_share) => zeros(nb_country),
+        (:revenue_recycle, :lost_revenue_share) => 0.0,
+
+        (:quantile_recycle, :min_study_gdp) => meta_min_study_gdp,  # minimum(elasticity_studies.pcGDP)
+        (:quantile_recycle, :max_study_gdp) => meta_max_study_gdp,  # maximum(elasticity_studies.pcGDP)
+        (:quantile_recycle, :elasticity_intercept) => meta_intercept,
+        (:quantile_recycle, :elasticity_slope) => meta_slope,
+        (:quantile_recycle, :damage_elasticity) => 0.6,  # Gilli et al. (2024), estimate based on SSP2 projection
+        (:quantile_recycle, :quantile_consumption_shares) => consumption_distribution_2020_2300,
+        # (:quantile_recycle, :quantile_consumption_shares) => consumption_distribution, # Static version
+        (:quantile_recycle, :recycle_share) => ones(nb_country, nb_quantile) .* 1 / nb_quantile,
+        (:quantile_recycle, :γ) => 1.0,  # change in income distribution
+    )
+    all_defaults = merge(FAIR_initial_values_2020, other_defaults)
+
+    update_leftover_params!(m, all_defaults)
+
 	return m
 end
+
 end #module

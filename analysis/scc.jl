@@ -430,9 +430,10 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
             color = {
                 field = "interaction_pct",
                 type = "quantitative",
-                title = "Percentage",
+                title = "Interaction (%)",
                 scale = {
-                    scheme = "oranges"
+                    scheme = "purpleorange",
+                    domainMid = 0
                 }
             }
         }

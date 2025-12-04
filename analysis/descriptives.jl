@@ -76,6 +76,34 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
     return plot
 end
 
+function plot_theta_E_stock0(df::DataFrame)::VegaLite.VLSpec
+    plot = @vlplot(
+        data = df,
+        layer = [
+            {
+                mark = { :point },
+                x = {field = :E_stock0_percapita,
+                     title = "Natural capital stock per capita (k USD)"},
+                y = {field = :θ_env,
+                     title = "Damage coefficient (1/ \u00B0C)"}
+            },
+            {
+                transform = [
+                    {
+                        regression = :θ_env,
+                        on = :E_stock0_percapita
+                    }
+                ],
+                mark = { :line, color = "firebrick", opacity = 0.8 },
+                x = :E_stock0_percapita,
+                y = :θ_env
+            }
+        ]
+    )
+
+    return plot
+end
+
 function plot_descriptive_coeficients(df::DataFrame)::VegaLite.VLSpec
 
     circle_plot = @vlplot(

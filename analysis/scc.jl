@@ -10,25 +10,30 @@ include("../src/components/welfare.jl")
 
 
 function set_up_marginal_model(
-    η::Real, θ::Real, α::Real, γ::Real, pulse_year::Int, pulse_size::Real
+    η::Real,
+    θ::Real,
+    α::Real,
+    γ::Real,
+    pulse_year::Int,
+    pulse_size::Real,
+    additional_parameters::Dict=Dict()
 )::MarginalModel
+    main_parameters = Dict(:η => η, :θ => θ, :α => α, (:quantile_recycle, :γ) => γ)
+    parameters = merge(main_parameters, additional_parameters)
 
-    m = GreenNICE.create()
-    update_params!(m, Dict(:η => η, :θ => θ, :α => α))
-    update_param!(m, :quantile_recycle, :γ, γ)
+    m = GreenNICE.create(parameters=parameters)
+    mm = create_marginal_model(m, pulse_size)
 
     years = dim_keys(m, :time)
     n_years = length(years)
-    pulse_year_index = findfirst(t -> t == pulse_year, years)
-
+    pulse_year_index = findfirst(year -> year == pulse_year, years)
     pulse_series = zeros(n_years)
     pulse_series[pulse_year_index] = pulse_size
-
-    mm = create_marginal_model(m, pulse_size)
     update_param!(mm.modified, :emissions, :co2_pulse, pulse_series)
 
     return mm
 end
+
 
 function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :E_flow_percapita))
@@ -182,10 +187,10 @@ end
 
 
 """
-        get_SCC_decomposition(
-            η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
-            pulse_year::Int=2025, pulse_size::Real=1.
-        )::DataFrame
+    get_SCC_decomposition(
+        η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
+        pulse_year::Int=2025, pulse_size::Real=1., additional_parameters::Dict=Dict()
+    )::DataFrame
 
     Get social cost of carbon as damages to consumption and damages to the environment.
 
@@ -208,14 +213,18 @@ end
     - `γ::Real`: within-country inequality parameter. 0 means no within-country inequality.
         1 is the standard calibration.
     - `ρ::Real`: rate of pure time preference (utility discount rate).
+
+    # Keyword arguments
     - `pulse_year::Int`: year where the CO2 marginal pulse is emmitted, and year of
         reference for the SCC.
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
+    - `additional_parameters::Dict`: additional parameters to be passed to the model.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; pulse_year::Int=2025, pulse_size::Real=1.
+    η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
+    pulse_year::Int=2025, pulse_size::Real=1., additional_parameters::Dict=Dict()
 )::DataFrame
-    mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
+    mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size, additional_parameters)
     run(mm)
     model_df = get_model_data(mm, pulse_year)
 
@@ -238,8 +247,8 @@ end
 
 """
         get_SCC_decomposition(
-        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
-    )::DataFrame
+            η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        )::DataFrame
 
     Get SCC decomposition for a vector of γ values.
 

@@ -1,6 +1,6 @@
 module GreenNICE
 
-using Mimi, MimiFAIRv2, Statistics, Random, Distributions
+using Mimi, MimiFAIRv2, Statistics
 
 # Calibration
 include("../data/parameters.jl")

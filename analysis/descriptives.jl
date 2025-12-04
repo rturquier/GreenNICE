@@ -30,6 +30,7 @@ function get_descriptives_df()::DataFrame
         @mutate(gini_cons = Float64.(gini_cons))
         @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
         @mutate(θ_env = Float64.(θ_env))
+        @select(-:time)
     end
 
     return df
@@ -73,6 +74,19 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
     )
 
     return plot
+end
+
+function plot_descriptive_coeficients(df::DataFrame)::VegaLite.VLSpec
+
+    circle_plot = @vlplot(
+    :circle,
+    data = df,
+    y = {field = :θ_env, title = "Damage coefficient (1/ \u00B0C)"},
+    x = {field = :gini_cons, title = "Consumption gini index" },
+    size = {field = :E_stock0_percapita, title =["Natural capital", "stock (k USD)"]}
+    )
+
+    return circle_plot
 end
 
 

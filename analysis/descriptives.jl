@@ -107,7 +107,7 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
                 type = "quantitative",
                 title = "",
                 scale = {
-                    scheme = "Greens"
+                    scheme = "greenblue"
                 }
             }
         }

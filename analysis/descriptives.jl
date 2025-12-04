@@ -36,6 +36,19 @@ function get_descriptives_df()::DataFrame
     return df
 end
 
+function get_WPP_regions(df::DataFrame)::DataFrame
+
+    df_regions = @chain CSV.read("data/WPP_regions_country_list.csv", DataFrame) begin
+        @mutate(country = Symbol.(countrycode))
+        @mutate(WPP_region_name = Symbol.(WPP_region_name))
+        @select(-(:WPP_region_number, :countrycode))
+    end
+
+    df = leftjoin(df, df_regions, on = :country)
+
+    return df
+end
+
 function get_country_id(df::DataFrame)::DataFrame
 
     df_country = @chain begin
@@ -165,12 +178,21 @@ end
 
 function plot_descriptive_coeficients(df::DataFrame)::VegaLite.VLSpec
 
+    df = get_WPP_regions(df)
+
     circle_plot = @vlplot(
-    :circle,
-    data = df,
-    y = {field = :θ_env, title = "Damage coefficient (1/ \u00B0C)"},
-    x = {field = :gini_cons, title = "Consumption gini index" },
-    size = {field = :E_stock0_percapita, title =["Natural capital", "stock (k USD)"]}
+        :circle,
+        data = df,
+        y = {field = :θ_env, title = "Damage coefficient (1/ °C)"},
+        x = {field = :gini_cons, title = "Consumption gini index"},
+        color = {field = :WPP_region_name,
+                 type = "nominal",
+                 title = "Region",
+                 legend = {columns = 2},
+                 scale = {scheme = "category20"}},
+        size = {field = :E_stock0_percapita,
+                title = "Natural capital stock (k USD)",
+                legend = {orient = "right", direction = "horizontal" }}
     )
 
     return circle_plot

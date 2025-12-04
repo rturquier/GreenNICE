@@ -29,7 +29,7 @@ function get_descriptives_df()::DataFrame
     return df
 end
 
-function plot_gini_E_stock0(df::DataFrame)
+function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
     plot = @vlplot(
         data = df,
         layer = [

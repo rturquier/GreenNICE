@@ -13,9 +13,7 @@ function get_descriptives_df()::DataFrame
     m = GreenNICE.create()
     run(m)
 
-    damage_coeficient = @chain getdataframe(m, :damages, :θ_env) begin
-        @mutate(θ_env = Float64.(θ_env))
-    end
+    damage_coeficient = getdataframe(m, :damages, :θ_env)
 
     E_stock0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
         @filter(time == 2020)
@@ -29,8 +27,9 @@ function get_descriptives_df()::DataFrame
         @filter(time == 2020)
         leftjoin(E_stock0_percapita, on = :country)
         leftjoin(damage_coeficient, on = :country)
-        @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
         @mutate(gini_cons = Float64.(gini_cons))
+        @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
+        @mutate(θ_env = Float64.(θ_env))
     end
 
     return df

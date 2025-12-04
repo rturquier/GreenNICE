@@ -57,7 +57,7 @@ end
 end
 
 @testset "Quantile tests" begin
-    using Statistics
+    using Random, Statistics
     include("../src/components/quantile_recycle.jl")
 
     n_quantiles = 10

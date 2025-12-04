@@ -345,6 +345,9 @@ function get_SCC_interaction(
     interaction_df = @chain innerjoin(inequality_df, no_inequality_df, on = :country) begin
         @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
         @mutate(interaction_pct = (interaction) ./ inequality_damage_E * 100)
+        @mutate(interaction_pct = ifelse.(interaction .<0,
+                                          interaction_pct .* -1,
+                                          interaction_pct))
         @mutate(country = string.(country))
         leftjoin(countries_df, on = :country)
     end

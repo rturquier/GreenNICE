@@ -2,6 +2,8 @@ using Mimi
 using TidierData
 using TidierFiles
 using VegaLite
+using Countries
+using VegaDatasets
 
 include("../src/GreenNICE.jl")
 using .GreenNICE
@@ -27,6 +29,18 @@ function get_descriptives_df()::DataFrame
     end
 
     return df
+end
+
+function get_country_id(df::DataFrame)::DataFrame
+
+    df_country = @chain begin
+        DataFrame(all_countries())
+        @select(country = alpha3, id = numeric)
+        @mutate(country = Symbol.(country))
+        leftjoin(df, on = :country)
+    end
+
+    return df_country
 end
 
 function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
@@ -55,4 +69,49 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
     )
 
     return plot
+end
+
+
+function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
+
+    df_country = get_country_id(df)
+
+    world110m = dataset("world-110m")
+
+    E_percapita_country = @vlplot(
+        width = 640,
+        height = 360,
+        title = "",
+        projection = {type = :equirectangular}
+    ) +
+    @vlplot(
+        data = {
+            values = world110m,
+            format = {
+                type = :topojson,
+                feature = :countries
+            }
+        },
+        transform = [{
+            lookup = "id",
+            from = {
+                data = df_country,
+                key = :id,
+                fields = ["E_stock0_percapita"]
+            }
+        }],
+        mark = :geoshape,
+        encoding = {
+            color = {
+                field = "E_stock0_percapita",
+                type = "quantitative",
+                title = "",
+                scale = {
+                    scheme = "Greens"
+                }
+            }
+        }
+    )
+
+    return E_percapita_country
 end

@@ -36,7 +36,7 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
             {
                 mark = { :point },
                 x = {field = :E_stock0_percapita,
-                     title = "Natural capital stock per capita (2020 k USD)"},
+                     title = "Natural capital stock per capita (k USD)"},
                 y = {field = :gini_cons,
                      title = "Consumption gini index (2020)"}
             },

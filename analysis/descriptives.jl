@@ -53,7 +53,7 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
         data = df,
         layer = [
             {
-                mark = { :point },
+                mark = :point ,
                 x = {field = :E_stock0_percapita,
                      title = "Natural capital stock per capita (k USD)"},
                 y = {field = :gini_cons,
@@ -81,7 +81,7 @@ function plot_theta_E_stock0(df::DataFrame)::VegaLite.VLSpec
         data = df,
         layer = [
             {
-                mark = { :point },
+                mark = :point,
                 x = {field = :E_stock0_percapita,
                      title = "Natural capital stock per capita (k USD)"},
                 y = {field = :θ_env,

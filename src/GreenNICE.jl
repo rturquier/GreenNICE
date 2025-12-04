@@ -228,7 +228,7 @@ function _set_default_values!(m::Model)::Model
     )
     all_defaults = merge(FAIR_initial_values_2020, other_defaults)
 
-    update_leftover_params!(m, all_defaults)
+    update_params!(m, all_defaults)
     return m
 end
 
@@ -245,8 +245,8 @@ function create(; parameters::Dict=Dict())::Model
     _add_shared_parameters!(m)
     _connect_shared_parameters!(m)
     _connect_component_parameters!(m)
-    update_params!(m, parameters) # Set user-supplied values
     _set_default_values!(m)
+    update_params!(m, parameters) # Set user-supplied values
 
     return m
 end

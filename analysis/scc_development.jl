@@ -39,8 +39,6 @@ m = GreenNICE.create()
 run(m)
 
 warming_df = getdataframe(m, :damages => :temp_anomaly)
-warming_in_2100 = @filter(warming_df, time == 2100).temp_anomaly[1]
-
 warming_df |> @vlplot(:line, :time, :temp_anomaly)
 
 
@@ -49,6 +47,14 @@ paris_target_abatement_rate = 0.8
 default_μ_input_matrix = (GreenNICE.create() |> Mimi.build)[:abatement, :μ_input]
 new_μ_input_matrix = default_μ_input_matrix .+ paris_target_abatement_rate
 
+# %% Re-run to check temperature
+m = GreenNICE.create(parameters=Dict((:abatement, :μ_input) => new_μ_input_matrix))
+run(m)
+paris_warming_df = getdataframe(m, :damages => :temp_anomaly)
+paris_warming_df |> @vlplot(:line, :time, :temp_anomaly)
+@filter(paris_warming_df, temp_anomaly > 2)
+
+# %%
 η_list = [2.]
 θ_list = [0.5]
 γ_list = [0., 1.]
@@ -59,10 +65,3 @@ scc_df = get_SCC_decomposition(
 )
 
 plot_environment_SCC(scc_df)
-# update_param!(m, :abatement, :μ_input, new_μ_input_matrix)
-
-# %% Re-run model and get new warming value
-m = GreenNICE.create(parameters=Dict((:abatement, :μ_input) => new_μ_input_matrix))
-run(m)
-warming_df = getdataframe(m, :damages => :temp_anomaly)
-warming_in_2100 = @filter(warming_df, time == 2100).temp_anomaly[1]

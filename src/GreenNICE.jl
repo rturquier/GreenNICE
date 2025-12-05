@@ -135,7 +135,6 @@ function _connect_component_parameters!(m::Model)::Model
 	connect_param!(m, :revenue_recycle 	=> :LOCAL_DAMFRAC_KW,	:damages 			=> :LOCAL_DAMFRAC_KW)
 	connect_param!(m, :revenue_recycle 	=> :country_carbon_tax,	:abatement 			=> :country_carbon_tax)
 	connect_param!(m, :revenue_recycle  => :Y, 					:neteconomy 		=> :Y)
-	connect_param!(m, :quantile_recycle => :Y,					:neteconomy 		=> :Y)
 	connect_param!(m, :quantile_recycle => :ABATEFRAC,			:abatement 			=> :ABATEFRAC)
 	connect_param!(m, :quantile_recycle => :LOCAL_DAMFRAC_KW,	:damages 			=> :LOCAL_DAMFRAC_KW)
 	connect_param!(m, :quantile_recycle => :CPC, 				:neteconomy 		=> :CPC)
@@ -246,7 +245,7 @@ function create(; parameters::Dict=Dict())::Model
     _connect_shared_parameters!(m)
     _connect_component_parameters!(m)
     _set_default_values!(m)
-    update_params!(m, parameters) # Set user-supplied values
+    update_params!(m, parameters)  # Set user-supplied values (override defaults)
 
     return m
 end

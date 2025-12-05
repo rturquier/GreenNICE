@@ -11,25 +11,30 @@ include("../src/components/welfare.jl")
 
 
 function set_up_marginal_model(
-    η::Real, θ::Real, α::Real, γ::Real, pulse_year::Int, pulse_size::Real
+    η::Real,
+    θ::Real,
+    α::Real,
+    γ::Real,
+    pulse_year::Int,
+    pulse_size::Real,
+    additional_parameters::Dict=Dict()
 )::MarginalModel
+    main_parameters = Dict(:η => η, :θ => θ, :α => α, (:quantile_recycle, :γ) => γ)
+    parameters = merge(main_parameters, additional_parameters)
 
-    m = GreenNICE.create()
-    update_params!(m, Dict(:η => η, :θ => θ, :α => α))
-    update_param!(m, :quantile_recycle, :γ, γ)
+    m = GreenNICE.create(parameters=parameters)
+    mm = create_marginal_model(m, pulse_size)
 
     years = dim_keys(m, :time)
     n_years = length(years)
-    pulse_year_index = findfirst(t -> t == pulse_year, years)
-
+    pulse_year_index = findfirst(year -> year == pulse_year, years)
     pulse_series = zeros(n_years)
     pulse_series[pulse_year_index] = pulse_size
-
-    mm = create_marginal_model(m, pulse_size)
     update_param!(mm.modified, :emissions, :co2_pulse, pulse_series)
 
     return mm
 end
+
 
 function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :E_flow_percapita))
@@ -197,7 +202,10 @@ end
 """
         get_SCC_decomposition(
             η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
-            analysis_level::String="global", pulse_year::Int=2025, pulse_size::Real=1.
+            analysis_level::String="global",
+            pulse_year::Int=2025,
+            pulse_size::Real=1.,
+            additional_parameters::Dict=Dict()
         )::DataFrame
 
     Get social cost of carbon as damages to consumption and damages to the environment.
@@ -207,12 +215,13 @@ end
     Compare consumption and environment between the two models, and compute the present
     value of damages analytically.
 
-    Return a one-line `Dataframe` with two `Float64` columns:
+    Return a one-line `Dataframe` with the social cost of carbon (SCC) decomposed in two
+    columns:
     - `present_cost_of_damages_to_c`,
     - `present_cost_of_damages_to_E`.
 
-    The sum of these two numbers is the social cost of carbon (SCC). See function
-    `apply_SCC_decomposition_formula` for mathematical details.
+    The sum of these two numbers is the SCC. See function `apply_SCC_decomposition_formula`
+    for mathematical details.
 
     # Arguments
     - `η::Real`: inequality aversion (coefficient of relative risk aversion).
@@ -221,17 +230,23 @@ end
     - `γ::Real`: within-country inequality parameter. 0 means no within-country inequality.
         1 is the standard calibration.
     - `ρ::Real`: rate of pure time preference (utility discount rate).
+
+    # Keyword arguments
     - `analysis_level::String`: if "global", computes SCC decomposition at the global level,
         if "country", computes SCC decomposition at the country level.
     - `pulse_year::Int`: year where the CO2 marginal pulse is emmitted, and year of
         reference for the SCC.
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
+    - `additional_parameters::Dict`: additional parameters to be passed to the model.
 """
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
-    analysis_level::String="global", pulse_year::Int=2025, pulse_size::Real=1.
+    analysis_level::String="global",
+    pulse_year::Int=2025,
+    pulse_size::Real=1.,
+    additional_parameters::Dict=Dict()
 )::DataFrame
-    mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
+    mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size, additional_parameters)
     run(mm)
     model_df = get_model_data(mm, pulse_year)
 
@@ -262,44 +277,69 @@ end
     Get SCC decomposition for a vector of γ values.
 
     Apply `get_SCC_decomposition` for each value of γ provided in `γ_list`.
-    Return a Dataframe with as many rows as values in `γ_list`, with five columns:
-    - `η`, equal to the input `η`,
-    - `θ`, equal to the input `θ`,
-    - `γ`, equal to `γ_list`,
-    - `present_cost_of_damages_to_c`,
-    - `present_cost_of_damages_to_E`.
+    Return a Dataframe with as many rows as values in `γ_list`.
 """
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
 )::DataFrame
-    df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...), γ_list)
-    SCC_decomposition_df = reduce(vcat, df_list)
-    return SCC_decomposition_df
+    df_list = [get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...) for γ in γ_list]
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
+end
+
+
+"""
+        get_SCC_decomposition(
+            η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        )::DataFrame
+
+    Get SCC decomposition for an η × θ grid.
+"""
+function get_SCC_decomposition(
+    η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+)::DataFrame
+    η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
+    df_list = [get_SCC_decomposition(η, θ, α, γ_list, ρ; kwargs...) for (η, θ) in η_θ_grid]
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
 end
 
 function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpec
-    damages_to_E_with_equal_deciles = @chain SCC_decomposition_df begin
-        @filter(γ == 0)
-        @pull(present_cost_of_damages_to_E)
-    end
+    consumption_plot = SCC_decomposition_df |> @vlplot(
+        :line,
+        x="γ:q",
+        y="present_cost_of_damages_to_c:q",
+    )
+    environment_plot = SCC_decomposition_df |> @vlplot(
+        :line,
+        x="γ:q",
+        y="present_cost_of_damages_to_c:q",
+    )
+    combined_plot = hcat(consumption_plot, environment_plot)
+    return combined_plot
+end
 
-    # Wrangle and reshape to fit VegaLite requirements
-    plot_df = @eval @chain $SCC_decomposition_df begin
-        @mutate(
-            interaction = present_cost_of_damages_to_E
-                            - $damages_to_E_with_equal_deciles,
-            non_interaction = present_cost_of_damages_to_c
-                                + $damages_to_E_with_equal_deciles,
-        )
-        @pivot_longer(
-            (interaction, non_interaction),
-            names_to="interaction",
-            values_to="SCC_part"
-        )
-    end
 
-    plot = plot_df |> @vlplot(:area, x="γ:q", y="SCC_part:q", color="interaction:N")
-    return plot
+"""
+        facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
+
+    Plot the social cost of carbon to environment or consumption for different η's and θ's.
+
+    # Keyword arguments
+    - `cost_to::String`: either "E" to plot the present social value of damages to the
+        environment, or "c" for damages to consumption.
+"""
+function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
+    y_name = "present_cost_of_damages_to_" * cost_to
+    SCC_facet_plot = SCC_decomposition_df |> @vlplot(
+        :line,
+        x="γ:q",
+        y="$y_name:q",
+        column=:θ,
+        row={field=:η, sort={field=:η, order="descending"}},
+        resolve={scale={y="independent"}},
+    )
+    return SCC_facet_plot
 end
 
 """

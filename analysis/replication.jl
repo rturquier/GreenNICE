@@ -18,11 +18,7 @@ pulse_size = 1.0 # ton CO2
 
 ## Make figures showing interaction effect at country and region levels
 
-interaction_country = get_SCC_interaction(η, θ, α, γ_list, ρ; level_analysis="country")
-interaction_rwpp = get_SCC_interaction(η, θ, α, γ_list, ρ; level_analysis="region")
+interaction_country = get_SCC_interaction(η, θ, α, γ_list, ρ)
 
 map_level_country = map_SCC_decomposition_level(interaction_country)
 map_pct_country = map_SCC_decomposition_pct(interaction_country)
-
-map_level_rwpp = map_SCC_decomposition_level(interaction_rwpp)
-map_pct_rwpp = map_SCC_decomposition_pct(interaction_rwpp)

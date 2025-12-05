@@ -343,18 +343,18 @@ function get_SCC_interaction(
 
     countries_df = @chain begin
         DataFrame(all_countries())
-        @select(country = alpha3, id = numeric
-        )
+        @select(country = alpha3, id = numeric)
     end
 
-    interaction_df = @chain innerjoin(inequality_df, no_inequality_df, on = :country) begin
+    interaction_df = @chain inequality_df begin
+        @inner_join(no_inequality_df)
         @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
-        @mutate(interaction_pct = (interaction) ./ inequality_damage_E * 100)
+        @mutate(interaction_pct = 100 * interaction / inequality_damage_E)
         @mutate(interaction_pct = ifelse.(interaction .<0,
                                           interaction_pct .* -1,
                                           interaction_pct))
         @mutate(country = string.(country))
-        leftjoin(countries_df, on = :country)
+        @left_join(countries_df)
     end
 
     return interaction_df

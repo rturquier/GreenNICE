@@ -30,24 +30,7 @@ write_csv(scc_df, "outputs/scc_df.csv")
 scc_df = read_csv("outputs/scc_df.csv")
 
 # %% Plot
-scc_df |> @vlplot(
-    :line,
-    x="γ:q",
-    y="present_cost_of_damages_to_E:q",
-    column=:θ,
-    row={field=:η, sort={field=:η, order="descending"}},
-    resolve={scale={y="independent"}},
-)
-
-# %% Plot for consumption
-scc_df |> @vlplot(
-    :line,
-    x="γ:q",
-    y="present_cost_of_damages_to_c:q",
-    column=:θ,
-    row={field=:η, sort={field=:η, order="descending"}},
-    resolve={scale={y="independent"}},
-)
+facet_SCC(scc_df; cost_to="E")
 
 
 # ---- Make facet plot with a mitigation coefficient compatible with +2°C objective ---- #

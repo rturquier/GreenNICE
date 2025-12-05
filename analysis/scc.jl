@@ -296,3 +296,26 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     combined_plot = hcat(consumption_plot, environment_plot)
     return combined_plot
 end
+
+
+"""
+        facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
+
+    Plot the social cost of carbon to environment or consumption for different η's and θ's.
+
+    # Keyword arguments
+    - `cost_to::String`: either "E" to plot the present social value of damages to the
+        environment, or "c" for damages to consumption.
+"""
+function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
+    y_name = "present_cost_of_damages_to_" * cost_to
+    SCC_facet_plot = SCC_decomposition_df |> @vlplot(
+        :line,
+        x="γ:q",
+        y="$y_name:q",
+        column=:θ,
+        row={field=:η, sort={field=:η, order="descending"}},
+        resolve={scale={y="independent"}},
+    )
+    return SCC_facet_plot
+end

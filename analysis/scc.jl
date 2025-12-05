@@ -304,8 +304,7 @@ end
 
 """
         function get_SCC_interaction(
-            η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
-            pulse_year::Int=2025, pulse_size::Real=1.
+            η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real
         )::DataFrame
 
     Calculate interaction effect in absolute and relative terms at the country level.
@@ -321,13 +320,9 @@ end
     - `no_inequality_damage_E`: Present cost of damages to environment when γ = 0.
     - `interaction`: Absolute interaction effect (difference between the two columns).
     - `interaction_pct`: Percentage interaction effect relative to `inequality_damage_E`.
-    - `id`: Numeric country code for mapping purposes.
+    - `country_id`: Numeric country code for mapping purposes.
 """
-function get_SCC_interaction(
-    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
-    pulse_year::Int=2025, pulse_size::Real=1.
-)::DataFrame
-
+function get_SCC_interaction(η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real)::DataFrame
     SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ;
                                                  analysis_level="country")
 
@@ -343,7 +338,7 @@ function get_SCC_interaction(
 
     countries_df = @chain begin
         DataFrame(all_countries())
-        @select(country = alpha3, id = numeric)
+        @select(country = alpha3, country_id = numeric)
     end
 
     interaction_df = @chain inequality_df begin
@@ -382,7 +377,7 @@ function map_SCC_decomposition_level(interaction_df::DataFrame)
             lookup = "id",
             from = {
                 data = interaction_df,
-                key = :id,
+                key = :country_id,
                 fields = ["interaction"]
             }
         }],
@@ -426,7 +421,7 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
             lookup = "id",
             from = {
                 data = interaction_df,
-                key = :id,
+                key = :country_id,
                 fields = ["interaction_pct"]
             }
         }],

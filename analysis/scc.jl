@@ -141,8 +141,9 @@ end
 
 @doc raw"""
         apply_SCC_decomposition_formula(
-            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real,
-            analysis_level::String="global")::DataFrame
+            prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real;
+            analysis_level::String="global"
+        )::DataFrame
 
     Get present value of equity-weighted, money-metric damages to `c` and `E`.
 
@@ -162,7 +163,8 @@ end
 """
 function apply_SCC_decomposition_formula(
     prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real;
-    analysis_level::String="global")::DataFrame
+    analysis_level::String="global"
+)::DataFrame
 
     β = 1 / (1 + ρ)
 
@@ -174,7 +176,7 @@ function apply_SCC_decomposition_formula(
 
     SCC_df = @eval @chain $prepared_df begin
         @group_by($(group_columns...))
-        # Exclude 4 small countries with E = 0 because the have infinite ∂_cE
+        # Exclude 4 small countries with E = 0 because they have infinite ∂_cE
         @filter(E > 0)
         @summarize(
             t = unique(t),
@@ -194,8 +196,8 @@ end
 
 """
         get_SCC_decomposition(
-            η::Real, θ::Real, α::Real, γ::Real, ρ::Real; analysis_level::String="global",
-            pulse_year::Int=2025, pulse_size::Real=1.
+            η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
+            analysis_level::String="global", pulse_year::Int=2025, pulse_size::Real=1.
         )::DataFrame
 
     Get social cost of carbon as damages to consumption and damages to the environment.
@@ -219,15 +221,15 @@ end
     - `γ::Real`: within-country inequality parameter. 0 means no within-country inequality.
         1 is the standard calibration.
     - `ρ::Real`: rate of pure time preference (utility discount rate).
-    - `country_level::String`: if "global", computes SCC decomposition at the global level,
+    - `analysis_level::String`: if "global", computes SCC decomposition at the global level,
         if "country", computes SCC decomposition at the country level.
     - `pulse_year::Int`: year where the CO2 marginal pulse is emmitted, and year of
         reference for the SCC.
     - `pulse_size::Real`: size of the CO2 pulse, in tons.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ::Real, ρ::Real; analysis_level::String="global",
-    pulse_year::Int=2025, pulse_size::Real=1.
+    η::Real, θ::Real, α::Real, γ::Real, ρ::Real;
+    analysis_level::String="global", pulse_year::Int=2025, pulse_size::Real=1.
 )::DataFrame
     mm = set_up_marginal_model(η, θ, α, γ, pulse_year, pulse_size)
     run(mm)
@@ -237,8 +239,10 @@ function get_SCC_decomposition(
 
     SCC_decomposition_df = @eval @chain begin
         prepare_df_for_SCC($model_df, $η, $θ, $α)
-        apply_SCC_decomposition_formula(_, $reference_marginal_utility, $ρ;
-                                        analysis_level = $analysis_level)
+        apply_SCC_decomposition_formula(
+            _, $reference_marginal_utility, $ρ;
+            analysis_level = $analysis_level
+        )
         @mutate(
             η = $η,
             θ = $θ,
@@ -252,8 +256,8 @@ end
 
 """
         get_SCC_decomposition(
-        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
-    )::DataFrame
+            η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        )::DataFrame
 
     Get SCC decomposition for a vector of γ values.
 
@@ -299,17 +303,18 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
 end
 
 """
-function get_SCC_interaction(
-    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
-    pulse_year::Int=2025, pulse_size::Real=1.
-    )::DataFrame
+        function get_SCC_interaction(
+            η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
+            pulse_year::Int=2025, pulse_size::Real=1.
+        )::DataFrame
 
-    Calculate interaction effect in absolute and percentage terms at the country level.
+    Calculate interaction effect in absolute and relative terms at the country level.
 
     Use `get_SCC_decomposition` to compute the SCC decomposition at the country level
     for γ = 0 and γ = 1. Then, calculate the interaction effect as the difference in
-    present_cost_of_damages_to_E between the two levels of γ. Finally, it calculates the
+    `present_cost_of_damages_to_E` between the two levels of γ. Finally, calculate the
     percentage interaction effect relative to the damage when γ = 1.
+
     Return a DataFrame with the following columns:
     - `country`: Country code (ISO3).
     - `inequality_damage_E`: Present cost of damages to environment when γ = 1.
@@ -321,7 +326,7 @@ function get_SCC_interaction(
 function get_SCC_interaction(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real;
     pulse_year::Int=2025, pulse_size::Real=1.
-    )::DataFrame
+)::DataFrame
 
     SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ;
                                                  analysis_level="country")

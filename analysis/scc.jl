@@ -199,12 +199,13 @@ end
     Compare consumption and environment between the two models, and compute the present
     value of damages analytically.
 
-    Return a one-line `Dataframe` with two `Float64` columns:
+    Return a one-line `Dataframe` with the social cost of carbon (SCC) decomposed in two
+    columns:
     - `present_cost_of_damages_to_c`,
     - `present_cost_of_damages_to_E`.
 
-    The sum of these two numbers is the social cost of carbon (SCC). See function
-    `apply_SCC_decomposition_formula` for mathematical details.
+    The sum of these two numbers is the SCC. See function `apply_SCC_decomposition_formula`
+    for mathematical details.
 
     # Arguments
     - `η::Real`: inequality aversion (coefficient of relative risk aversion).
@@ -253,10 +254,7 @@ end
     Get SCC decomposition for a vector of γ values.
 
     Apply `get_SCC_decomposition` for each value of γ provided in `γ_list`.
-    Return a Dataframe with as many rows as values in `γ_list`, with three columns:
-    - `γ`, equal to `γ_list`,
-    - `present_cost_of_damages_to_c`,
-    - `present_cost_of_damages_to_E`.
+    Return a Dataframe with as many rows as values in `γ_list`.
 """
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...

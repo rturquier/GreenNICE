@@ -259,7 +259,24 @@ end
 function get_SCC_decomposition(
     η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
 )::DataFrame
-    df_list = map(γ -> get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...), γ_list)
+    df_list = [get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...) for γ in γ_list]
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
+end
+
+
+"""
+        get_SCC_decomposition(
+            η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        )::DataFrame
+
+    Get SCC decomposition for an η × θ grid.
+"""
+function get_SCC_decomposition(
+    η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+)::DataFrame
+    η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
+    df_list = [get_SCC_decomposition(η, θ, α, γ_list, ρ; kwargs...) for (η, θ) in η_θ_grid]
     concatenated_df = reduce(vcat, df_list)
     return concatenated_df
 end

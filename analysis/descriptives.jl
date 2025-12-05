@@ -117,11 +117,11 @@ function plot_theta_E_stock0(df::DataFrame)::VegaLite.VLSpec
     return plot
 end
 
-function plot_E_stock_0_vconcat(df::DataFrame)::VegaLite.VLSpec
+function plot_E_stock_0_hconcat(df::DataFrame)::VegaLite.VLSpec
 
     vconcat_plot= @vlplot(
     data = df,
-    vconcat=[
+    hconcat=[
      {
         layer = [
             {
@@ -188,7 +188,7 @@ function plot_descriptive_coeficients(df::DataFrame)::VegaLite.VLSpec
         color = {field = :WPP_region_name,
                  type = "nominal",
                  title = "Region",
-                 legend = {columns = 2},
+                 legend = {orient = "right", columns = 2},
                  scale = {scheme = "category20"}},
         size = {field = :E_stock0_percapita,
                 title = "Natural capital stock (k USD)",

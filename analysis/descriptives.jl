@@ -191,7 +191,7 @@ function plot_descriptive_coeficients(df::DataFrame)::VegaLite.VLSpec
                  legend = {orient = "right", columns = 2},
                  scale = {scheme = "category20"}},
         size = {field = :E_stock0_percapita,
-                title = "Natural capital stock (k USD)",
+                title = "Natural capital stock percapita (k USD)",
                 legend = {orient = "right", direction = "horizontal" }}
     )
 

@@ -16,9 +16,35 @@ pulse_year = 2025
 pulse_size = 1.0 # ton CO2
 
 
-## Make figures showing interaction effect at country and region levels
+# Replicate Numerical Results
 
+## Get Interaction values
+
+### Global interaction effect
 country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
+
+decomposition_BAU = get_SCC_decomposition(η, θ, α, γ, ρ)
+
+SCC_global = decomposition_BAU.present_cost_of_damages_to_c +
+             decomposition_BAU.present_cost_of_damages_to_E
+
+SCC_env = decomposition_BAU.present_cost_of_damages_to_E
+
+I_effect = sum(country_interaction_df.interaction)
+
+I_effect_pct = I_effect ./ SCC_env * 100
+
+### Interaction by country
+
+country_interaction_df
+
+top5_pct = first(sort(country_interaction_df, :interaction_pct, rev=true), 5)
+bottom5_pct = first(sort(country_interaction_df, :interaction_pct, rev=false), 5)
+
+top3_level = first(sort(country_interaction_df, :interaction, rev=true), 3)
+bottom3_level = first(sort(country_interaction_df, :interaction, rev=false), 3)
+
+## Make figures showing interaction effect at country and region levels
 
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)

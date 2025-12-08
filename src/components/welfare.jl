@@ -152,7 +152,7 @@ function inverse_utility(u::Real, E::Real, η::Real, θ::Real, α::Real)
         consumption = v_inverse(φ_inverse(u))
         @assert utility(consumption, E, η, θ, α) ≈ u
     catch
-        @info """Inverse utility seems to be undefined for these parameters:
+        @debug """Inverse utility seems to be undefined for these parameters:
                  utility = $u
                  reference environment = $E
                  η = $η, θ = $θ, α = $α.

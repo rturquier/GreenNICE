@@ -11,7 +11,7 @@ include("scc.jl")
 θ = 0.5
 α = 0.1
 ρ = 0.001
-γ_list = [0.0, 1.0]
+γ_list = [0.0, 0.25, 0.5, 0.75, 1.0]
 
 # %% Plot SCC decomposition
 SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
@@ -19,6 +19,7 @@ decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
 
 # ==== Map interaction effect at country and region levels ====
 # %% Get data
+γ_list = [0.0, 1.0]
 country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
 
 # %% Absolute interaction map

@@ -13,6 +13,10 @@ include("scc.jl")
 ρ = 0.001
 γ_list = [0.0, 1.0]
 
+# %% Plot SCC decomposition
+SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
+decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
+
 # ==== Map interaction effect at country and region levels ====
 # %% Get data
 country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)

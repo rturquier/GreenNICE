@@ -10,8 +10,7 @@ include("scc.jl")
 η = 1.5
 θ = 0.5
 α = 0.1
-γ = 1.0
-ρ = 0.01
+ρ = 0.001
 γ_list = [0.0, 1.0]
 
 # ==== Map interaction effect at country and region levels ====

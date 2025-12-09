@@ -167,14 +167,14 @@ end
 
 """
     EDE(
-    consumption::Vector,
-    environment::Union{Real,Vector},
-    baseline_environment::Real,
-    η::Real,
-    θ::Real,
-    α::Real,
-    nb_quantile::Int,
-)
+        consumption::Vector,
+        environment::Union{Real,Vector},
+        baseline_environment::Real,
+        η::Real,
+        θ::Real,
+        α::Real,
+        nb_quantile::Int,
+    )
 
 Calculate Equally Distributed Equivalent (EDE) consumption at the country level.
 
@@ -200,13 +200,13 @@ end
 
 """
     EDE_aggregated(
-    country_level_EDE::Vector,
-    baseline_environment::Real,
-    η::Real,
-    θ::Real,
-    α::Real,
-    population::Vector,
-)
+        country_level_EDE::Vector,
+        baseline_environment::Real,
+        η::Real,
+        θ::Real,
+        α::Real,
+        population::Vector,
+    )
 
 Aggregate country-level EDE consumption.
 """

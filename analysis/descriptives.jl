@@ -71,17 +71,6 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
                      title = "Natural capital stock per capita (k USD)"},
                 y = {field = :gini_cons,
                      title = "Consumption gini index (2020)"}
-            },
-            {
-                transform = [
-                    {
-                        regression = :gini_cons,
-                        on = :E_stock0_percapita
-                    }
-                ],
-                mark = { :line, color = "firebrick", opacity = 0.8 },
-                x = :E_stock0_percapita,
-                y = :gini_cons
             }
         ]
     )

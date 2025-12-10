@@ -208,7 +208,7 @@ function _set_default_values!(m::Model)::Model
 
         (:damages, :β1_KW) => beta1_KW,
         (:damages, :β2_KW) => beta2_KW,
-        (:damages, :θ_env) => θ_env,
+        (:damages, :ξ) => ξ,
 
         (:revenue_recycle, :switch_scope_recycle) => 0,
         (:revenue_recycle, :switch_global_pc_recycle) => 0,

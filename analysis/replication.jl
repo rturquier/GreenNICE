@@ -52,6 +52,7 @@ paris_target_abatement_rate = 0.8
 default_μ_input_matrix = (GreenNICE.create() |> Mimi.build)[:abatement, :μ_input]
 paris_μ_input_matrix = default_μ_input_matrix .+ paris_target_abatement_rate
 
+# %% Check that temperature stays below +2°C in the long run (with little overshoot)
 m = GreenNICE.create(parameters=Dict((:abatement, :μ_input) => paris_μ_input_matrix))
 run(m)
 paris_warming_df = getdataframe(m, :damages => :temp_anomaly)

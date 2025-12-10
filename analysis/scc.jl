@@ -384,10 +384,7 @@ function get_SCC_interaction(η::Real, θ::Real, α::Real, γ_list::Vector, ρ::
     interaction_df = @chain inequality_df begin
         @inner_join(no_inequality_df)
         @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
-        @mutate(interaction_pct = 100 * interaction / inequality_damage_E)
-        @mutate(interaction_pct = ifelse.(interaction .<0,
-                                          interaction_pct .* -1,
-                                          interaction_pct))
+        @mutate(interaction_pct = 100 * interaction / abs(inequality_damage_E))
         @mutate(country = string.(country))
         @left_join(countries_df)
     end

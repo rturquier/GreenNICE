@@ -13,7 +13,7 @@ function get_descriptives_df()::DataFrame
     m = GreenNICE.create()
     run(m)
 
-    damage_coeficient = getdataframe(m, :damages, :θ_env)
+    damage_coeficient = getdataframe(m, :damages, :ξ)
 
     E_stock0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
         @filter(time == 2020)
@@ -29,7 +29,7 @@ function get_descriptives_df()::DataFrame
         leftjoin(damage_coeficient, on = :country)
         @mutate(gini_cons = Float64.(gini_cons))
         @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
-        @mutate(θ_env = Float64.(θ_env))
+        @mutate(ξ = Float64.(ξ))
         @select(-:time)
     end
 
@@ -258,15 +258,15 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
             from = {
                 data = df_country,
                 key = :id,
-                fields = ["θ_env"]
+                fields = ["ξ"]
             }
         }],
         mark = :geoshape,
         encoding = {
             color = {
-                field = "θ_env",
+                field = "ξ",
                 type = "quantitative",
-                title = "",
+                title = "ξ",
                 scale = {
                     scheme = "plasma"
                 }

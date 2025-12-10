@@ -266,7 +266,7 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
             color = {
                 field = "ξ",
                 type = "quantitative",
-                title = "",
+                title = "ξ",
                 scale = {
                     scheme = "plasma"
                 }

@@ -10,11 +10,10 @@ include("scc.jl")
 θ = 0.5
 α = 0.1
 γ = 1.0
-ρ = 0.01
+ρ = 0.001
 γ_list = [0.0, 1.0]
 pulse_year = 2025
 pulse_size = 1.0 # ton CO2
-
 
 # Replicate Numerical Results
 

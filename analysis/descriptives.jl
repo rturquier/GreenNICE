@@ -70,7 +70,7 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
                 x = {field = :E_stock0_percapita,
                      title = "Natural capital stock per capita (k USD)"},
                 y = {field = :gini_cons,
-                     title = "Consumption gini index (2020)"}
+                     title = "Consumption gini index"}
             }
         ]
     )
@@ -230,4 +230,49 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
     )
 
     return E_percapita_country
+end
+
+
+function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
+
+    df_country = get_country_id(df)
+
+    world110m = dataset("world-110m")
+
+    ξ_country = @vlplot(
+        width = 640,
+        height = 360,
+        title = "",
+        projection = {type = :equirectangular}
+    ) +
+    @vlplot(
+        data = {
+            values = world110m,
+            format = {
+                type = :topojson,
+                feature = :countries
+            }
+        },
+        transform = [{
+            lookup = "id",
+            from = {
+                data = df_country,
+                key = :id,
+                fields = ["θ_env"]
+            }
+        }],
+        mark = :geoshape,
+        encoding = {
+            color = {
+                field = "θ_env",
+                type = "quantitative",
+                title = "",
+                scale = {
+                    scheme = "plasma"
+                }
+            }
+        }
+    )
+
+    return ξ_country
 end

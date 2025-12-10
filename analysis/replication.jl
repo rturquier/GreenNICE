@@ -30,3 +30,11 @@ VegaLite.save("outputs/maps/initial_E_stock_percapita.svg", Initial_E_stock)
 VegaLite.save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0)
 VegaLite.save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 
+# SCC interaction calculations
+
+interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
+
+SCC_decomposition_map_pct = map_SCC_decomposition_pct(interaction_df)
+
+## Save figures
+VegaLite.save("outputs/maps/map_interaction_effect_pct.svg", SCC_decomposition_map_pct)

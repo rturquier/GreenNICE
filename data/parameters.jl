@@ -224,4 +224,4 @@ E_stock0 = E_stock0_data[:, :E_stock0]
 
 Env_damage_coef = DataFrame(load("data/coef_env_damage.csv", header_exists=true))
 filter!(:countrycode => in(countries), Env_damage_coef)
-θ_env = Env_damage_coef[:,:coef]
+ξ = Env_damage_coef[:,:coef]

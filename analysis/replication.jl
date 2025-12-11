@@ -58,15 +58,14 @@ I_effect_pct = I_effect ./ SCC_env * 100
 
 ### Interaction by country
 
-country_interaction_df
+top3_level = first(sort(country_interaction_df, :interaction, rev=true), 3)
+bottom3_level = first(sort(country_interaction_df, :interaction, rev=false), 3)
 
 top5_pct = first(sort(country_interaction_df, :interaction_pct, rev=true), 5)
 bottom5_pct = first(sort(country_interaction_df, :interaction_pct, rev=false), 5)
 
-top3_level = first(sort(country_interaction_df, :interaction, rev=true), 3)
-bottom3_level = first(sort(country_interaction_df, :interaction, rev=false), 3)
-
 ## Make figures showing interaction effect at country and region levels
 
-absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
-relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
+interaction_effect_map = map_SCC_decomposition_level(country_interaction_df)
+
+VegaLite.save("outputs/maps/interaction_effect_map.svg", interaction_effect_map)

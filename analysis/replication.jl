@@ -39,10 +39,10 @@ top5_E_stock0_pc = first(sort(E_stock_2020_pc, :E_stock_percapita, rev=true), 5)
 bottom5_E_stock0_pc = first(sort(E_stock_2020_pc, :E_stock_percapita, rev=false), 5)
 
 ### ξ
-ξ_country = getdataframe(m_descriptives, :damages, :θ_env)
+ξ_country = getdataframe(m_descriptives, :damages, :ξ)
 
-top_3_ξ = first(sort(ξ_country, :θ_env, rev=true), 3)
-bottom_3_ξ = first(sort(ξ_country, :θ_env, rev=false), 3)
+top_3_ξ = first(sort(ξ_country, :ξ, rev=true), 3)
+bottom_3_ξ = first(sort(ξ_country, :ξ, rev=false), 3)
 
 ### Gini
 
@@ -82,14 +82,14 @@ bottom5_pct = first(sort(country_interaction_df, :interaction_pct, rev=false), 5
 ### Correlation between ξ, gini and interaction effect
 correlations_df = @chain ξ_country begin
     @mutate(country = string.(country))
-    @mutate(θ_env = float.(θ_env))
+    @mutate(ξ = float.(ξ))
     leftjoin(country_interaction_df, on=:country)
     leftjoin(gini_cons_2020, on=:country)
     @mutate(interaction = float.(interaction))
     @mutate(gini_cons = float.(gini_cons))
 end
 
-correlation_ξ_gini = lm(@formula(interaction ~ θ_env + gini_cons), correlations_df)
+correlation_ξ_gini = lm(@formula(interaction ~ ξ + gini_cons), correlations_df)
 
 regtable(correlation_ξ_gini, render = LatexTable(), file="outputs/tables/correlation_damage_gini.tex" )
 

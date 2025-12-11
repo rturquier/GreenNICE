@@ -15,7 +15,7 @@ include("scc.jl")
 pulse_year = 2025
 pulse_size = 1.0 # ton CO2
 
-# Replicate Descriptive values
+# Replicate Numbers reported in paper
 
 m_descriptives = GreenNICE.create()
 run(m_descriptives)
@@ -40,7 +40,7 @@ top_3_ξ = first(sort(ξ_country, :ξ, rev=true), 3)
 bottom_3_ξ = first(sort(ξ_country, :ξ, rev=false), 3)
 
 
-## Get Interaction values
+## Section 4: Interaction effect
 
 ### Global interaction effect
 country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)

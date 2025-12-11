@@ -15,7 +15,30 @@ include("scc.jl")
 pulse_year = 2025
 pulse_size = 1.0 # ton CO2
 
-# Replicate Numerical Results
+# Replicate Descriptive values
+
+m_descriptives = GreenNICE.create()
+run(m_descriptives)
+## Section 3: Making NICE Green
+
+### Natural capital
+
+E_stock_2020_pc = @chain getdataframe(m_descriptives, :environment, :E_flow_percapita) begin
+    @filter(time == 2020)
+    @filter(quantile == "First")
+    @mutate(E_stock_percapita = E_flow_percapita / 0.96)
+    @select(country, E_stock_percapita)
+end
+
+top5_E_stock0_pc = first(sort(E_stock_2020_pc, :E_stock_percapita, rev=true), 5)
+bottom5_E_stock0_pc = first(sort(E_stock_2020_pc, :E_stock_percapita, rev=false), 5)
+
+### ξ
+ξ_country = getdataframe(m_descriptives, :damages, :ξ)
+
+top_3_ξ = first(sort(ξ_country, :ξ, rev=true), 3)
+bottom_3_ξ = first(sort(ξ_country, :ξ, rev=false), 3)
+
 
 ## Get Interaction values
 

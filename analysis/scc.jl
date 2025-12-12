@@ -137,8 +137,6 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
             ∂_cE = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
         )
-        @group_by(year)
-        @ungroup()
     end
     return prepared_df
 end

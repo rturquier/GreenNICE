@@ -46,14 +46,21 @@ bottom_3_ξ = first(sort(ξ_country, :ξ, rev=false), 3)
 
 ### Gini
 
-gini_cons_2020 = @chain getdataframe(m_descriptives, :quantile_recycle, :gini_cons) begin
-    @filter(time == 2020)
-    @mutate(country = string.(country))
-    @select(country, gini_cons)
+gini_cons = @chain getdataframe(m_descriptives, :quantile_recycle, :gini_cons) begin
+    @mutate(country = string.(country), gini_cons = float.(gini_cons))
+    @filter(time in (2020, 2100))
+    @select(country, time, gini_cons)
+    unstack(:time, :gini_cons)
+    rename!(:("2020") => :gini_cons_2020)
+    rename!(:("2100") => :gini_cons_2100)
 end
 
-top3_gini = first(sort(gini_cons_2020, :gini_cons, rev=true), 3)
-bottom3_gini = first(sort(gini_cons_2020, :gini_cons, rev=false), 3)
+
+top3_gini = first(sort(gini_cons, :gini_cons_2020, rev=true), 3)
+bottom3_gini = first(sort(gini_cons, :gini_cons_2020, rev=false), 3)
+
+top3_gini_2100 = first(sort(gini_cons, :gini_cons_2100, rev=true), 3)
+bottom3_gini_2100 = first(sort(gini_cons, :gini_cons_2100, rev=false), 3)
 
 ## Section 4: Interaction effect
 
@@ -79,19 +86,31 @@ bottom3_level = first(sort(country_interaction_df, :interaction, rev=false), 3)
 top5_pct = first(sort(country_interaction_df, :interaction_pct, rev=true), 5)
 bottom5_pct = first(sort(country_interaction_df, :interaction_pct, rev=false), 5)
 
-### Correlation between ξ, gini and interaction effect
+### Correlation between ξ, gini and interaction
+
 correlations_df = @chain ξ_country begin
     @mutate(country = string.(country))
-    @mutate(ξ = float.(ξ))
+    @mutate(θ_env = float.(θ_env))
     leftjoin(country_interaction_df, on=:country)
-    leftjoin(gini_cons_2020, on=:country)
+    leftjoin(gini_cons, on=:country)
     @mutate(interaction = float.(interaction))
-    @mutate(gini_cons = float.(gini_cons))
 end
 
-correlation_ξ_gini = lm(@formula(interaction ~ ξ + gini_cons), correlations_df)
+correlation_gini_2020_2100 = lm(@formula(gini_cons_2020 ~ gini_cons_2100), correlations_df)
+regtable(correlation_gini_2020_2100,
+        render = LatexTable(),
+        file="outputs/tables/correlation_gini_2020_2100.tex")
 
-regtable(correlation_ξ_gini, render = LatexTable(), file="outputs/tables/correlation_damage_gini.tex" )
+correlation_ξ_gini_2020 = lm(@formula(interaction ~ θ_env + gini_cons_2020), correlations_df)
+regtable(correlation_ξ_gini_2020,
+        render = LatexTable(),
+        file="outputs/tables/correlation_damage_gini_2020.tex")
+
+correlation_ξ_gini_2100 = lm(@formula(interaction ~ θ_env + gini_cons_2100), correlations_df)
+regtable(correlation_ξ_gini,
+        render = LatexTable(),
+        file="outputs/tables/correlation_damage_gini_2100.tex")
+
 
 ## Make figures showing interaction effect at country and region levels
 

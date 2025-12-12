@@ -153,8 +153,8 @@ end
     The social cost of carbon (SCC) is equal to the sum of the present cost of marginal
     damages to consumption `c`, and to environment `E`:
     ```math
-      \sum_t \beta^t \sum_{i} \partial_{c_{i,t}}{W_t} \frac{dc_i}{de}
-    + \sum_t \beta^t \sum_{i} \partial_{E_{i,t}}{W_t} \frac{dE_i}{de}.
+      \sum_t \beta^t \sum_{i,j} \partial_{c_{i,j,t}}{W_t} \cdot (-\partial_{e_0} c_{i,j,t})
+    + \sum_t \beta^t \sum_{i,j} \partial_{E_{i,j,t}}{W_t} \cdot (-\partial_{e_0} E_{i,j,t}).
     ```
 
     Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in

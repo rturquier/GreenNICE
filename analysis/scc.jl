@@ -137,8 +137,6 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
             ∂_cE = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
         )
-        @group_by(year)
-        @ungroup()
     end
     return prepared_df
 end
@@ -155,8 +153,8 @@ Get present value of equity-weighted, money-metric damages to `c` and `E`.
 The social cost of carbon (SCC) is equal to the sum of the present cost of marginal
 damages to consumption `c`, and to environment `E`:
 ```math
-    \sum_t \beta^t \sum_{i} \partial_{c_{i,t}}{W_t} \frac{dc_i}{de}
-+ \sum_t \beta^t \sum_{i} \partial_{E_{i,t}}{W_t} \frac{dE_i}{de}.
+    \sum_t \beta^t \sum_{i,j} \partial_{c_{i,j,t}}{W_t} \cdot (-\partial_{e_0} c_{i,j,t})
++ \sum_t \beta^t \sum_{i,j} \partial_{E_{i,j,t}}{W_t} \cdot (-\partial_{e_0} E_{i,j,t}).
 ```
 
 Marginal damages to consumption ``\frac{dc_i}{de}`` are called `marginal_damage_to_c` in
@@ -384,10 +382,7 @@ function get_SCC_interaction(η::Real, θ::Real, α::Real, γ_list::Vector, ρ::
     interaction_df = @chain inequality_df begin
         @inner_join(no_inequality_df)
         @mutate(interaction = inequality_damage_E - no_inequality_damage_E)
-        @mutate(interaction_pct = 100 * interaction / inequality_damage_E)
-        @mutate(interaction_pct = ifelse.(interaction .<0,
-                                          interaction_pct .* -1,
-                                          interaction_pct))
+        @mutate(interaction_pct = 100 * interaction / abs(inequality_damage_E))
         @mutate(country = string.(country))
         @left_join(countries_df)
     end

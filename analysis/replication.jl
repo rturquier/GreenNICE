@@ -2,9 +2,24 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-
+@__FILE__
+abspath(PROGRAM_FILE)
 # %% Include
 include("scc.jl")
+include("descriptives.jl")
+
+# %% Get descriptive figures
+df_raw = get_descriptives_df()
+
+Initial_E_stock = map_E_percapita_country(df_raw)
+Gini_E_stock0 = plot_gini_E_stock0(df_raw)
+ξ_map = map_damage_coefficient_country(df_raw)
+
+# %% Save figures
+save("outputs/maps/initial_E_stock_percapita.svg", Initial_E_stock)
+save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0)
+save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
+
 
 # %% Set default parameters
 η = 1.5
@@ -26,9 +41,11 @@ country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
 
 # %% Absolute interaction map
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
+save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)
 
 # %% Relative interaction map
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
+save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 
 # ==== Facet plots ====
 # %% Set default η × θ grid

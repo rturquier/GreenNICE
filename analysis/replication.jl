@@ -2,8 +2,7 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-@__FILE__
-abspath(PROGRAM_FILE)
+
 # %% Include
 include("scc.jl")
 include("descriptives.jl")

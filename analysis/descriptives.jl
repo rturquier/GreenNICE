@@ -25,8 +25,8 @@ function get_descriptives_df()::DataFrame
 
     df = @chain getdataframe(m, :quantile_recycle, :gini_cons) begin
         @filter(time == 2020)
-        leftjoin(E_stock0_percapita, on = :country)
-        leftjoin(damage_coeficient, on = :country)
+        @left_join(E_stock0_percapita)
+        @left_join(damage_coeficient)
         @mutate(gini_cons = Float64.(gini_cons))
         @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
         @mutate(ξ = Float64.(ξ))
@@ -44,7 +44,7 @@ function get_WPP_regions(df::DataFrame)::DataFrame
         @select(-(:WPP_region_number, :countrycode))
     end
 
-    df = leftjoin(df, df_regions, on = :country)
+    df = @left_join(df, df_regions)
 
     return df
 end
@@ -55,7 +55,7 @@ function get_country_id(df::DataFrame)::DataFrame
         DataFrame(all_countries())
         @select(country = alpha3, id = numeric)
         @mutate(country = Symbol.(country))
-        leftjoin(df, on = :country)
+        @left_join(df)
     end
 
     return df_country

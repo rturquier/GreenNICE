@@ -8,14 +8,14 @@ include("scc.jl")
 include("descriptives.jl")
 
 # %% Get descriptive figures
-df_raw = get_descriptives_df()
+descriptives_df = get_descriptives_df()
 
-Initial_E_stock = map_E_percapita_country(df_raw)
-Gini_E_stock0 = plot_gini_E_stock0(df_raw)
-ξ_map = map_damage_coefficient_country(df_raw)
+initial_E_stock_map = map_E_percapita_country(descriptives_df)
+Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
+ξ_map = map_damage_coefficient_country(descriptives_df)
 
 # %% Save figures
-save("outputs/maps/initial_E_stock_percapita.svg", Initial_E_stock)
+save("outputs/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
 save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0)
 save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 

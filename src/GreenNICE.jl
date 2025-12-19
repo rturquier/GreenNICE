@@ -157,6 +157,8 @@ function _set_default_values!(m::Model)::Model
 	nb_country = length(dim_keys(m, :country))
     nb_year = length(dim_keys(m, :time))
 
+    paris_target_abatement_rate = 0.8
+
     FAIR_initial_values_2020 = Dict(
         (:aerosol_plus_cycles, :aerosol_plus_0) => init_aerosol[:, :concentration],
         (:aerosol_plus_cycles, :R0_aerosol_plus) => Matrix(init_aerosol[:, [:R1, :R2, :R3, :R4]]),
@@ -198,7 +200,7 @@ function _set_default_values!(m::Model)::Model
         (:abatement, :global_carbon_tax) => zeros(nb_year),
         (:abatement, :reference_carbon_tax) => zeros(nb_year),
         (:abatement, :reference_country_index) => findfirst(x -> x == "USA", countries),
-        (:abatement, :μ_input) => zeros(nb_year, nb_country),
+        (:abatement, :μ_input) => zeros(nb_year, nb_country) .+ paris_target_abatement_rate,
         (:abatement, :θ2) => 2.6,
         (:abatement, :pbacktime) => full_pbacktime,
 

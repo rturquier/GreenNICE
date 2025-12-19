@@ -46,48 +46,24 @@ save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 
-# ==== Facet plots ====
+# ==== Facet plot ====
 # %% Set default η × θ grid
 η_list = [0.1, 1.05, 2.]
 θ_list = [-1.5, -0.5, 0.5]
 γ_list = [0., 0.5, 1.]
 
-# %% Run Business-As-Usual (BAU) model and save outputs
-# Takes 30 to 60 minutes
-BAU_facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
-write_csv(BAU_facet_df, "outputs/BAU_facet_df.csv")
-
-# %% Get temperature in a default run
+# %% Plot temperature trajectory in a default run
 m = GreenNICE.create()
 run(m)
 warming_df = getdataframe(m, :damages => :temp_anomaly)
 warming_df |> @vlplot(:line, :time, :temp_anomaly)
 
-# %% Change abatement rate to stay under +2°C (Paris agreement target)
-paris_target_abatement_rate = 0.8
-default_μ_input_matrix = (GreenNICE.create() |> Mimi.build)[:abatement, :μ_input]
-paris_μ_input_matrix = default_μ_input_matrix .+ paris_target_abatement_rate
-
-# %% Check that temperature stays below +2°C in the long run (with little overshoot)
-m = GreenNICE.create(parameters=Dict((:abatement, :μ_input) => paris_μ_input_matrix))
-run(m)
-paris_warming_df = getdataframe(m, :damages => :temp_anomaly)
-paris_warming_df |> @vlplot(:line, :time, :temp_anomaly)
-
-# %% Run model on a Paris agreement warming trajectory and save outputs
-# Takes 30 to 60 minutes
-paris_facet_df = get_SCC_decomposition(
-    η_list, θ_list, α, γ_list, ρ;
-    additional_parameters=Dict((:abatement, :μ_input) => paris_μ_input_matrix)
-)
-write_csv(paris_facet_df, "outputs/paris_facet_df.csv")
+# %% Run model on parameter grid (this can take a long time) and save results
+facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
+write_csv(facet_df, "outputs/facet_df.csv")
 
 # %% Read
-BAU_facet_df = read_csv("outputs/BAU_facet_df.csv")
-paris_facet_df = read_csv("outputs/paris_facet_df.csv")
+facet_df = read_csv("outputs/facet_df.csv")
 
-# %% BAU facet plot
-facet_SCC(BAU_facet_df; cost_to="E")
-
-# %% Facet plot for the 2°C scenario
-facet_SCC(paris_facet_df; cost_to="E")
+# %% Facet plot
+facet_SCC(facet_df; cost_to="E")

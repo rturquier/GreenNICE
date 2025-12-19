@@ -233,6 +233,17 @@ function _set_default_values!(m::Model)::Model
     return m
 end
 
+function _set_custom_values!(m, parameters)
+    # allow diffent types of keys and values to avoid type errors when setting a new value
+    parameters = Dict{Union{Symbol, Tuple{Symbol, Symbol}}, Any}(parameters)
+
+    E_multiplier = pop!(parameters, :E_multiplier, 1)
+    parameters[:environment, :E_stock0] = E_stock0 * E_multiplier
+
+    update_params!(m, parameters)
+    return m
+end
+
 function create(; parameters::Dict=Dict())::Model
 	m = MimiFAIRv2.get_model(
         emissions_forcing_scenario="ssp245",
@@ -247,7 +258,7 @@ function create(; parameters::Dict=Dict())::Model
     _connect_shared_parameters!(m)
     _connect_component_parameters!(m)
     _set_default_values!(m)
-    update_params!(m, parameters)  # Set user-supplied values (override defaults)
+    _set_custom_values!(m, parameters)
 
     return m
 end

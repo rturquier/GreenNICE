@@ -6,7 +6,7 @@ using Mimi
     using .GreenNICE
 
     # Test that the model builds
-    m = GreenNICE.create()
+    m = GreenNICE.create(; parameters=Dict(:E_multiplier => 2))
     @test m isa Model
 
     # Test that the model runs

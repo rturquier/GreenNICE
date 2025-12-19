@@ -244,6 +244,24 @@ function _set_custom_values!(m, parameters)
     return m
 end
 
+"""
+    create(; parameters::Dict=Dict())::Model
+
+Create a GreenNICE `Model`.
+
+All parameters set in `_add_shared_parameters!` and `_set_default_values!` can be set
+to custom values by passing a dictionary  to the `parameters` keyword argument, with
+the following syntax:
+```
+    GreenNICE.create(;
+        parameters=Dict((:component, :parameter) => value_1, :shared_parameter => value_2)
+    )
+```
+
+The following additional parameters can be passed in the dictionary:
+- `E_multiplier`: multiply initial natural capital values `E_stock0` by a factor
+    (default: `1`)
+"""
 function create(; parameters::Dict=Dict())::Model
 	m = MimiFAIRv2.get_model(
         emissions_forcing_scenario="ssp245",

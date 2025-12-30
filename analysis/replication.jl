@@ -44,9 +44,19 @@ country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)
 
+# %%% Identify countries with highest and lowest interaction effects
+top3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=true), 3)
+bottom3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=false), 3)
+
 # %% Relative interaction map
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
+
+# %%% Identify countries with highest and lowest relative interaction effects
+
+top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
+bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
+                                3)
 
 # ==== Facet plot ====
 # %% Set default η × θ grid

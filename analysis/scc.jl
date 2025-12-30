@@ -421,11 +421,9 @@ function map_SCC_decomposition_level(interaction_df::DataFrame)
             color = {
                 field = "interaction",
                 type = "quantitative",
-                title = "Interaction cost",
+                title = "Interaction",
                 scale = {
-                    scheme = "blueorange",
-                    domainMid = 0,
-                    domain = [-0.1, 0.1]
+                    scheme = "goldred"
                 }
             }
         }

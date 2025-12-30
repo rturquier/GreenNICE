@@ -33,7 +33,7 @@ save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
 decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
 
-decomposition_plot |> save("outputs/SCC_decomposition.svg")
+decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 
 # ==== Map interaction effect at country and region levels ====
 # %% Get data

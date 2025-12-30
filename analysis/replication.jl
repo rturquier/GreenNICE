@@ -1,8 +1,6 @@
 # %% Activate environment, install packages and precompile project
 using Pkg
 using DataFrames
-using GLM
-using RegressionTables
 
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()

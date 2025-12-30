@@ -39,8 +39,8 @@ decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 # %% Get data
 γ_list = [0.0, 1.0]
 γ = 1.0
-country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
 
+country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
 decomposition_BAU = get_SCC_decomposition(η, θ, α, γ, ρ)
 
 SCC_c = decomposition_BAU.present_cost_of_damages_to_c
@@ -48,7 +48,6 @@ SCC_E = decomposition_BAU.present_cost_of_damages_to_E
 SCC = SCC_c + SCC_E
 
 I_abs_interaction = sum(country_interaction_df.interaction)
-
 I_rel_interaction = I_abs_interaction ./ SCC_E * 100
 
 # ==== Map interaction effect at country levels ====
@@ -65,7 +64,6 @@ relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 
 # %%% Identify countries with highest and lowest relative interaction effects
-
 top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
 bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
                                 3)

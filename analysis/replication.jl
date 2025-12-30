@@ -36,6 +36,7 @@ decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
 decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 
 # ==== Calculate interaction effect ====
+# %% Get data
 γ_list = [0.0, 1.0]
 γ = 1.0
 country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
@@ -51,8 +52,6 @@ I_abs_interaction = sum(country_interaction_df.interaction)
 I_rel_interaction = I_abs_interaction ./ SCC_E * 100
 
 # ==== Map interaction effect at country levels ====
-# %% Get data
-
 # %% Absolute interaction map
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)

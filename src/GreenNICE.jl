@@ -157,6 +157,8 @@ function _set_default_values!(m::Model)::Model
 	nb_country = length(dim_keys(m, :country))
     nb_year = length(dim_keys(m, :time))
 
+    paris_target_abatement_rate = 0.8
+
     FAIR_initial_values_2020 = Dict(
         (:aerosol_plus_cycles, :aerosol_plus_0) => init_aerosol[:, :concentration],
         (:aerosol_plus_cycles, :R0_aerosol_plus) => Matrix(init_aerosol[:, [:R1, :R2, :R3, :R4]]),
@@ -198,7 +200,7 @@ function _set_default_values!(m::Model)::Model
         (:abatement, :global_carbon_tax) => zeros(nb_year),
         (:abatement, :reference_carbon_tax) => zeros(nb_year),
         (:abatement, :reference_country_index) => findfirst(x -> x == "USA", countries),
-        (:abatement, :μ_input) => zeros(nb_year, nb_country),
+        (:abatement, :μ_input) => zeros(nb_year, nb_country) .+ paris_target_abatement_rate,
         (:abatement, :θ2) => 2.6,
         (:abatement, :pbacktime) => full_pbacktime,
 
@@ -208,7 +210,7 @@ function _set_default_values!(m::Model)::Model
 
         (:damages, :β1_KW) => beta1_KW,
         (:damages, :β2_KW) => beta2_KW,
-        (:damages, :θ_env) => θ_env,
+        (:damages, :ξ) => ξ,
 
         (:revenue_recycle, :switch_scope_recycle) => 0,
         (:revenue_recycle, :switch_global_pc_recycle) => 0,
@@ -231,6 +233,35 @@ function _set_default_values!(m::Model)::Model
     return m
 end
 
+function _set_custom_values!(m, parameters)
+    # allow diffent types of keys and values to avoid type errors when setting a new value
+    parameters = Dict{Union{Symbol, Tuple{Symbol, Symbol}}, Any}(parameters)
+
+    E_multiplier = pop!(parameters, :E_multiplier, 1)
+    parameters[:environment, :E_stock0] = E_stock0 * E_multiplier
+
+    update_params!(m, parameters)
+    return m
+end
+
+"""
+    create(; parameters::Dict=Dict())::Model
+
+Create a GreenNICE `Model`.
+
+All parameters set in `_add_shared_parameters!` and `_set_default_values!` can be set
+to custom values by passing a dictionary  to the `parameters` keyword argument, with
+the following syntax:
+```
+    GreenNICE.create(;
+        parameters=Dict((:component, :parameter) => value_1, :shared_parameter => value_2)
+    )
+```
+
+The following additional parameters can be passed in the dictionary:
+- `E_multiplier`: multiply initial natural capital values `E_stock0` by a factor
+    (default: `1`)
+"""
 function create(; parameters::Dict=Dict())::Model
 	m = MimiFAIRv2.get_model(
         emissions_forcing_scenario="ssp245",
@@ -245,7 +276,7 @@ function create(; parameters::Dict=Dict())::Model
     _connect_shared_parameters!(m)
     _connect_component_parameters!(m)
     _set_default_values!(m)
-    update_params!(m, parameters)  # Set user-supplied values (override defaults)
+    _set_custom_values!(m, parameters)
 
     return m
 end

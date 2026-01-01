@@ -1,7 +1,5 @@
 # %% Activate environment, install packages and precompile project
 using Pkg
-using DataFrames
-
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 
@@ -18,7 +16,7 @@ Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
 
 # %% Save figures
 save("outputs/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
-save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0)
+save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0_scatterplot)
 save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 
 

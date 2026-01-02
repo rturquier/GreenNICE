@@ -11,13 +11,13 @@ include("descriptives.jl")
 descriptives_df = get_descriptives_df()
 
 initial_E_stock_map = map_E_percapita_country(descriptives_df)
-Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
 ξ_map = map_damage_coefficient_country(descriptives_df)
+Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
 
 # %% Save figures
-save("outputs/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
+save("outputs/figures/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
+save("outputs/figures/maps/initial_damage_coefficient_map.svg", ξ_map)
 save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0_scatterplot)
-save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 
 
 # %% Set default parameters
@@ -31,7 +31,7 @@ save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
 decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
 
-decomposition_plot |> save("outputs/SCC_decomposition.svg")
+decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 
 # ==== Map interaction effect at country and region levels ====
 # %% Get data
@@ -66,4 +66,5 @@ write_csv(facet_df, "outputs/facet_df.csv")
 facet_df = read_csv("outputs/facet_df.csv")
 
 # %% Facet plot
-facet_SCC(facet_df; cost_to="E")
+facet_plot = facet_SCC(facet_df; cost_to="E")
+facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")

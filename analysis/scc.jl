@@ -530,7 +530,7 @@ end
 
 Get the annual flow of material forest ecosystem services from Costanza et al. (2014).
 """
-function get_costanza_total_forest_material_value()
+function get_costanza_forest_values()
     costanza_forest_df = @chain begin
         ExcelReaders.readxl("analysis/costanza-2014-table-S1.xls", "Sheet2!A4:AT32")
         DataFrame(_, :auto)
@@ -557,11 +557,22 @@ function get_costanza_total_forest_material_value()
         )
     end
 
-    total_forest_material_value = @chain costanza_forest_df begin
-        @mutate(total_material_value = (food + raw_materials + genetic_resources) * area)
-        @pull(total_material_value)
-        only(_)
-        adjust_for_inflation(_, 2007, 2017)
+    total_value_per_hectare = @chain costanza_forest_df begin
+        @select(gas_regulation:cultural)
+        sum(eachcol(_))
     end
-    return total_forest_material_value
+
+    forest_values_df = @eval @chain $costanza_forest_df begin
+        @mutate(
+            total_value_2007 = $total_value_per_hectare * area,
+            food_material_genetic_2007 = (food + raw_materials + genetic_resources) * area
+        )
+        @transmute(
+            total_value = adjust_for_inflation(total_value_2007, 2007, 2017),
+            food_material_genetic = adjust_for_inflation(
+                food_material_genetic_2007, 2007, 2017
+            ),
+        )
+    end
+    return forest_values_df
 end

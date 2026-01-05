@@ -78,4 +78,4 @@ facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 
 # ====  Sensitivity to E
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
-costanza_total_forest_material_value = get_costanza_total_forest_material_value()
+costanza_forest_values = get_costanza_forest_values()

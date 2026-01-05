@@ -46,17 +46,24 @@ save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 
+# ==== Descriptive information on the default run ====
+# %% Default run
+m = GreenNICE.create()
+run(m)
+
+# %% Plot temperature trajectory in a default run
+warming_df = getdataframe(m, :damages => :temp_anomaly)
+warming_df |> @vlplot(:line, :time, :temp_anomaly)
+
+# %% Plot global flow of ecosystem services in default run
+E_flow_df = getdataframe(m, :environment => :E_flow_global)
+E_flow_df |> @vlplot(:line, :time, :E_flow_global)
+
 # ==== Facet plot ====
 # %% Set default η × θ grid
 η_list = [0.1, 1.05, 2.]
 θ_list = [-1.5, -0.5, 0.5]
 γ_list = [0., 0.5, 1.]
-
-# %% Plot temperature trajectory in a default run
-m = GreenNICE.create()
-run(m)
-warming_df = getdataframe(m, :damages => :temp_anomaly)
-warming_df |> @vlplot(:line, :time, :temp_anomaly)
 
 # %% Run model on parameter grid (this can take a long time) and save results
 facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
@@ -69,5 +76,6 @@ facet_df = read_csv("outputs/facet_df.csv")
 facet_plot = facet_SCC(facet_df; cost_to="E")
 facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 
+# ====  Sensitivity to E
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_total_forest_material_value = get_costanza_total_forest_material_value()

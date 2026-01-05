@@ -501,6 +501,24 @@ function check_sensitivity_to_E(
     return concatenated_df
 end
 
+function plot_sensitivity_to_E(sensitivity_to_E_df::DataFrame)
+    sensitivity_to_E_plot = sensitivity_to_E_df |> @vlplot(
+        mark={
+            :line,
+            point=true
+        },
+        x={
+            "E_multiplier:q",
+            scale={
+                domain=(0, 5.5),
+            }
+        },
+        y="present_cost_of_damages_to_E:q",
+        color="γ:o"
+    )
+    sensitivity_to_E_plot
+end
+
 """
     get_CPI_data()
 

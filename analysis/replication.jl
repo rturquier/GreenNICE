@@ -85,3 +85,7 @@ E_multiplier_list = [0.5, 1, 2, 3, 4, 5]
 
 sensitivity_to_E_df = check_sensitivity_to_E(E_multiplier_list, η, θ, α, ρ)
 write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
+
+# %% Read and plot
+sensitivity_to_E_df = read_csv("outputs/sensitivity_to_E.csv")
+plot_sensitivity_to_E(sensitivity_to_E_df)

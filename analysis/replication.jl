@@ -68,3 +68,6 @@ facet_df = read_csv("outputs/facet_df.csv")
 # %% Facet plot
 facet_plot = facet_SCC(facet_df; cost_to="E")
 facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
+
+# %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
+costanza_total_forest_material_value = get_costanza_total_forest_material_value()

@@ -3,6 +3,10 @@ using TidierData
 using TidierFiles
 using VegaLite, VegaDatasets
 using Countries
+using ExcelReaders  # to read Costanza et al. (2014) table S1, a legacy .xls file
+using HTTP  # to get CPI data
+using JSON  # to get CPI data
+
 
 include("../src/GreenNICE.jl")
 using .GreenNICE
@@ -519,4 +523,45 @@ function adjust_for_inflation(amount, amount_year, target_year=2017)
 
     adjusted_amount = amount * (target_year_CPI / amount_year_CPI)
     return adjusted_amount
+end
+
+"""
+    get_costanza_total_forest_material_value()
+
+Get the annual flow of material forest ecosystem services from Costanza et al. (2014).
+"""
+function get_costanza_total_forest_material_value()
+    costanza_forest_df = @chain begin
+        ExcelReaders.readxl("analysis/costanza-2014-table-S1.xls", "Sheet2!A4:AT32")
+        DataFrame(_, :auto)
+        @filter(x2 == "Forest")
+        @select(
+            area = x5 * 10^6,
+            gas_regulation = x7,
+            climate_regulation = x9,
+            disturbance_regulation = x11,
+            water_regulation = x13,
+            water_supply = x15,
+            erosion_control = x17,
+            soil_formation = x19,
+            nutrient_cycling = x21,
+            waste_treatment = x23,
+            pollination = x25,
+            biological_control = x27,
+            habitat = x29,
+            food = x31,
+            raw_materials = x33,
+            genetic_resources = x35,
+            recreation = x37,
+            cultural = x39
+        )
+    end
+
+    total_forest_material_value = @chain costanza_forest_df begin
+        @mutate(total_material_value = (food + raw_materials + genetic_resources) * area)
+        @pull(total_material_value)
+        only(_)
+        adjust_for_inflation(_, 2007, 2017)
+    end
+    return total_forest_material_value
 end

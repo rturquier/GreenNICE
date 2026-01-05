@@ -79,3 +79,9 @@ facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 # ====  Sensitivity to E
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
+
+# %% Run model with different E multipliers to check sensitivity, and save results
+E_multiplier_list = [0.5, 1, 2, 3, 4, 5]
+
+sensitivity_to_E_df = check_sensitivity_to_E(E_multiplier_list, η, θ, α, ρ)
+write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")

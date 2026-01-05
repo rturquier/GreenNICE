@@ -479,6 +479,28 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
     return percentage_interaction_map
 end
 
+function check_sensitivity_to_E(
+    E_multiplier_list::Vector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
+)::DataFrame
+    kwargs::Dict{Any, Any} = Dict(kwargs)  # avoids type errors when manipulating kwargs
+    γ_list = [0., 1.]
+
+    df_list = []
+    for E_multiplier in E_multiplier_list
+        if haskey(kwargs, :additional_parameters)
+            kwargs[:additional_parameters][:E_multiplier] = E_multiplier
+        else
+            kwargs[:additional_parameters] = Dict(:E_multiplier => E_multiplier)
+        end
+        df = get_SCC_decomposition(η, θ, α, γ_list, ρ; kwargs...)
+        df.E_multiplier .= E_multiplier
+        push!(df_list, df)
+    end
+
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
+end
+
 """
     get_CPI_data()
 

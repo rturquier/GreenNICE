@@ -237,7 +237,7 @@ function _set_custom_values!(m, parameters)
     # allow diffent types of keys and values to avoid type errors when setting a new value
     parameters = Dict{Union{Symbol, Tuple{Symbol, Symbol}}, Any}(parameters)
 
-    E_multiplier = pop!(parameters, :E_multiplier, 1)
+    E_multiplier = pop!(parameters, :E_multiplier, 1)  # defaults to 1
     parameters[:environment, :E_stock0] = E_stock0 * E_multiplier
 
     update_params!(m, parameters)

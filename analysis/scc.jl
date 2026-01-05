@@ -474,3 +474,49 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
 
     return percentage_interaction_map
 end
+
+"""
+    get_CPI_data()
+
+Get consumer price index (CPI) data from the US Bureau of Labor Statistics
+"""
+function get_CPI_data()
+    # The free public API is limited to 10 years per request
+    all_data = []
+    for start_year in 2000:10:2020
+        end_year = min(start_year + 9, 2024)
+        payload = Dict(
+            "seriesid" => ["CUUR0000SA0"],
+            "startyear" => string(start_year),
+            "endyear" => string(end_year)
+        )
+        response = HTTP.post(
+            "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+            ["Content-Type" => "application/json"],
+            JSON.json(payload)
+        )
+        data = JSON.parse(String(response.body))
+        append!(all_data, data["Results"]["series"][1]["data"])
+    end
+
+    CPI_df = @chain all_data begin
+        DataFrame()
+        @group_by(year)
+        @summarize(CPI = mean(as_float(value)))
+        @arrange(year)
+    end
+    return CPI_df
+end
+
+function adjust_for_inflation(amount, amount_year, target_year=2017)
+    if !isfile("data/CPI.csv")
+        write_csv(get_CPI_data(), "data/CPI.csv")
+    end
+
+    CPI_df = read_csv("data/CPI.csv")
+    amount_year_CPI = @eval@chain $CPI_df @filter(year == $amount_year) @pull(CPI) only
+    target_year_CPI = @eval@chain $CPI_df @filter(year == $target_year) @pull(CPI) only
+
+    adjusted_amount = amount * (target_year_CPI / amount_year_CPI)
+    return adjusted_amount
+end

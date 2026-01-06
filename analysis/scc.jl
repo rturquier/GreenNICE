@@ -605,7 +605,12 @@ function get_costanza_forest_values()
     forest_values_df = @eval @chain $costanza_forest_df begin
         @transmute(
             total_value = area * $total_value_per_hectare,
-            water_food_recreation =  area * (water_supply + food + recreation),
+            water_food_recreation =  area * (
+                water_regulation
+                + water_supply
+                + food
+                + recreation
+            ),
         )
         @transmute(across(everything(), x -> adjust_for_inflation(x, 2007, 2017)))
         @rename_with(x -> replace(x, "_function" => ""))

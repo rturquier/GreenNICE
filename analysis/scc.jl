@@ -3,7 +3,7 @@ using TidierData
 using TidierFiles
 using VegaLite, VegaDatasets
 using Countries
-using ExcelReaders  # to read Costanza et al. (2014) table S1, a legacy .xls file
+using XLSX  # to read Costanza et al. (2014) table S1
 using HTTP  # to get CPI data
 using JSON  # to get CPI data
 
@@ -569,13 +569,19 @@ end
     get_costanza_total_forest_material_value()
 
 Get the annual flow of material forest ecosystem services from Costanza et al. (2014).
+
+Note: the original .xls file (`1-s2.0-S0959378014000685-mmc2.xls`) was converted to .xlsx
+manually using LibreOffice, as reading an xls file in 2026 with Julia was just too messy.
 """
 function get_costanza_forest_values()
     costanza_forest_df = @chain begin
-        ExcelReaders.readxl("analysis/costanza-2014-table-S1.xls", "Sheet2!A4:AT32")
+        XLSX.readdata("analysis/costanza-2014-table-S1.xlsx", "Sheet2", "A4:AT32")
         DataFrame(_, :auto)
-        @filter(x2 == "Forest")
+        @mutate(biome = coalesce(x1, x2, x3))
+        @filter(biome != "Biome")
+        @drop_missing(biome)
         @select(
+            biome,
             area = x5 * 10^6,
             gas_regulation = x7,
             climate_regulation = x9,
@@ -595,6 +601,7 @@ function get_costanza_forest_values()
             recreation = x37,
             cultural = x39
         )
+        coalesce.(_, 0)
     end
 
     total_value_per_hectare = @chain costanza_forest_df begin
@@ -604,6 +611,7 @@ function get_costanza_forest_values()
 
     forest_values_df = @eval @chain $costanza_forest_df begin
         @transmute(
+            biome,
             total_value = area * $total_value_per_hectare,
             water_food_recreation =  area * (
                 water_regulation
@@ -612,7 +620,8 @@ function get_costanza_forest_values()
                 + recreation
             ),
         )
-        @transmute(across(everything(), x -> adjust_for_inflation(x, 2007, 2017)))
+        @filter(biome == "Forest")
+        @transmute(across(where(is_float), x -> adjust_for_inflation(x, 2007, 2017)))
         @rename_with(x -> replace(x, "_function" => ""))
     end
     return forest_values_df

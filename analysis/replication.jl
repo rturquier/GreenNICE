@@ -56,6 +56,7 @@ warming_df = getdataframe(m, :damages => :temp_anomaly)
 warming_df |> @vlplot(:line, :time, :temp_anomaly)
 
 # %% Plot global flow of ecosystem services in default run
+# Unit is million of dollars per year
 E_flow_df = getdataframe(m, :environment => :E_flow_global)
 E_flow_df |> @vlplot(:line, :time, :E_flow_global)
 

@@ -81,7 +81,7 @@ facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 costanza_forest_values = get_costanza_forest_values()
 
 # %% Run model with different E multipliers to check sensitivity, and save results
-E_multiplier_list = [0.5, 1, 2, 3, 4, 5, 10, 15, 20]
+E_multiplier_list = [0.5, 1, 2, 3, 4, 5]
 
 sensitivity_to_E_df = check_sensitivity_to_E(E_multiplier_list, η, θ, α, ρ)
 write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
@@ -90,7 +90,3 @@ write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
 sensitivity_to_E_df = read_csv("outputs/sensitivity_to_E.csv")
 sensitivity_to_E_plot = plot_sensitivity_to_E(sensitivity_to_E_df)
 sensitivity_to_E_plot |> save("outputs/figures/sensitivity_to_E.svg")
-
-# %% Add additional points to the chart
-additional_points_df = check_sensitivity_to_E([10, 15, 20], η, θ, α, ρ)
-sensitivity_to_E_df = reduce(vcat, [sensitivity_to_E_df, additional_points_df])

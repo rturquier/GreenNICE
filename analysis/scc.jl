@@ -527,7 +527,7 @@ Get consumer price index (CPI) data from the US Bureau of Labor Statistics
 function get_CPI_data()
     # The free public API is limited to 10 years per request
     all_data = []
-    for start_year in 2000:10:2020
+    for start_year in [2000, 2010, 2020]
         end_year = min(start_year + 9, 2024)
         payload = Dict(
             "seriesid" => ["CUUR0000SA0"],

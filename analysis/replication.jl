@@ -80,6 +80,10 @@ facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 
+# %% Convert total value of ecosystem services to 2017 USD
+total_costanza_estimate = 124.8 * 10^12
+adjust_for_inflation(total_costanza_estimate, 2007, 2017)
+
 # %% Run model with different E multipliers to check sensitivity, and save results
 E_multiplier_list = [0.5, 1, 2, 3, 4, 5]
 

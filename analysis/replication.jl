@@ -88,4 +88,5 @@ write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
 
 # %% Read and plot
 sensitivity_to_E_df = read_csv("outputs/sensitivity_to_E.csv")
-plot_sensitivity_to_E(sensitivity_to_E_df)
+sensitivity_to_E_plot = plot_sensitivity_to_E(sensitivity_to_E_df)
+sensitivity_to_E_plot |> save("outputs/figures/sensitivity_to_E.svg")

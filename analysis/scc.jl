@@ -310,12 +310,18 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     consumption_plot = SCC_decomposition_df |> @vlplot(
         :line,
         x="γ:q",
-        y="present_cost_of_damages_to_c:q",
+        y= {
+            "present_cost_of_damages_to_c:q",
+            axis = { title = "SCC_c" }
+            },
     )
     environment_plot = SCC_decomposition_df |> @vlplot(
         :line,
         x="γ:q",
-        y="present_cost_of_damages_to_E:q",
+        y={
+            "present_cost_of_damages_to_E:q",
+            axis = { title = "SCC_E" }
+        },
     )
     combined_plot = hcat(consumption_plot, environment_plot)
     return combined_plot

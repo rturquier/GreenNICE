@@ -3,6 +3,10 @@ using TidierData
 using TidierFiles
 using VegaLite, VegaDatasets
 using Countries
+using XLSX  # to read Costanza et al. (2014) table S1
+using HTTP  # to get CPI data
+using JSON  # to get CPI data
+
 
 include("../src/GreenNICE.jl")
 using .GreenNICE
@@ -479,4 +483,152 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
     )
 
     return percentage_interaction_map
+end
+
+function check_sensitivity_to_E(
+    E_multiplier_list::Vector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
+)::DataFrame
+    kwargs::Dict{Any, Any} = Dict(kwargs)  # avoids type errors when manipulating kwargs
+    γ_list = [0., 1.]
+
+    df_list = []
+    for E_multiplier in E_multiplier_list
+        if haskey(kwargs, :additional_parameters)
+            kwargs[:additional_parameters][:E_multiplier] = E_multiplier
+        else
+            kwargs[:additional_parameters] = Dict(:E_multiplier => E_multiplier)
+        end
+        df = get_SCC_decomposition(η, θ, α, γ_list, ρ; kwargs...)
+        df.E_multiplier .= E_multiplier
+        push!(df_list, df)
+    end
+
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
+end
+
+function plot_sensitivity_to_E(sensitivity_to_E_df::DataFrame)
+    sensitivity_to_E_plot = sensitivity_to_E_df |> @vlplot(
+        mark={
+            :line,
+            point=true
+        },
+        x={
+            "E_multiplier:q",
+            scale={
+                domain=(0, 5.5),
+            }
+        },
+        y="present_cost_of_damages_to_E:q",
+        color="γ:o"
+    )
+    sensitivity_to_E_plot
+end
+
+"""
+    get_CPI_data()
+
+Get consumer price index (CPI) data from the US Bureau of Labor Statistics
+"""
+function get_CPI_data()
+    # The free public API is limited to 10 years per request
+    all_data = []
+    for start_year in [2000, 2010, 2020]
+        end_year = min(start_year + 9, 2024)
+        payload = Dict(
+            "seriesid" => ["CUUR0000SA0"],
+            "startyear" => string(start_year),
+            "endyear" => string(end_year)
+        )
+        response = HTTP.post(
+            "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+            ["Content-Type" => "application/json"],
+            JSON.json(payload)
+        )
+        data = JSON.parse(String(response.body))
+        append!(all_data, data["Results"]["series"][1]["data"])
+    end
+
+    CPI_df = @chain all_data begin
+        DataFrame()
+        @group_by(year)
+        @summarize(CPI = mean(as_float(value)))
+        @arrange(year)
+    end
+    return CPI_df
+end
+
+function adjust_for_inflation(amount, amount_year, target_year=2017)
+    if !isfile("data/CPI.csv")
+        write_csv(get_CPI_data(), "data/CPI.csv")
+    end
+
+    CPI_df = read_csv("data/CPI.csv")
+    amount_year_CPI = @eval@chain $CPI_df @filter(year == $amount_year) @pull(CPI) only
+    target_year_CPI = @eval@chain $CPI_df @filter(year == $target_year) @pull(CPI) only
+
+    adjusted_amount = amount * (target_year_CPI / amount_year_CPI)
+    return adjusted_amount
+end
+
+"""
+    get_costanza_total_forest_material_value()
+
+Get the annual flow of material forest ecosystem services from Costanza et al. (2014).
+
+Note: the original .xls file (`1-s2.0-S0959378014000685-mmc2.xls`) was converted to .xlsx
+manually using LibreOffice, as reading an xls file in 2026 with Julia was just too messy.
+"""
+function get_costanza_forest_values()
+    costanza_forest_df = @chain begin
+        XLSX.readdata("analysis/costanza-2014-table-S1.xlsx", "Sheet2", "A4:AT32")
+        DataFrame(_, :auto)
+        @mutate(biome = coalesce(x1, x2, x3))
+        @filter(biome != "Biome")
+        @drop_missing(biome)
+        @select(
+            biome,
+            area = x5 * 10^6,
+            gas_regulation = x7,
+            climate_regulation = x9,
+            disturbance_regulation = x11,
+            water_regulation = x13,
+            water_supply = x15,
+            erosion_control = x17,
+            soil_formation = x19,
+            nutrient_cycling = x21,
+            waste_treatment = x23,
+            pollination = x25,
+            biological_control = x27,
+            habitat = x29,
+            food = x31,
+            raw_materials = x33,
+            genetic_resources = x35,
+            recreation = x37,
+            cultural = x39
+        )
+        coalesce.(_, 0)
+    end
+
+    total_value_per_hectare = @chain costanza_forest_df begin
+        @select(gas_regulation:cultural)
+        sum(eachcol(_))
+    end
+
+    forest_values_df = @eval @chain $costanza_forest_df begin
+        @transmute(
+            biome,
+            total_value = area * $total_value_per_hectare,
+            water_food_recreation =  area * (
+                water_regulation
+                + water_supply
+                + food
+                + recreation
+            ),
+        )
+        @filter(biome == "Forest")
+        @transmute(across(where(is_float), x -> adjust_for_inflation(x, 2007, 2017)))
+        @rename_with(x -> replace(x, "_function" => ""))
+    end
+    return forest_values_df
 end

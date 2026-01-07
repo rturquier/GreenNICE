@@ -1,7 +1,5 @@
 # %% Activate environment, install packages and precompile project
 using Pkg
-using DataFrames
-
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 
@@ -13,13 +11,13 @@ include("descriptives.jl")
 descriptives_df = get_descriptives_df()
 
 initial_E_stock_map = map_E_percapita_country(descriptives_df)
-Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
 ξ_map = map_damage_coefficient_country(descriptives_df)
+Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
 
 # %% Save figures
-save("outputs/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
+save("outputs/figures/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
+save("outputs/figures/maps/initial_damage_coefficient_map.svg", ξ_map)
 save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0_scatterplot)
-save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 
 
 # %% Set default parameters
@@ -68,18 +66,25 @@ save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
 bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
                                 3)
+# ==== Descriptive information on the default run ====
+# %% Default run
+m = GreenNICE.create()
+run(m)
+
+# %% Plot temperature trajectory in a default run
+warming_df = getdataframe(m, :damages => :temp_anomaly)
+warming_df |> @vlplot(:line, :time, :temp_anomaly)
+
+# %% Plot global flow of ecosystem services in default run
+# Unit is million of dollars per year
+E_flow_df = getdataframe(m, :environment => :E_flow_global)
+E_flow_df |> @vlplot(:line, :time, :E_flow_global)
 
 # ==== Facet plot ====
 # %% Set default η × θ grid
 η_list = [0.1, 1.05, 2.]
 θ_list = [-1.5, -0.5, 0.5]
 γ_list = [0., 0.5, 1.]
-
-# %% Plot temperature trajectory in a default run
-m = GreenNICE.create()
-run(m)
-warming_df = getdataframe(m, :damages => :temp_anomaly)
-warming_df |> @vlplot(:line, :time, :temp_anomaly)
 
 # %% Run model on parameter grid (this can take a long time) and save results
 facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
@@ -89,4 +94,24 @@ write_csv(facet_df, "outputs/facet_df.csv")
 facet_df = read_csv("outputs/facet_df.csv")
 
 # %% Facet plot
-facet_SCC(facet_df; cost_to="E")
+facet_plot = facet_SCC(facet_df; cost_to="E")
+facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
+
+# ====  Sensitivity to E
+# %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
+costanza_forest_values = get_costanza_forest_values()
+
+# %% Convert total value of ecosystem services to 2017 USD
+total_costanza_estimate = 124.8 * 10^12
+adjust_for_inflation(total_costanza_estimate, 2007, 2017)
+
+# %% Run model with different E multipliers to check sensitivity, and save results
+E_multiplier_list = [0.5, 1, 2, 3, 4, 5]
+
+sensitivity_to_E_df = check_sensitivity_to_E(E_multiplier_list, η, θ, α, ρ)
+write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
+
+# %% Read and plot
+sensitivity_to_E_df = read_csv("outputs/sensitivity_to_E.csv")
+sensitivity_to_E_plot = plot_sensitivity_to_E(sensitivity_to_E_df)
+sensitivity_to_E_plot |> save("outputs/figures/sensitivity_to_E.svg")

@@ -37,7 +37,7 @@ decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 # ==== Calculate interaction effect ====
 # %% Get data
 country_interaction_df = get_SCC_interaction(η, θ, α, [0.0, 1.0], ρ)
-decomposition_BAU =   @filter(SCC_decomposition_df, γ == 1.)
+decomposition_BAU = @filter(SCC_decomposition_df, γ == 1.)
 
 # %% Calculate SCC
 SCC_c = decomposition_BAU.present_cost_of_damages_to_c

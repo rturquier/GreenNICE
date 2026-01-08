@@ -25,7 +25,7 @@ save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 θ = 0.5
 α = 0.1
 ρ = 0.001
-γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 1.]
+γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
 
 # %% Get SCC decomposition
 SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
@@ -80,7 +80,7 @@ E_flow_df = getdataframe(m, :environment => :E_flow_global)
 E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 
 # ==== Facet plot ====
-# %% Set default η × θ grid
+# %% Set η × θ grid
 η_list = [1, 1.5, 2]
 θ_list = [-1, -0.25, 0.5]
 
@@ -94,6 +94,12 @@ facet_df = read_csv("outputs/facet_df.csv")
 # %% Facet plot
 facet_plot = facet_SCC(facet_df; cost_to="E")
 facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
+
+# %% Add one more point
+additional_point = get_SCC_decomposition(η_list, θ_list, α, [0.975], ρ)
+facet_df_with_additional_point = reduce(vcat, [facet_df, additional_point])
+facet_df_with_additional_point = @arrange(facet_df_with_additional_point, θ, η, γ)
+write_csv(facet_df_with_additional_point, "outputs/facet_df.csv")
 
 # ====  Sensitivity to E
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)

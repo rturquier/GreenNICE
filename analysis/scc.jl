@@ -485,7 +485,7 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
     return percentage_interaction_map
 end
 
-function check_sensitivity_to_E(
+function get_SCC_vs_E(
     E_multiplier_list::Vector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
 )::DataFrame
     kwargs::Dict{Any, Any} = Dict(kwargs)  # avoids type errors when manipulating kwargs
@@ -507,22 +507,33 @@ function check_sensitivity_to_E(
     return concatenated_df
 end
 
-function plot_sensitivity_to_E(sensitivity_to_E_df::DataFrame)
-    sensitivity_to_E_plot = sensitivity_to_E_df |> @vlplot(
+"""
+    plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
+
+Plot evolution of SCC with respect to the flow
+
+# Keyword arguments
+- `cost_to::String`: either "E" to plot the present social value of damages to the
+    environment, or "c" for damages to consumption.
+"""
+function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
+    y_name = "present_cost_of_damages_to_" * cost_to
+    y_title = "SCC_" * cost_to
+
+    SCC_vs_E_plot = SCC_vs_E_df |> @vlplot(
         mark={
             :line,
             point=true
         },
         x={
-            "E_multiplier:q",
-            scale={
-                domain=(0, 5.5),
-            }
+            "E_multiplier:q"
         },
-        y="present_cost_of_damages_to_E:q",
-        color="γ:o"
+        y={"$y_name:q", title=y_title},
+        color="γ:o",
+        width=650,
+        height=300,
     )
-    sensitivity_to_E_plot
+    SCC_vs_E_plot
 end
 
 """

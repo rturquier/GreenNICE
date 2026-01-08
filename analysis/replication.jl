@@ -82,8 +82,8 @@ E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 
 # ==== Facet plot ====
 # %% Set default η × θ grid
-η_list = [0.1, 1.05, 2.]
-θ_list = [-1.5, -0.5, 0.5]
+η_list = [1, 1.5, 2]
+θ_list = [-1, -0.25, 0.5]
 γ_list = [0., 0.5, 1.]
 
 # %% Run model on parameter grid (this can take a long time) and save results

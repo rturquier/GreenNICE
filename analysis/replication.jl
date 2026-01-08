@@ -58,7 +58,7 @@ warming_df |> @vlplot(:line, :time, :temp_anomaly)
 # %% Plot global flow of ecosystem services in default run
 # Unit is million of dollars per year
 E_flow_df = getdataframe(m, :environment => :E_flow_global)
-E_flow_df |> @vlplot(:line, :time, :E_flow_global)
+E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 
 # ==== Facet plot ====
 # %% Set default η × θ grid
@@ -95,3 +95,11 @@ write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
 sensitivity_to_E_df = read_csv("outputs/sensitivity_to_E.csv")
 sensitivity_to_E_plot = plot_sensitivity_to_E(sensitivity_to_E_df)
 sensitivity_to_E_plot |> save("outputs/figures/sensitivity_to_E.svg")
+
+# %% Plot E trajectory in a high-E run
+high_E_m = GreenNICE.create(; parameters=Dict(:E_multiplier => 5))
+run(high_E_m)
+high_E_flow_df = getdataframe(high_E_m, :environment => :E_flow_global)
+high_E_flow_df |>
+    @vlplot(:line, :time, {:E_flow_global, scale={zero=false}}) |>
+    save("outputs/figures/high_E_flow.svg")

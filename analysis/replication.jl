@@ -25,20 +25,19 @@ save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
 θ = 0.5
 α = 0.1
 ρ = 0.001
-γ_list = [0.0, 0.25, 0.5, 0.75, 1.0]
+γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
+
+# %% Get SCC decomposition
+SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
 
 # %% Plot SCC decomposition
-SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
 decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
-
 decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 
 # ==== Calculate interaction effect ====
 # %% Get data
-γ_list = [0.0, 1.0]
-γ = 1.0
-country_interaction_df = get_SCC_interaction(η, θ, α, γ_list, ρ)
-decomposition_BAU = get_SCC_decomposition(η, θ, α, γ, ρ)
+country_interaction_df = get_SCC_interaction(η, θ, α, [0.0, 1.0], ρ)
+decomposition_BAU = @filter(SCC_decomposition_df, γ == 1.)
 
 # %% Calculate SCC
 SCC_c = decomposition_BAU.present_cost_of_damages_to_c
@@ -81,10 +80,9 @@ E_flow_df = getdataframe(m, :environment => :E_flow_global)
 E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 
 # ==== Facet plot ====
-# %% Set default η × θ grid
-η_list = [0.1, 1.05, 2.]
-θ_list = [-1.5, -0.5, 0.5]
-γ_list = [0., 0.5, 1.]
+# %% Set η × θ grid
+η_list = [1, 1.5, 2]
+θ_list = [-1, -0.25, 0.5]
 
 # %% Run model on parameter grid (this can take a long time) and save results
 facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)

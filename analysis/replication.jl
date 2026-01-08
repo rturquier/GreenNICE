@@ -95,12 +95,6 @@ facet_df = read_csv("outputs/facet_df.csv")
 facet_plot = facet_SCC(facet_df; cost_to="E")
 facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 
-# %% Add one more point
-additional_point = get_SCC_decomposition(η_list, θ_list, α, [0.975], ρ)
-facet_df_with_additional_point = reduce(vcat, [facet_df, additional_point])
-facet_df_with_additional_point = @arrange(facet_df_with_additional_point, θ, η, γ)
-write_csv(facet_df_with_additional_point, "outputs/facet_df.csv")
-
 # ====  Sensitivity to E
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()

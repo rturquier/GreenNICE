@@ -520,20 +520,28 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
     y_name = "present_cost_of_damages_to_" * cost_to
     y_title = "SCC_" * cost_to
 
-    SCC_vs_E_plot = SCC_vs_E_df |> @vlplot(
-        mark={
-            :line,
-            point=true
-        },
-        x={
-            "E_multiplier:q"
-        },
-        y={"$y_name:q", title=y_title},
-        color="γ:o",
-        width=650,
-        height=300,
-    )
-    SCC_vs_E_plot
+    SCC_vs_E_plot = SCC_vs_E_df |>
+        @vlplot(
+            width=650,
+            height=300,
+        ) +
+        @vlplot(
+            mark={
+                :line,
+                point=true
+            },
+            x={"E_multiplier:q"},
+            y={"$y_name:q", title=y_title},
+            color="γ:o"
+        ) +
+        @vlplot(
+            mark=:rule,
+            x={"E_multiplier:q"},
+            y={"min($y_name):q"},
+            y2={"max($y_name):q"},
+            color={value="#444"},
+        )
+    return SCC_vs_E_plot
 end
 
 """

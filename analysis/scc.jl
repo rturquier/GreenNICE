@@ -524,15 +524,7 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
         @vlplot(
             width=650,
             height=300,
-        ) +
-        @vlplot(
-            mark={
-                :line,
-                point=true
-            },
-            x={"E_multiplier:q"},
-            y={"$y_name:q", title=y_title},
-            color="γ:o"
+            x={axis={values=[0.5, 1, 5, 10, 15, 20, 25], format="~g"}}
         ) +
         @vlplot(
             mark=:rule,
@@ -540,6 +532,31 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
             y={"min($y_name):q"},
             y2={"max($y_name):q"},
             color={value="#444"},
+        ) +
+        @vlplot(
+            mark={:rule, strokeWidth=1},
+            data={values=[{}]},
+            x={datum=1},
+            # y={datum=0},
+            # y2={datum=17},
+            color={value="black"},
+            # opacity={value=0.5}
+        ) +
+        @vlplot(
+            mark={:text, align="left", dx=5, dy=-140, fontSize=14},
+            data={values=[{x=1, label="baseline scenario"}]},
+            x="x:q",
+            text="label:n",
+            color={value="black"}
+        ) +
+        @vlplot(
+            mark={
+                :line,
+                point=true
+            },
+            x={"E_multiplier:q", },
+            y={"$y_name:q", title=y_title},
+            color="γ:o"
         )
     return SCC_vs_E_plot
 end

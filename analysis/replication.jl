@@ -117,7 +117,7 @@ SCC_E_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="E")
 SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")
 
 SCC_c_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="c")
-SCC_c_vs_E_plot |> save("utputs/figures/SCC_c_vs_E.svg")
+SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 
 # %% Plot E trajectory in a high-E run
 high_E_m = GreenNICE.create(; parameters=Dict(:E_multiplier => 5))

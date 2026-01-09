@@ -520,44 +520,72 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
     y_name = "present_cost_of_damages_to_" * cost_to
     y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
 
-    SCC_vs_E_plot = SCC_vs_E_df |>
-        @vlplot(
-            width=650,
-            height=300,
-            x={axis={values=[0.5, 1, 5, 10, 15, 20, 25], format="~g"}}
-        ) +
-        @vlplot(
-            mark=:rule,
-            x={"E_multiplier:q"},
-            y={"min($y_name):q"},
-            y2={"max($y_name):q"},
-            color={value="#444"},
-        ) +
-        @vlplot(
-            mark={:rule, strokeWidth=1},
-            data={values=[{}]},
-            x={datum=1},
-            # y={datum=0},
-            # y2={datum=17},
-            color={value="black"},
-            # opacity={value=0.5}
-        ) +
-        @vlplot(
-            mark={:text, align="left", dx=5, dy=-140, fontSize=14},
-            data={values=[{x=1, label="baseline scenario"}]},
-            x="x:q",
-            text="label:n",
-            color={value="black"}
-        ) +
-        @vlplot(
-            mark={
-                :line,
-                point=true
-            },
-            x={"E_multiplier:q", title="E multiplier"},
-            y={"$y_name:q", title=y_title},
-            color="γ:o"
-        )
+    base = SCC_vs_E_df |> @vlplot(
+        width=650,
+        height=300,
+        x={axis={
+            values=[0.5, 1, 5, 10, 15, 20, 25],
+            format="~g",
+            title="E multiplier",
+            grid=true
+        }},
+        y={axis={
+            title=y_title,
+            grid=true
+        }},
+        config={
+            legend={
+                titleFont="Computern modern",
+                titleFontSize=14
+            }
+        }
+    )
+
+    dot_pair_connections = @vlplot(
+        mark={:rect, width=1.2},
+        x={"E_multiplier:q"},
+        y={"min($y_name):q"},
+        y2={"max($y_name):q"},
+        color={
+            value={
+                y2=1, x2=0,
+                y1=0, x1=0,
+                gradient="linear",
+                stops=[
+                    {offset=0, color="#850085"},
+                    {offset=1, color="#C98ACF"}
+                ]
+            }
+        },
+    )
+
+    baseline_rule = @vlplot(
+        mark={:rule, strokeWidth=1},
+        data={values=[{}]},
+        x={datum=1},
+        y={datum=0},
+        y2={datum=17},
+        color={value="black"}
+    )
+    baseline_text = @vlplot(
+        mark={:text, align="left", dx=-10, y=120, fontSize=12},
+        data={values=[{x=1, label="baseline scenario"}]},
+        x="x:q",
+        text="label:n",
+        color={value="black"}
+    )
+
+    curves = @vlplot(
+        mark={:line, point=true, strokeWidth=1.4},
+        x="E_multiplier:q",
+        y="$y_name:q",
+        color={"γ:o", sort="descending", scale={
+            # domain=[0, 1],
+            range=["#850085", "#C98ACF"]
+        }}
+    )
+
+    SCC_vs_E_plot = base + baseline_rule + baseline_text + dot_pair_connections + curves
     return SCC_vs_E_plot
 end
 

@@ -535,8 +535,9 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
         }},
         config={
             legend={
-                titleFont="Computern modern",
-                titleFontSize=14
+                titleFont="Serif",
+                titleFontSize=14,
+                titleFontWeight="normal",
             }
         }
     )
@@ -579,10 +580,16 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
         mark={:line, point=true, strokeWidth=1.4},
         x="E_multiplier:q",
         y="$y_name:q",
-        color={"γ:o", sort="descending", scale={
-            # domain=[0, 1],
-            range=["#850085", "#C98ACF"]
-        }}
+        color={
+            "γ:o",
+            sort="descending",
+            scale={range=["#850085", "#C98ACF"]},
+            legend={
+                labelExpr="'γ = ' + datum.value",
+                labelFont="Serif",
+                labelFontSize=12,
+            }
+        }
     )
 
     SCC_vs_E_plot = base + baseline_rule + baseline_text + dot_pair_connections + curves

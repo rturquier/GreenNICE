@@ -518,7 +518,7 @@ Plot evolution of SCC with respect to the flow
 """
 function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
     y_name = "present_cost_of_damages_to_" * cost_to
-    y_title = "SCC_" * cost_to
+    y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
 
     SCC_vs_E_plot = SCC_vs_E_df |>
         @vlplot(
@@ -554,7 +554,7 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
                 :line,
                 point=true
             },
-            x={"E_multiplier:q", },
+            x={"E_multiplier:q", title="E multiplier"},
             y={"$y_name:q", title=y_title},
             color="γ:o"
         )

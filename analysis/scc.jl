@@ -563,12 +563,12 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
         mark={:rule, strokeWidth=1},
         data={values=[{}]},
         x={datum=1},
-        y={datum=0},
-        y2={datum=17},
+        # y={datum=0},
+        # y2={datum=17},
         color={value="black"}
     )
     baseline_text = @vlplot(
-        mark={:text, align="left", dx=-10, y=120, fontSize=12},
+        mark={:text, align="left", dx=5, y=15, fontSize=12},
         data={values=[{x=1, label="baseline scenario"}]},
         x="x:q",
         text="label:n",

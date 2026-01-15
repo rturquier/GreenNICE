@@ -103,16 +103,21 @@ costanza_forest_values = get_costanza_forest_values()
 total_costanza_estimate = 124.8 * 10^12
 adjust_for_inflation(total_costanza_estimate, 2007, 2017)
 
-# %% Run model with different E multipliers to check sensitivity, and save results
-E_multiplier_list = [0.5, 1, 2, 3, 4, 5]
+# %% Set list of E multipliers (x-axis in SCC_E vs E plots)
+E_multiplier_list = [0.5 (1:25)...] |> vec
 
-sensitivity_to_E_df = check_sensitivity_to_E(E_multiplier_list, η, θ, α, ρ)
-write_csv(sensitivity_to_E_df, "outputs/sensitivity_to_E.csv")
+# %% Get SCC for different E multipliers to check sensitivity, and save results
+SCC_vs_E_df = get_SCC_vs_E(E_multiplier_list, η, θ, α, ρ)
+write_csv(SCC_vs_E_df, "outputs/SCC_vs_E.csv")
 
 # %% Read and plot
-sensitivity_to_E_df = read_csv("outputs/sensitivity_to_E.csv")
-sensitivity_to_E_plot = plot_sensitivity_to_E(sensitivity_to_E_df)
-sensitivity_to_E_plot |> save("outputs/figures/sensitivity_to_E.svg")
+SCC_vs_E_df = read_csv("outputs/SCC_vs_E.csv")
+
+SCC_E_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="E")
+SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")
+
+SCC_c_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="c")
+SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 
 # %% Plot E trajectory in a high-E run
 high_E_m = GreenNICE.create(; parameters=Dict(:E_multiplier => 5))

@@ -485,7 +485,7 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
     return percentage_interaction_map
 end
 
-function check_sensitivity_to_E(
+function get_SCC_vs_E(
     E_multiplier_list::Vector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
 )::DataFrame
     kwargs::Dict{Any, Any} = Dict(kwargs)  # avoids type errors when manipulating kwargs
@@ -507,22 +507,105 @@ function check_sensitivity_to_E(
     return concatenated_df
 end
 
-function plot_sensitivity_to_E(sensitivity_to_E_df::DataFrame)
-    sensitivity_to_E_plot = sensitivity_to_E_df |> @vlplot(
-        mark={
-            :line,
-            point=true
-        },
-        x={
-            "E_multiplier:q",
-            scale={
-                domain=(0, 5.5),
+"""
+    plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
+
+Plot evolution of SCC with respect to the flow
+
+# Keyword arguments
+- `cost_to::String`: either "E" to plot the present social value of damages to the
+    environment, or "c" for damages to consumption.
+"""
+function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
+    y_name = "present_cost_of_damages_to_" * cost_to
+    y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
+
+    base = SCC_vs_E_df |> @vlplot(
+        width=650,
+        height=300,
+        x={axis={
+            values=[0.5, 1, 5, 10, 15, 20, 25],
+            format="~g",
+            title="E multiplier",
+            grid=true
+        }},
+        y={axis={
+            title=y_title,
+            grid=true
+        }},
+        config={
+            legend={
+                titleFont="Serif",
+                titleFontSize=14,
+                titleFontWeight="normal",
+            }
+        }
+    )
+
+    dot_pair_connections = @vlplot(
+        mark={:rect, width=1.2},
+        x={"E_multiplier:q"},
+        y={"min($y_name):q"},
+        y2={"max($y_name):q"},
+        color={
+            value={
+                y2=1, x2=0,
+                y1=0, x1=0,
+                gradient="linear",
+                stops=[
+                    {offset=0, color="#850085"},
+                    {offset=1, color="#C98ACF"}
+                ]
             }
         },
-        y="present_cost_of_damages_to_E:q",
-        color="γ:o"
     )
-    sensitivity_to_E_plot
+
+    baseline_rule = @vlplot(
+        mark={:rule, strokeWidth=1},
+        data={values=[{}]},
+        x={datum=1},
+        # y={datum=0},
+        # y2={datum=17},
+        color={value="black"}
+    )
+    baseline_text = @vlplot(
+        mark={:text, align="left", dx=5, y=15, fontSize=12},
+        data={values=[{x=1, label="baseline scenario"}]},
+        x="x:q",
+        text="label:n",
+        color={value="black"}
+    )
+
+    curves = @vlplot(
+        mark={:line, strokeWidth=1.4},
+        x="E_multiplier:q",
+        y="$y_name:q",
+        color={
+            "γ:o",
+            scale={
+                domain=[0, 1],
+                range=["#C98ACF", "#850085"]
+            },
+            legend=nothing,
+        },
+        shape={
+            "γ:o",
+            scale={
+                domain=[1, 0],
+                range=["diamond", "circle"]
+            },
+            legend={
+                labelExpr="'γ = ' + datum.value",
+                labelFont="Serif",
+                labelFontSize=12,
+                symbolStrokeColor="transparent",
+                symbolFillColor={expr="scale('color', datum.value)"}
+            },
+        }
+    )
+
+    SCC_vs_E_plot = base + baseline_rule + baseline_text + dot_pair_connections + curves
+    return SCC_vs_E_plot
 end
 
 """

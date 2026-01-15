@@ -339,10 +339,17 @@ Plot the social cost of carbon to environment or consumption for different η's 
 """
 function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
     y_name = "present_cost_of_damages_to_" * cost_to
+    y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
     SCC_facet_plot = SCC_decomposition_df |> @vlplot(
         :line,
         x="γ:q",
-        y="$y_name:q",
+        y={
+            "$y_name:q",
+            axis={
+                title=y_title,
+                titlePadding=5,
+            }
+        },
         column=:θ,
         row={field=:η, sort={field=:η, order="descending"}},
         resolve={scale={y="independent"}},

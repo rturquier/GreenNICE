@@ -577,18 +577,30 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
     )
 
     curves = @vlplot(
-        mark={:line, point=true, strokeWidth=1.4},
+        mark={:line, strokeWidth=1.4},
         x="E_multiplier:q",
         y="$y_name:q",
         color={
             "γ:o",
-            sort="descending",
-            scale={range=["#850085", "#C98ACF"]},
+            scale={
+                domain=[0, 1],
+                range=["#C98ACF", "#850085"]
+            },
+            legend=nothing,
+        },
+        shape={
+            "γ:o",
+            scale={
+                domain=[1, 0],
+                range=["diamond", "circle"]
+            },
             legend={
                 labelExpr="'γ = ' + datum.value",
                 labelFont="Serif",
                 labelFontSize=12,
-            }
+                symbolStrokeColor="transparent",
+                symbolFillColor={expr="scale('color', datum.value)"}
+            },
         }
     )
 

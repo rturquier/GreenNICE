@@ -14,6 +14,8 @@ initial_E_stock_map = map_E_percapita_country(descriptives_df)
 ξ_map = map_damage_coefficient_country(descriptives_df)
 Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
 
+df = descriptives_df
+
 # %% Save figures
 save("outputs/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
 save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0_scatterplot)

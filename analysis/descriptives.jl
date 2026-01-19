@@ -231,10 +231,23 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
     return E_percapita_country
 end
 
+function group_ξ(descriptives_df)
+
+    grouped_df = @chain descriptives_df begin
+        @mutate(ξ = Float64.(ξ))
+        @mutate(ξ_floor = floor.(10 .* ξ))
+        @mutate(ξ_floor = ifelse.(ξ_floor .== -3, -2, ξ_floor))
+        @select(country, ξ_floor)
+    end
+
+    return grouped_df
+end
 
 function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
 
-    df_country = get_country_id(df)
+    df_grouped = group_ξ(df)
+
+    df_country = get_country_id(df_grouped)
 
     world110m = dataset("world-110m")
 
@@ -257,17 +270,28 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
             from = {
                 data = df_country,
                 key = :id,
-                fields = ["ξ"]
+                fields = ["ξ_floor"]
             }
-        }],
+        },
+            {
+            filter = "datum.ξ_floor != null"
+        }
+        ],
         mark = :geoshape,
         encoding = {
             color = {
-                field = "ξ",
-                type = "quantitative",
+                field = "ξ_floor",
+                type = "ordinal",
                 title = "ξ",
                 scale = {
-                    scheme = "plasma"
+                    scheme = "yellowgreenblue"
+                },
+                legend = {
+                    labelExpr = "datum.label == -2 ? '< -0.1' :
+                                datum.label == -1 ? '[-0.1, 0)' :
+                                datum.label ==  0 ? '[0, 0.1)' :
+                                datum.label ==  1 ? '>= 0.1' :
+                                     'No data'"
                 }
             }
         }

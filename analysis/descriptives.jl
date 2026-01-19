@@ -15,20 +15,19 @@ function get_descriptives_df()::DataFrame
 
     damage_coeficient = getdataframe(m, :damages, :ξ)
 
-    E_stock0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
+    E_flow0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
         @filter(time == 2020)
         @filter(quantile == "First")
-        @mutate(E_stock0_percapita = E_flow_percapita / 0.96)
-        @select(country, E_stock0_percapita)
+        @mutate(E_flow0_percapita = E_flow_percapita)
+        @select(country, E_flow0_percapita)
     end
-
 
     df = @chain getdataframe(m, :quantile_recycle, :gini_cons) begin
         @filter(time == 2020)
-        @left_join(E_stock0_percapita)
+        @left_join(E_flow0_percapita)
         @left_join(damage_coeficient)
         @mutate(gini_cons = Float64.(gini_cons))
-        @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
+        @mutate(E_flow0_percapita = Float64.(E_flow0_percapita))
         @mutate(ξ = Float64.(ξ))
         @select(-:time)
     end

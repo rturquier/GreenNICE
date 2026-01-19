@@ -212,13 +212,13 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
             from = {
                 data = df_country,
                 key = :id,
-                fields = ["E_stock0_percapita"]
+                fields = ["E_flow0_percapita"]
             }
         }],
         mark = :geoshape,
         encoding = {
             color = {
-                field = "E_stock0_percapita",
+                field = "E_flow0_percapita",
                 type = "quantitative",
                 title = "",
                 scale = {

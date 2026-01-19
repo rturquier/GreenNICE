@@ -276,3 +276,31 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
 
     return ξ_country
 end
+
+function plot_temperature_trajectory(model::Mimi.Model)
+    temperature_df = getdataframe(m, :damages => :temp_anomaly)
+    initial_temperature = temperature_df.temp_anomaly[1]
+    temperature_plot = temperature_df |> @vlplot(
+        mark={:line, color="#AA1144"},
+        x={
+            :time,
+            axis={
+                title="Year",
+                format="d",
+                labelFlush=false,
+                values=[2020, 2050, 2100, 2150, 2200, 2250, 2300]
+            }
+        },
+        y={
+            :temp_anomaly,
+            axis={
+                title="Temperature anomaly (°C)",
+                labelExpr="format(datum.value, '+.3~r') + '°'",
+                values=[0, initial_temperature, 1.5, 2.0]
+            }
+        },
+        width=500,
+        height=250,
+    )
+    return temperature_plot
+end

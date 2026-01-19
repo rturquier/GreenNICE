@@ -26,7 +26,7 @@
 
         E_discount_rate = 0.04
 
-        stock_to_flow_factor    = (1 - E_discount_rate) / (1 - E_discount_rate^100)
+        stock_to_flow_factor = E_discount_rate / (1 - (1 + E_discount_rate)^(-100))
 
         E_stock0_percapita = (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :])
 

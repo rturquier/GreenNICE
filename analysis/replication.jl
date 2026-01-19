@@ -71,8 +71,8 @@ m = GreenNICE.create()
 run(m)
 
 # %% Plot temperature trajectory in a default run
-warming_df = getdataframe(m, :damages => :temp_anomaly)
-warming_df |> @vlplot(:line, :time, :temp_anomaly)
+temperature_plot = plot_temperature_trajectory(m)
+temperature_plot |> save("outputs/figures/temperature.svg")
 
 # %% Plot global flow of ecosystem services in default run
 # Unit is million of dollars per year

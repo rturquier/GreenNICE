@@ -15,20 +15,19 @@ function get_descriptives_df()::DataFrame
 
     damage_coeficient = getdataframe(m, :damages, :ξ)
 
-    E_stock0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
+    E_flow0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
         @filter(time == 2020)
         @filter(quantile == "First")
-        @mutate(E_stock0_percapita = E_flow_percapita / 0.96)
-        @select(country, E_stock0_percapita)
+        @mutate(E_flow0_percapita = E_flow_percapita)
+        @select(country, E_flow0_percapita)
     end
-
 
     df = @chain getdataframe(m, :quantile_recycle, :gini_cons) begin
         @filter(time == 2020)
-        @left_join(E_stock0_percapita)
+        @left_join(E_flow0_percapita)
         @left_join(damage_coeficient)
         @mutate(gini_cons = Float64.(gini_cons))
-        @mutate(E_stock0_percapita = Float64.(E_stock0_percapita))
+        @mutate(E_flow0_percapita = Float64.(E_flow0_percapita))
         @mutate(ξ = Float64.(ξ))
         @select(-:time)
     end
@@ -66,9 +65,9 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
         data = df,
         layer = [
             {
-                mark = :point ,
-                x = {field = :E_stock0_percapita,
-                     title = "Natural capital stock per capita (k USD)"},
+                mark = :circle ,
+                x = {field = :E_flow0_percapita,
+                     title = "Natural capital flow per capita (k USD)"},
                 y = {field = :gini_cons,
                      title = "Consumption gini index"}
             }
@@ -213,13 +212,13 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
             from = {
                 data = df_country,
                 key = :id,
-                fields = ["E_stock0_percapita"]
+                fields = ["E_flow0_percapita"]
             }
         }],
         mark = :geoshape,
         encoding = {
             color = {
-                field = "E_stock0_percapita",
+                field = "E_flow0_percapita",
                 type = "quantitative",
                 title = "",
                 scale = {
@@ -232,10 +231,23 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
     return E_percapita_country
 end
 
+function group_ξ(descriptives_df)
+
+    grouped_df = @chain descriptives_df begin
+        @mutate(ξ = Float64.(ξ))
+        @mutate(ξ_floor = floor.(10 .* ξ))
+        @mutate(ξ_floor = ifelse.(ξ_floor .== -3, -2, ξ_floor))
+        @select(country, ξ_floor)
+    end
+
+    return grouped_df
+end
 
 function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
 
-    df_country = get_country_id(df)
+    df_grouped = group_ξ(df)
+
+    df_country = get_country_id(df_grouped)
 
     world110m = dataset("world-110m")
 
@@ -258,17 +270,28 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
             from = {
                 data = df_country,
                 key = :id,
-                fields = ["ξ"]
+                fields = ["ξ_floor"]
             }
-        }],
+        },
+            {
+            filter = "datum.ξ_floor != null"
+        }
+        ],
         mark = :geoshape,
         encoding = {
             color = {
-                field = "ξ",
-                type = "quantitative",
+                field = "ξ_floor",
+                type = "ordinal",
                 title = "ξ",
                 scale = {
-                    scheme = "plasma"
+                    scheme = "yellowgreenblue"
+                },
+                legend = {
+                    labelExpr = "datum.label == -2 ? '< -0.1' :
+                                datum.label == -1 ? '[-0.1, 0)' :
+                                datum.label ==  0 ? '[0, 0.1)' :
+                                datum.label ==  1 ? '>= 0.1' :
+                                     'No data'"
                 }
             }
         }

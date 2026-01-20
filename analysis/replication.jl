@@ -52,7 +52,7 @@ I_rel_interaction = I_abs_interaction ./ SCC_E * 100
 # ==== Map interaction effect at country levels ====
 # %% Absolute interaction map
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
-save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)
+save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
 
 # %%% Identify countries with highest and lowest interaction effects
 top3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=true), 3)

@@ -65,7 +65,7 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
         data = df,
         mark = :circle,
         x = {field = :E_flow0_percapita,
-                title = "Initial yearly flow of ecosystem services per capita (k USD)"},
+                title = "Initial yearly flow of ecosystem services per capita (USD)"},
         y = {field = :gini_cons,
                 title = "Consumption Gini index"},
         width = 500,

@@ -63,15 +63,13 @@ end
 function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
     plot = @vlplot(
         data = df,
-        layer = [
-            {
-                mark = :circle ,
-                x = {field = :E_flow0_percapita,
-                     title = "Natural capital flow per capita (k USD)"},
-                y = {field = :gini_cons,
-                     title = "Consumption gini index"}
-            }
-        ]
+        mark = :circle,
+        x = {field = :E_flow0_percapita,
+                title = "Initial yearly flow of ecosystem services per capita (k USD)"},
+        y = {field = :gini_cons,
+                title = "Consumption Gini index"},
+        width = 500,
+        height = 200,
     )
 
     return plot
@@ -86,7 +84,7 @@ function plot_theta_E_stock0(df::DataFrame)::VegaLite.VLSpec
                 x = {field = :E_stock0_percapita,
                      title = "Natural capital stock per capita (k USD)"},
                 y = {field = :θ_env,
-                     title = "Damage coefficient (1/ \u00B0C)"}
+                     title = "Damage coefficient (1/°C)"}
             },
             {
                 transform = [

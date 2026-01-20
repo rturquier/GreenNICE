@@ -10,14 +10,21 @@ include("descriptives.jl")
 # %% Get descriptive figures
 descriptives_df = get_descriptives_df()
 
-initial_E_stock_map = map_E_percapita_country(descriptives_df)
+initial_E_flow_map = map_E_percapita_country(descriptives_df)
 ξ_map = map_damage_coefficient_country(descriptives_df)
-Gini_E_stock0_scatterplot = plot_gini_E_stock0(descriptives_df)
+Gini_E_flow0_scatterplot = plot_gini_E_stock0(descriptives_df)
 
 # %% Save figures
-save("outputs/maps/initial_E_stock_percapita.svg", initial_E_stock_map)
-save("outputs/figures/gini_E_stock0.svg", Gini_E_stock0_scatterplot)
+save("outputs/maps/initial_E_flow_percapita.svg", initial_E_flow_map)
+save("outputs/figures/gini_E_flow0.svg", Gini_E_flow0_scatterplot)
 save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
+
+# %% Get descriptive values
+top3_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita, rev=true), 3)
+bottom4_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita,
+                                        rev=false), 4)
+top3_ξ = first(sort(descriptives_df, :ξ, rev=true), 3)
+bottom3_ξ = first(sort(descriptives_df, :ξ, rev=false), 3)
 
 # %% Set default parameters
 η = 1.5
@@ -52,7 +59,7 @@ I_rel_interaction = I_abs_interaction ./ SCC_E * 100
 # ==== Map interaction effect at country levels ====
 # %% Absolute interaction map
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
-save("outputs/maps/map_interaction_effect_pct.svg", absolute_interaction_map)
+save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
 
 # %%% Identify countries with highest and lowest interaction effects
 top3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=true), 3)

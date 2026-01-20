@@ -218,7 +218,7 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
             color = {
                 field = "E_flow0_percapita",
                 type = "quantitative",
-                title = "",
+                title = "E per capita (USD)",
                 scale = {
                     scheme = "greenblue"
                 }

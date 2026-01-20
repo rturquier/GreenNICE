@@ -18,7 +18,7 @@ function get_descriptives_df()::DataFrame
     E_flow0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin
         @filter(time == 2020)
         @filter(quantile == "First")
-        @mutate(E_flow0_percapita = E_flow_percapita)
+        @mutate(E_flow0_percapita = 1000 .* E_flow_percapita)
         @select(country, E_flow0_percapita)
     end
 

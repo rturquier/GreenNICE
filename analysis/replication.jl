@@ -11,8 +11,8 @@ include("descriptives.jl")
 descriptives_df = get_descriptives_df()
 
 initial_E_flow_map = map_E_percapita_country(descriptives_df)
-ξ_map = map_damage_coefficient_country(descriptives_df)
 Gini_E_flow0_scatterplot = plot_gini_E_stock0(descriptives_df)
+ξ_map = map_damage_coefficient_country(descriptives_df)
 
 # %% Save figures
 save("outputs/maps/initial_E_flow_percapita.svg", initial_E_flow_map)

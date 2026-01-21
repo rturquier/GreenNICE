@@ -139,7 +139,7 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
     prepared_df = @eval @chain $df begin
         @mutate(
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
-            ∂_cE = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
+            ∂_EW = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
         )
     end
     return prepared_df
@@ -183,12 +183,12 @@ function apply_SCC_decomposition_formula(
 
     SCC_df = @eval @chain $prepared_df begin
         @group_by($(group_columns...))
-        # Exclude 4 small countries with E = 0 because they have infinite ∂_cE
+        # Exclude 4 small countries with E = 0 because they have infinite ∂_EW
         @filter(E > 0)
         @summarize(
             t = unique(t),
             welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
-            welfare_loss_E = sum(∂_cE * marginal_damage_to_E),
+            welfare_loss_E = sum(∂_EW * marginal_damage_to_E),
         )
         @filter(t >= 0)
         @summarize(

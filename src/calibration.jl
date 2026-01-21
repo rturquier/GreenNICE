@@ -76,18 +76,17 @@ E_stock0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
 E_stock0 = leftjoin(E_stock0, country_E_stock0; on=:countrycode, makeunique=true)
 sort!(E_stock0, :countrycode)
+
 # Define a dictionary with country codes and their corresponding replacement country codes
 # Used world bank data to find country in vecinity with similar forest surface (year 2020)
 # Data for islands does not follow geographic proximity, but size.
-replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "MNE", "BRB" => "SLB",
+replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "JAM", "BRB" => "SLB",
                             "BRN" => "SGP", "BTN" => "NPL", "CPV" => "MUS", "CUB" => "DOM",
                             "CYP" => "MLT", "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB",
                             "GNQ" => "BEN", "HKG" => "SGP", "LBY" => "EGY", "MMR" => "THA",
                             "PSE" => "JOR", "PYF" => "SLB", "SYR" => "IRQ", "TKM" => "KAZ",
                             "TLS" => "SLB", "TON" => "SLB", "TWN" => "KOR", "UZB" => "KAZ",
                             "VCT" => "SLB", "VUT" => "SLB", "WSM" => "SLB", "YEM" => "SAU")
-
-
 
 # Update the values of E_stock0 based on the replacement_countries dictionary
 for (country, replacement) in replacement_countries

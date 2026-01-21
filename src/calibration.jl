@@ -146,7 +146,7 @@ sort!(coef_env_damage, :countrycode)
 # Caribean islands get values from Dominican Republic (DOM).
 
 replacement_coefs = Dict("ABW" => "DOM", "AFG" => "TJK", "AGO" => "COD", "BHR" => "QAT",
-                        "BHS" => "HRV", "BRB" => "DOM", "BRN" => "IDN", "BTN" => "NPL",
+                        "BHS" => "JAM", "BRB" => "DOM", "BRN" => "IDN", "BTN" => "NPL",
                         "COM" => "MDG", "CPV" => "MDG", "CUB" => "DOM", "CYP" => "TUR",
                         "DZA" => "NER", "ERI" => "OMN", "FJI" => "SLB", "GNB" => "GIN",
                         "GNQ" => "BEN", "HKG" => "CHN", "ISR" => "JOR", "LBY" => "EGY",

@@ -215,7 +215,7 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
                 field = "E_flow0_percapita",
                 type = :quantitative,
                 bin = {
-                    step = nothing,  # Disable automatic binning
+                    step = nothing,
                     thresholds = [0, 20, 100, 200]
                 },
                 scale = {

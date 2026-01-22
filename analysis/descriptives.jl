@@ -57,6 +57,9 @@ function get_country_id(df::DataFrame)::DataFrame
         @left_join(df)
     end
 
+    df_country.ξ = Float64.(coalesce.(df_country.ξ, NaN))
+    df_country.E_flow0_percapita = Float64.(coalesce.(df_country.E_flow0_percapita, NaN))
+
     return df_country
 end
 
@@ -188,22 +191,15 @@ end
 function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
 
     df_country = get_country_id(df)
-
     world110m = dataset("world-110m")
 
-    E_percapita_country = @vlplot(
+    @vlplot(
         width = 640,
         height = 360,
-        title = "",
-        projection = {type = :equirectangular}
-    ) +
-    @vlplot(
+        projection = { type = :equirectangular },
         data = {
             values = world110m,
-            format = {
-                type = :topojson,
-                feature = :countries
-            }
+            format = { type = :topojson, feature = :countries }
         },
         transform = [{
             lookup = "id",
@@ -217,16 +213,20 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
         encoding = {
             color = {
                 field = "E_flow0_percapita",
-                type = "quantitative",
-                title = "E per capita (USD)",
+                type = :quantitative,
+                bin = {
+                    step = nothing,  # Disable automatic binning
+                    thresholds = [0, 20, 100, 200]
+                },
                 scale = {
                     scheme = "greenblue"
+                },
+                legend = {
+                    title = "E per capita (USD)"
                 }
             }
         }
     )
-
-    return E_percapita_country
 end
 
 function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec

@@ -83,8 +83,10 @@ temperature_plot = plot_temperature_trajectory(m)
 temperature_plot |> save("outputs/figures/temperature.svg")
 
 # %% Plot global flow of ecosystem services in default run
-# Unit is million of dollars per year
-E_flow_df = getdataframe(m, :environment => :E_flow_global)
+E_flow_df = @chain begin
+    getdataframe(m, :environment => :E_flow_global)
+    @mutate(E_flow_global = E_flow_global * 10^6)  # convert million USD to USD
+end
 E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 
 # ==== Facet plot ====
@@ -103,13 +105,13 @@ facet_df = read_csv("outputs/facet_df.csv")
 facet_plot = facet_SCC(facet_df; cost_to="E")
 facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
 
-# ====  Sensitivity to E
+# ====  Sensitivity to E =====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 
 # %% Convert total value of ecosystem services to 2017 USD
-total_costanza_estimate = 124.8 * 10^12
-adjust_for_inflation(total_costanza_estimate, 2007, 2017)
+total_costanza_estimate_2007 = 124.8 * 10^12
+total_costanza_estimate = adjust_for_inflation(total_costanza_estimate_2007, 2007, 2017)
 
 # %% Set list of E multipliers (x-axis in SCC_E vs E plots)
 E_multiplier_list = [0.5 (1:25)...] |> vec
@@ -136,15 +138,18 @@ high_E_flow_df |>
     save("outputs/figures/high_E_flow.svg")
 
 # ==== SCC vs θ, facetted by E and η ====
-# %% Run and save
-costanza_forests_multiplier = 25
-costanza_total_multiplier = 600
-# E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
-E_facet_list = [1, costanza_total_multiplier]
+baseline_E = (@chain E_flow_df @filter(time == 2020) @pull(E_flow_global)) |> only
+costanza_E_water_food_recreation = costanza_forest_values[1, :water_food_recreation]
 
+costanza_forests_multiplier = costanza_E_water_food_recreation / baseline_E
+costanza_total_multiplier = total_costanza_estimate / baseline_E
 
+E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
+
+# %%  Set x-axis values
 # θ_axis = [i for i in -1:0.05:1]
 θ_axis = [i for i in -1:1:1]
 
+# %% Run and save
 SCC_vs_E_θ_and_η_df = get_SCC_vs_E_θ_and_η(E_facet_list, η_list, θ_axis, α, ρ)
 write_csv(SCC_vs_E_θ_and_η_df, "outputs/SCC_vs_E_θ_and_η.csv")

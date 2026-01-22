@@ -615,6 +615,52 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
     return SCC_vs_E_plot
 end
 
+function get_SCC_vs_E_θ_and_η(
+    E_multiplier_list::Vector, η_list::Vector, θ_list::Vector, α::Real, ρ::Real; kwargs...
+)::DataFrame
+    η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
+    df_list = [
+        get_SCC_vs_E(E_multiplier_list, η, θ, α, ρ; kwargs...) for (η, θ) in η_θ_grid
+    ]
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
+end
+
+function plot_SCC_vs_θ_facetted_by_E_and_η(
+    SCC_vs_E_θ_and_η_df::DataFrame; cost_to::String="E"
+)::VegaLite.VLSpec
+    y_name = "present_cost_of_damages_to_" * cost_to
+    y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
+
+    plot =  SCC_vs_E_θ_and_η_df |>
+        @vlplot(
+            mark=:line,
+            # transform={filter={field="θ", range=[0, 1]}},
+            x="θ:q",
+            y={"$y_name:q", scale={type="linear"}, axis={title=y_title, titlePadding=5}},
+            color={
+                "γ:o",
+                scale={domain=[0, 1], range=["#C98ACF", "#850085"]},
+                legend=nothing,
+            },
+            shape={
+                "γ:o",
+                scale={domain=[1, 0], range=["diamond", "circle"]},
+                legend={
+                    labelExpr="'γ = ' + datum.value",
+                    labelFont="Serif",
+                    labelFontSize=12,
+                    symbolStrokeColor="transparent",
+                    symbolFillColor={expr="scale('color', datum.value)"}
+                },
+            },
+            column=:E_multiplier,
+            row={field=:η, sort={field=:η, order="descending"}},
+            resolve={scale={y="independent"}},
+        )
+    return plot
+end
+
 """
     get_CPI_data()
 

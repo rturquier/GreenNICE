@@ -229,27 +229,13 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
     return E_percapita_country
 end
 
-function group_ξ(descriptives_df)
-
-    grouped_df = @chain descriptives_df begin
-        @mutate(ξ = Float64.(ξ))
-        @mutate(ξ_floor = floor.(10 .* ξ))
-        @mutate(ξ_floor = ifelse.(ξ_floor .== -3, -2, ξ_floor))
-        @select(country, ξ_floor)
-    end
-
-    return grouped_df
-end
-
 function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
 
-    df_grouped = group_ξ(df)
-
-    df_country = get_country_id(df_grouped)
+    df_country = get_country_id(df)
 
     world110m = dataset("world-110m")
 
-    ξ_country = @vlplot(
+   ξ_country = @vlplot(
         width = 640,
         height = 360,
         title = "",
@@ -263,33 +249,39 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
                 feature = :countries
             }
         },
-        transform = [{
-            lookup = "id",
-            from = {
-                data = df_country,
-                key = :id,
-                fields = ["ξ_floor"]
-            }
-        },
+        transform = [
             {
-            filter = "datum.ξ_floor != null"
-        }
+                lookup = "id",
+                from = {
+                    data = df_country,
+                    key = :id,
+                    fields = ["ξ"]
+                }
+            },
+            {
+                filter = "datum.ξ != null"
+            },
+            {
+                bin = {step = 0.05, extent = [-0.05, 0.05]},
+                field = "ξ",
+                as = "ξ_binned"
+            }
         ],
         mark = :geoshape,
         encoding = {
             color = {
-                field = "ξ_floor",
+                field = "ξ_binned",
                 type = "ordinal",
                 title = "ξ",
-                scale = {
-                    scheme = "yellowgreenblue"
-                },
                 legend = {
-                    labelExpr = "datum.label == -2 ? '< -0.1' :
-                                datum.label == -1 ? '[-0.1, 0)' :
-                                datum.label ==  0 ? '[0, 0.1)' :
-                                datum.label ==  1 ? '>= 0.1' :
-                                     'No data'"
+                    labelExpr = "datum.label == -0.05 ? '[-0.05, 0)' : " *
+                                "datum.label == 0 ? '[0, 0.05)' : " *
+                                "datum.label < 0 ? '< -0.05' : " *
+                                "'≥ 0.05'"
+                },
+                scale = {
+                    scheme = "purplegreen",
+                    reverse = false
                 }
             }
         }

@@ -17,7 +17,7 @@ Gini_E_flow0_scatterplot = plot_gini_E_stock0(descriptives_df)
 # %% Save figures
 save("outputs/maps/initial_E_flow_percapita.svg", initial_E_flow_map)
 save("outputs/figures/gini_E_flow0.svg", Gini_E_flow0_scatterplot)
-save("outputs/figures/initial_damage_coefficient_map.svg", ξ_map)
+save("outputs/maps/initial_damage_coefficient_map.svg", ξ_map)
 
 # %% Get descriptive values
 top3_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita, rev=true), 3)

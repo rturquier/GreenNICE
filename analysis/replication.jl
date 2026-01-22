@@ -153,3 +153,10 @@ E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
 # %% Run and save
 SCC_vs_E_θ_and_η_df = get_SCC_vs_E_θ_and_η(E_facet_list, η_list, θ_axis, α, ρ)
 write_csv(SCC_vs_E_θ_and_η_df, "outputs/SCC_vs_E_θ_and_η.csv")
+
+# %% Read
+SCC_vs_E_θ_and_η_df = read_csv("outputs/SCC_vs_E_θ_and_η.csv")
+
+# %% Plot
+SCC_vs_θ_facetted_by_E_and_η = plot_SCC_vs_θ_facetted_by_E_and_η(SCC_vs_E_θ_and_η_df)
+SCC_vs_θ_facetted_by_E_and_η |> save("outputs/figures/SCC_vs_θ_facetted_by_E_and_η.svg")

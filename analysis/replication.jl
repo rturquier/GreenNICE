@@ -147,8 +147,7 @@ costanza_total_multiplier = total_costanza_estimate / baseline_E
 E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
 
 # %%  Set x-axis values
-# θ_axis = [i for i in -1:0.05:1]
-θ_axis = [i for i in -1:1:1]
+θ_axis = [θ for θ in -1:0.025:1]
 
 # %% Run and save
 SCC_vs_E_θ_and_η_df = get_SCC_vs_E_θ_and_η(E_facet_list, η_list, θ_axis, α, ρ)

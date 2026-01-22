@@ -615,6 +615,17 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
     return SCC_vs_E_plot
 end
 
+function get_SCC_vs_E_θ_and_η(
+    E_multiplier_list::Vector, η_list::Vector, θ_list::Vector, α::Real, ρ::Real; kwargs...
+)::DataFrame
+    η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
+    df_list = [
+        get_SCC_vs_E(E_multiplier_list, η, θ, α, ρ; kwargs...) for (η, θ) in η_θ_grid
+    ]
+    concatenated_df = reduce(vcat, df_list)
+    return concatenated_df
+end
+
 """
     get_CPI_data()
 

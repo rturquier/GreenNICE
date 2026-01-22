@@ -134,3 +134,17 @@ high_E_flow_df = getdataframe(high_E_m, :environment => :E_flow_global)
 high_E_flow_df |>
     @vlplot(:line, :time, {:E_flow_global, scale={zero=false}}) |>
     save("outputs/figures/high_E_flow.svg")
+
+# ==== SCC vs θ, facetted by E and η ====
+# %% Run and save
+costanza_forests_multiplier = 25
+costanza_total_multiplier = 600
+# E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
+E_facet_list = [1, costanza_total_multiplier]
+
+
+# θ_axis = [i for i in -1:0.05:1]
+θ_axis = [i for i in -1:1:1]
+
+SCC_vs_E_θ_and_η_df = get_SCC_vs_E_θ_and_η(E_facet_list, η_list, θ_axis, α, ρ)
+write_csv(SCC_vs_E_θ_and_η_df, "outputs/SCC_vs_E_θ_and_η.csv")

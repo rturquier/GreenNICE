@@ -606,7 +606,7 @@ function plot_SCC_vs_E(
     )
 
     curves = @vlplot(
-        mark={:line, strokeWidth=1.4},
+        mark={:line, strokeWidth=1.4, interpolate="monotone"},
         x="E_multiplier:q",
         y="$y_name:q",
         color={

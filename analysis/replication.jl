@@ -138,6 +138,7 @@ high_E_flow_df |>
     save("outputs/figures/high_E_flow.svg")
 
 # ==== SCC vs θ, facetted by E and η ====
+# %% Compare CWON calibration of E to Costanza values
 baseline_E = (@chain E_flow_df @filter(time == 2020) @pull(E_flow_global)) |> only
 costanza_E_water_food_recreation = costanza_forest_values[1, :water_food_recreation]
 

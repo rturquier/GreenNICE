@@ -113,6 +113,13 @@ costanza_forest_values = get_costanza_forest_values()
 total_costanza_estimate_2007 = 124.8 * 10^12
 total_costanza_estimate = adjust_for_inflation(total_costanza_estimate_2007, 2007, 2017)
 
+# %% Compare CWON calibration of E to Costanza values
+baseline_E = (@chain E_flow_df @filter(time == 2020) @pull(E_flow_global)) |> only
+costanza_E_water_food_recreation = costanza_forest_values[1, :water_food_recreation]
+
+costanza_forests_multiplier = costanza_E_water_food_recreation / baseline_E
+costanza_total_multiplier = total_costanza_estimate / baseline_E
+
 # %% Set list of E multipliers (x-axis in SCC_E vs E plots)
 E_multiplier_list = [0.5 (1:25)...] |> vec
 
@@ -138,17 +145,9 @@ high_E_flow_df |>
     save("outputs/figures/high_E_flow.svg")
 
 # ==== SCC vs θ, facetted by E and η ====
-# %% Compare CWON calibration of E to Costanza values
-baseline_E = (@chain E_flow_df @filter(time == 2020) @pull(E_flow_global)) |> only
-costanza_E_water_food_recreation = costanza_forest_values[1, :water_food_recreation]
-
-costanza_forests_multiplier = costanza_E_water_food_recreation / baseline_E
-costanza_total_multiplier = total_costanza_estimate / baseline_E
-
-E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
-
-# %%  Set x-axis values
+# %%  Set values for x-axis and E facets
 θ_axis = [θ for θ in -1:0.025:1]
+E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
 
 # %% Run and save
 SCC_vs_E_θ_and_η_df = get_SCC_vs_E_θ_and_η(E_facet_list, η_list, θ_axis, α, ρ)

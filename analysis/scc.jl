@@ -514,31 +514,69 @@ function get_SCC_vs_E(
     return concatenated_df
 end
 
+function vertical_rule(
+    x::Number,
+    y::Number,
+    y2::Number,
+    label::Union{String, Array{String}}="",
+    label_dx::Number=0,
+    label_dy::Number=0
+)::VegaLite.VLSpec
+    rule = @vlplot(
+        mark={:rule, strokeWidth=1},
+        x={datum=x},
+        y={datum=y},
+        y2={datum=y2},
+        color={value="#888"})
+    text = @vlplot(
+        mark={:text, align="center", dx=label_dx, dy=label_dy},
+        data={values=[{x=x, label=label}]},
+        x="x:q",
+        text="label:n"
+    )
+    return @vlplot() + rule + text  # `@vlplot()` avoids a VegaLite.jl bug when layering
+end
+
 """
     plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
 
 Plot evolution of SCC with respect to the flow
 
 # Keyword arguments
-- `cost_to::String`: either "E" to plot the present social value of damages to the
-    environment, or "c" for damages to consumption.
+- `cost_to::String` (required): either "E" to plot the present social value of damages to
+    the environment, or "c" for damages to consumption.
+- `intermediate_layer::VegaLite.VLSpec` (optional): one or several plot components to be
+    included between the chart background and the curves (e.g. vertical rules from the
+    `vertical_rule` function).
 """
-function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
+function plot_SCC_vs_E(
+    SCC_vs_E_df::DataFrame;
+    cost_to::String,
+    intermediate_layer::Union{VegaLite.VLSpec, Nothing}=nothing
+)
     y_name = "present_cost_of_damages_to_" * cost_to
     y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
 
     base = SCC_vs_E_df |> @vlplot(
         width=650,
         height=300,
-        x={axis={
-            values=[0.5, 1, 5, 10, 15, 20, 25],
-            format="~g",
-            title="E multiplier",
-            grid=true
+        x={
+            scale={domain=(-10, 600)},
+            axis={
+                values=[1, (50:50:550)...],
+                labelExpr="[
+                    datum.value == 1 ? 1 :
+                        datum.value == 50 ? 50 :
+                        datum.value % 100 ? '' :
+                        datum.value,
+                    datum.value == 1 ? '(CWON data)' : ''
+                ]",
+                title="E multiplier",
+                grid=true,
         }},
         y={axis={
             title=y_title,
-            grid=true
+            grid=true,
         }},
         config={
             legend={
@@ -565,22 +603,6 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
                 ]
             }
         },
-    )
-
-    baseline_rule = @vlplot(
-        mark={:rule, strokeWidth=1},
-        data={values=[{}]},
-        x={datum=1},
-        # y={datum=0},
-        # y2={datum=17},
-        color={value="black"}
-    )
-    baseline_text = @vlplot(
-        mark={:text, align="left", dx=5, y=15, fontSize=12},
-        data={values=[{x=1, label="baseline scenario"}]},
-        x="x:q",
-        text="label:n",
-        color={value="black"}
     )
 
     curves = @vlplot(
@@ -611,7 +633,10 @@ function plot_SCC_vs_E(SCC_vs_E_df::DataFrame; cost_to::String)
         }
     )
 
-    SCC_vs_E_plot = base + baseline_rule + baseline_text + dot_pair_connections + curves
+    if intermediate_layer ≠ nothing
+        base += intermediate_layer
+    end
+    SCC_vs_E_plot = base + dot_pair_connections + curves
     return SCC_vs_E_plot
 end
 

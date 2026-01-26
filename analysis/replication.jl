@@ -121,18 +121,37 @@ costanza_forests_multiplier = costanza_E_water_food_recreation / baseline_E
 costanza_total_multiplier = total_costanza_estimate / baseline_E
 
 # %% Set list of E multipliers (x-axis in SCC_E vs E plots)
-E_multiplier_list = [0.5 (1:25)...] |> vec
+E_multiplier_list = [
+    1
+    costanza_forests_multiplier
+    50
+    (100:50:550)...
+    costanza_total_multiplier
+]
 
 # %% Get SCC for different E multipliers to check sensitivity, and save results
 SCC_vs_E_df = get_SCC_vs_E(E_multiplier_list, η, θ, α, ρ)
 write_csv(SCC_vs_E_df, "outputs/SCC_vs_E.csv")
 
-# %% Read and plot
+# %% Read
 SCC_vs_E_df = read_csv("outputs/SCC_vs_E.csv")
 
-SCC_E_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="E")
+# %% Plot SCC_E vs E
+vertical_rules = (
+    vertical_rule(
+        costanza_forests_multiplier, 0, 15.4, ["Costanza et al.", "(restricted)"], 2, -25
+    )
+    +
+    vertical_rule(
+        costanza_total_multiplier, 9.4, 14.4, ["Costanza et al." ,"(total)"], 0, 65
+    )
+    +
+    vertical_rule(costanza_total_multiplier, 0, 6.3)
+)
+SCC_E_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="E", intermediate_layer=vertical_rules)
 SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")
 
+# %% Plot SCC_c vs E
 SCC_c_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="c")
 SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 

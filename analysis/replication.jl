@@ -89,6 +89,9 @@ E_flow_df = @chain begin
 end
 E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 
+# %% Get initial value of global E
+intial_global_E = E_flow_df.E_flow_global |> first
+
 # ==== Facet plot ====
 # %% Set η × θ grid
 η_list = [1, 1.5, 2]

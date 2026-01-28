@@ -142,14 +142,14 @@ SCC_vs_E_df = read_csv("outputs/SCC_vs_E.csv")
 # %% Plot SCC_E vs E
 vertical_rules = (
     vertical_rule(
-        costanza_forests_multiplier, 0, 15.4, ["Costanza et al.", "(restricted)"], 2, -25
+        costanza_forests_multiplier, 0, 15.7, ["Costanza et al.", "(restricted)"], 2, -8
     )
     +
     vertical_rule(
-        costanza_total_multiplier, 9.4, 14.4, ["Costanza et al." ,"(total)"], 0, 65
+        costanza_total_multiplier, 11, 16, ["Costanza et al." ,"(total)"], 0, 65
     )
     +
-    vertical_rule(costanza_total_multiplier, 0, 6.3)
+    vertical_rule(costanza_total_multiplier, 0, 7.3)
 )
 SCC_E_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="E", intermediate_layer=vertical_rules)
 SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")

@@ -28,7 +28,7 @@ bottom3_ξ = first(sort(descriptives_df, :ξ, rev=false), 3)
 
 # %% Set default parameters
 η = 1.5
-θ = 0.5
+θ = 0.43
 α = 0.1
 ρ = 0.001
 γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
@@ -95,7 +95,7 @@ intial_global_E = E_flow_df.E_flow_global |> first
 # ==== Facet plot ====
 # %% Set η × θ grid
 η_list = [1, 1.5, 2]
-θ_list = [-1, -0.25, 0.5]
+θ_list = [-0.42, 0.43, 0.90]
 
 # %% Run model on parameter grid (this can take a long time) and save results
 facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)

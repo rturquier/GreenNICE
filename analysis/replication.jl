@@ -105,8 +105,13 @@ write_csv(facet_df, "outputs/facet_df.csv")
 facet_df = read_csv("outputs/facet_df.csv")
 
 # %% Facet plot
-facet_plot = facet_SCC(facet_df; cost_to="E")
-facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
+facet_plot_E = facet_SCC(facet_df; cost_to="E")
+facet_plot_E |> save("outputs/figures/facetted_SCC_E_vs_gamma.svg")
+
+# %% Facet plot for SCC_c
+facet_plot_c = facet_SCC(facet_df; cost_to="c")
+facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
+
 
 # ====  Sensitivity to E =====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)

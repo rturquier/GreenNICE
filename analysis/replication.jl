@@ -158,13 +158,6 @@ SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")
 SCC_c_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="c")
 SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 
-# %% Plot E trajectory in a high-E run
-high_E_m = GreenNICE.create(; parameters=Dict(:E_multiplier => 5))
-run(high_E_m)
-high_E_flow_df = getdataframe(high_E_m, :environment => :E_flow_global)
-high_E_flow_df |>
-    @vlplot(:line, :time, {:E_flow_global, scale={zero=false}}) |>
-    save("outputs/figures/high_E_flow.svg")
 
 # ==== SCC vs θ, facetted by E and η ====
 # %%  Set values for x-axis and E facets

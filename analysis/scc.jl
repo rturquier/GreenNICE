@@ -816,7 +816,7 @@ function plot_relative_I_vs_E(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
     relative_I_vs_E_plot = relative_I_vs_E |> @vlplot(
         width = 650,
         height = 300,
-        mark = {:line, color = "firebrick"},
+        mark = {:line, color = "firebrick", strokeWidth = 2.5},
         x = {
             "E_multiplier:q",
             axis = {
@@ -827,7 +827,7 @@ function plot_relative_I_vs_E(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
         },
         y = {
             "relative_I:q",
-            scale = {domain = [40, 55], zero = false},
+            scale = {domain = [0, 100]},
             axis = {
                 title = "Relative Interaction Effect (I%)",
                 grid = true

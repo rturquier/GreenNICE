@@ -163,6 +163,9 @@ SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")
 SCC_c_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="c")
 SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 
+# %% Plot relative I vs E
+SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
+SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
 
 # ==== SCC vs θ, facetted by E and η ====
 # %%  Set values for x-axis and E facets

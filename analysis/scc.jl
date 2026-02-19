@@ -793,3 +793,46 @@ function get_costanza_forest_values()
     end
     return forest_values_df
 end
+
+function plot_relative_I_vs_E(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
+
+    no_inequality_df = @chain SCC_vs_E_df begin
+        @filter(γ == 0)
+        @select(E_multiplier, SCC_E_0 = present_cost_of_damages_to_E)
+    end
+
+    inequality_df = @chain SCC_vs_E_df begin
+        @filter(γ == 1)
+        @select(E_multiplier, SCC_E_1 = present_cost_of_damages_to_E)
+    end
+
+    relative_I_vs_E = @chain inequality_df begin
+        @inner_join(no_inequality_df)
+        @mutate(
+            relative_I = (SCC_E_1 - SCC_E_0) / abs(SCC_E_1) * 100
+        )
+    end
+
+    relative_I_vs_E_plot = relative_I_vs_E |> @vlplot(
+        width = 650,
+        height = 300,
+        mark = {:line, color = "firebrick", strokeWidth = 2.5},
+        x = {
+            "E_multiplier:q",
+            axis = {
+                values = [1, (50:50:550)...],
+                title = "E multiplier",
+                grid = true
+            }
+        },
+        y = {
+            "relative_I:q",
+            scale = {domain = [0, 100]},
+            axis = {
+                title = "Relative Interaction Effect (I%)",
+                grid = true
+            }
+        }
+    )
+    return relative_I_vs_E_plot
+end

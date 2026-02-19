@@ -28,7 +28,7 @@ bottom3_ξ = first(sort(descriptives_df, :ξ, rev=false), 3)
 
 # %% Set default parameters
 η = 1.5
-θ = 0.5
+θ = 0.43
 α = 0.1
 ρ = 0.001
 γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
@@ -95,7 +95,7 @@ intial_global_E = E_flow_df.E_flow_global |> first
 # ==== Facet plot ====
 # %% Set η × θ grid
 η_list = [1, 1.5, 2]
-θ_list = [-1, -0.25, 0.5]
+θ_list = [-0.42, 0.43, 0.90]
 
 # %% Run model on parameter grid (this can take a long time) and save results
 facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
@@ -105,8 +105,13 @@ write_csv(facet_df, "outputs/facet_df.csv")
 facet_df = read_csv("outputs/facet_df.csv")
 
 # %% Facet plot
-facet_plot = facet_SCC(facet_df; cost_to="E")
-facet_plot |> save("outputs/figures/facetted_SCC_decomposition.svg")
+facet_plot_E = facet_SCC(facet_df; cost_to="E")
+facet_plot_E |> save("outputs/figures/facetted_SCC_E_vs_gamma.svg")
+
+# %% Facet plot for SCC_c
+facet_plot_c = facet_SCC(facet_df; cost_to="c")
+facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
+
 
 # ====  Sensitivity to E =====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
@@ -142,14 +147,14 @@ SCC_vs_E_df = read_csv("outputs/SCC_vs_E.csv")
 # %% Plot SCC_E vs E
 vertical_rules = (
     vertical_rule(
-        costanza_forests_multiplier, 0, 15.4, ["Costanza et al.", "(restricted)"], 2, -25
+        costanza_forests_multiplier, 0, 15.7, ["Costanza et al.", "(restricted)"], 2, -8
     )
     +
     vertical_rule(
-        costanza_total_multiplier, 9.4, 14.4, ["Costanza et al." ,"(total)"], 0, 65
+        costanza_total_multiplier, 11, 16, ["Costanza et al." ,"(total)"], 0, 65
     )
     +
-    vertical_rule(costanza_total_multiplier, 0, 6.3)
+    vertical_rule(costanza_total_multiplier, 0, 7.3)
 )
 SCC_E_vs_E_plot = plot_SCC_vs_E(SCC_vs_E_df; cost_to="E", intermediate_layer=vertical_rules)
 SCC_E_vs_E_plot |> save("outputs/figures/SCC_E_vs_E.svg")
@@ -161,14 +166,6 @@ SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 # %% Plot relative I vs E
 SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
-
-# %% Plot E trajectory in a high-E run
-high_E_m = GreenNICE.create(; parameters=Dict(:E_multiplier => 5))
-run(high_E_m)
-high_E_flow_df = getdataframe(high_E_m, :environment => :E_flow_global)
-high_E_flow_df |>
-    @vlplot(:line, :time, {:E_flow_global, scale={zero=false}}) |>
-    save("outputs/figures/high_E_flow.svg")
 
 # ==== SCC vs θ, facetted by E and η ====
 # %%  Set values for x-axis and E facets

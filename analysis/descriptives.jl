@@ -205,25 +205,34 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
                 feature = :countries
             }
         },
-        transform = [{
-            lookup = "id",
-            from = {
-                data = df_country,
-                key = :id,
-                fields = ["E_flow0_percapita"]
-            }
-        }],
-        mark = :geoshape,
-        encoding = {
-            color = {
-                field = "E_flow0_percapita",
-                type = "quantitative",
-                title = "E per capita (USD)",
-                scale = {
-                    scheme = "greenblue"
+        transform = [
+            {
+                lookup = "id",
+                from = {
+                    data = df_country,
+                    key = :id,
+                    fields = ["E_flow0_percapita", "country_name"]
                 }
-            }
-        }
+            },
+            {filter = "datum.country_name != 'Antarctica'"},
+        ],
+        mark = :geoshape,
+        color = {
+            condition = {
+                test = "datum.E_flow0_percapita != null",
+                field = "E_flow0_percapita",
+                title = "E per capita (USD)",
+                type = "quantitative",
+                scale = {
+                    type = "threshold",
+                    domain = [50, 150, 250, 400, 600],
+                    scheme = "greens",
+                },
+                legend={orient="none", direction="horizontal", legendY=310, legendX=270},
+            },
+            # color country in gray if E_flow0_percapita is missing
+            value = "#d3d3d3"
+        },
     )
 
     return E_percapita_country

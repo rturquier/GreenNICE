@@ -52,7 +52,7 @@ function get_country_id(df::DataFrame)::DataFrame
 
     df_country = @chain begin
         DataFrame(all_countries())
-        @select(country = alpha3, id = numeric)
+        @select(country = alpha3, id = numeric, country_name = common_name)
         @mutate(country = Symbol.(country))
         @left_join(df)
     end
@@ -205,25 +205,34 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
                 feature = :countries
             }
         },
-        transform = [{
-            lookup = "id",
-            from = {
-                data = df_country,
-                key = :id,
-                fields = ["E_flow0_percapita"]
-            }
-        }],
-        mark = :geoshape,
-        encoding = {
-            color = {
-                field = "E_flow0_percapita",
-                type = "quantitative",
-                title = "E per capita (USD)",
-                scale = {
-                    scheme = "greenblue"
+        transform = [
+            {
+                lookup = "id",
+                from = {
+                    data = df_country,
+                    key = :id,
+                    fields = ["E_flow0_percapita", "country_name"]
                 }
-            }
-        }
+            },
+            {filter = "datum.country_name != 'Antarctica'"},
+        ],
+        mark = :geoshape,
+        color = {
+            condition = {
+                test = "datum.E_flow0_percapita != null",
+                field = "E_flow0_percapita",
+                title = "E per capita (USD)",
+                type = "quantitative",
+                scale = {
+                    type = "threshold",
+                    domain = [50, 150, 250, 400, 600],
+                    scheme = "greens",
+                },
+                legend={orient="none", direction="horizontal", legendY=310, legendX=270},
+            },
+            # color country in gray if E_flow0_percapita is missing
+            value = "#d3d3d3"
+        },
     )
 
     return E_percapita_country
@@ -238,10 +247,7 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
    ξ_country = @vlplot(
         width = 640,
         height = 360,
-        title = "",
-        projection = {type = :equirectangular}
-    ) +
-    @vlplot(
+        projection = {type = :equirectangular},
         data = {
             values = world110m,
             format = {
@@ -255,36 +261,31 @@ function map_damage_coefficient_country(df::DataFrame)::VegaLite.VLSpec
                 from = {
                     data = df_country,
                     key = :id,
-                    fields = ["ξ"]
+                    fields = ["ξ", "country_name"]
                 }
             },
-            {
-                filter = "datum.ξ != null"
-            },
-            {
-                bin = {step = 0.05, extent = [-0.05, 0.05]},
-                field = "ξ",
-                as = "ξ_binned"
-            }
+            {filter = "datum.country_name != 'Antarctica'"},
         ],
         mark = :geoshape,
-        encoding = {
-            color = {
-                field = "ξ_binned",
-                type = "ordinal",
-                title = "ξ",
-                legend = {
-                    labelExpr = "datum.label == -0.05 ? '[-0.05, 0)' : " *
-                                "datum.label == 0 ? '[0, 0.05)' : " *
-                                "datum.label < 0 ? '< -0.05' : " *
-                                "'≥ 0.05'"
-                },
-                scale = {
-                    scheme = "purplegreen",
-                    reverse = false
-                }
-            }
-        }
+        color =
+        {
+            condition = {
+            test = "datum.ξ != null",
+            field = "ξ",
+            title = "ξ",
+            type = "quantitative",
+            bin = true,
+            scale = {
+                range=["#834792", "#A67FB6", "#C9AED3", "#AEDDA9", "#71BB75"],
+            },
+            legend={orient="none", direction="horizontal", legendY=310, legendX=270},
+        },
+        # color country in gray if ξ is missing
+        value = "#d3d3d3"
+        },
+        tooltip = [
+            {field = "ξ", type = "quantitative", title = "ξ"},
+        ]
     )
 
     return ξ_country

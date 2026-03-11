@@ -273,7 +273,7 @@ end
 
 """
     get_SCC_decomposition(
-        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real; kwargs...
     )::DataFrame
 
 Get SCC decomposition for a vector of γ values.
@@ -282,7 +282,7 @@ Apply `get_SCC_decomposition` for each value of γ provided in `γ_list`.
 Return a Dataframe with as many rows as values in `γ_list`.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+    η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real; kwargs...
 )::DataFrame
     df_list = [get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...) for γ in γ_list]
     concatenated_df = reduce(vcat, df_list)
@@ -292,13 +292,23 @@ end
 
 """
     get_SCC_decomposition(
-        η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        η_list::AbstractVector,
+        θ_list::AbstractVector,
+        α::Real,
+        γ_list::AbstractVector,
+        ρ::Real;
+        kwargs...
     )::DataFrame
 
 Get SCC decomposition for an η × θ grid.
 """
 function get_SCC_decomposition(
-    η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+    η_list::AbstractVector,
+    θ_list::AbstractVector,
+    α::Real,
+    γ_list::AbstractVector,
+    ρ::Real;
+    kwargs...
 )::DataFrame
     η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
     df_list = [get_SCC_decomposition(η, θ, α, γ_list, ρ; kwargs...) for (η, θ) in η_θ_grid]
@@ -359,7 +369,7 @@ end
 
 """
     function get_SCC_interaction(
-        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real
+        η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real
     )::DataFrame
 
 Calculate interaction effect in absolute and relative terms at the country level.
@@ -377,7 +387,9 @@ Return a DataFrame with the following columns:
 - `interaction_pct`: Percentage interaction effect relative to `inequality_damage_E`.
 - `country_id`: Numeric country code for mapping purposes.
 """
-function get_SCC_interaction(η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real)::DataFrame
+function get_SCC_interaction(
+    η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real
+)::DataFrame
     SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ;
                                                  analysis_level="country")
 
@@ -493,7 +505,7 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
 end
 
 function get_SCC_vs_E(
-    E_multiplier_list::Vector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
+    E_multiplier_list::AbstractVector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
 )::DataFrame
     kwargs::Dict{Any, Any} = Dict(kwargs)  # avoids type errors when manipulating kwargs
     γ_list = [0., 1.]
@@ -641,7 +653,12 @@ function plot_SCC_vs_E(
 end
 
 function get_SCC_vs_E_θ_and_η(
-    E_multiplier_list::Vector, η_list::Vector, θ_list::Vector, α::Real, ρ::Real; kwargs...
+    E_multiplier_list::AbstractVector,
+    η_list::AbstractVector,
+    θ_list::AbstractVector,
+    α::Real,
+    ρ::Real;
+    kwargs...
 )::DataFrame
     η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
     df_list = [

@@ -121,6 +121,9 @@ facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
 heatmap_df = get_SCC_decomposition(η_list, θ_list, α, [0, 1], ρ)
 write_csv(heatmap_df, "outputs/heatmap_df.csv")
 
+# %% Read
+heatmap_df = read_csv("outputs/heatmap_df.csv")
+
 # ====  Sensitivity to E ====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()

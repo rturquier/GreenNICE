@@ -112,8 +112,16 @@ facet_plot_E |> save("outputs/figures/facetted_SCC_E_vs_gamma.svg")
 facet_plot_c = facet_SCC(facet_df; cost_to="c")
 facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
 
+# ==== Heatmap ====
+# %% Set η × θ grid
+η_list = 0:0.1:2
+θ_list = -1:0.1:1
 
-# ====  Sensitivity to E =====
+# %% Run model on parameter grid (this can take a long time) and save results
+heatmap_df = get_SCC_decomposition(η_list, θ_list, α, [0, 1], ρ)
+write_csv(heatmap_df, "outputs/heatmap_df.csv")
+
+# ====  Sensitivity to E ====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 

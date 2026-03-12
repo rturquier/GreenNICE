@@ -157,6 +157,17 @@ heatmap_df = @chain begin
     )
 end
 
+# %% Plot heatmap
+heatmap_df |> @vlplot(
+    :rect,
+    x= "θ:o",
+    y= {"η:o", scale={reverse=true}},
+    color= {
+        :Δ_SCC_E_over_SCC_E,
+        scale = {scheme="blueorange", domainMid=0}
+    },
+)
+
 # ====  Sensitivity to E ====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()

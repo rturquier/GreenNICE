@@ -182,6 +182,9 @@ heatmap = heatmap_df |> @vlplot(
     color={value="#888"}
 )
 
+heatmap |> save("outputs/figures/Δ_SCC_E_vs_SCC_E_heatmap.svg")
+heatmap
+
 # ====  Sensitivity to E ====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()

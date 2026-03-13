@@ -158,14 +158,28 @@ heatmap_df = @chain begin
 end
 
 # %% Plot heatmap
-heatmap_df |> @vlplot(
-    :rect,
-    x= "θ:o",
-    y= {"η:o", scale={reverse=true}},
-    color= {
-        :Δ_SCC_E_over_SCC_E,
-        scale = {scheme="blueorange", domainMid=0}
-    },
+heatmap = heatmap_df |> @vlplot(
+        x="θ:o",
+        y={"η:o", scale={reverse=true}},
+) + @vlplot(
+        :rect,
+        color={
+            :Δ_SCC_E_over_SCC_E,
+            scale={scheme="blueorange", domainMid=0},
+            legend={
+                title=["Share of SCC_E due", "to national inequality"],
+                format=".0%",
+                gradientLength=300,
+                gradientThickness=20
+            }
+        },
+) + @vlplot(
+    mark={:rule, strokeWidth=1, strokeDash=(8, 8)},
+    x={datum=-1},
+    y={datum=2},
+    x2={datum=1},
+    y2={datum=0},
+    color={value="#888"}
 )
 
 # ====  Sensitivity to E ====

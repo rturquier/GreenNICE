@@ -149,8 +149,8 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
         @mutate(
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
             ∂_EW = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
-            ∂_cW_equal = marginal_welfare_of_consumption(c_equal, E, l, $η, $θ, $α),
-            ∂_EW_equal = marginal_welfare_of_environment(c_equal, E, l, $η, $θ, $α),
+            ∂_cW_across_equal = marginal_welfare_of_consumption(c_across_equal, E, l, $η, $θ, $α),
+            ∂_EW_across_equal = marginal_welfare_of_environment(c_across_equal, E, l, $η, $θ, $α),
         )
     end
     return prepared_df

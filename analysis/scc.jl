@@ -123,11 +123,12 @@ end
 
 
 function get_marginal_utility_at_present_average(df::DataFrame, η::Real, θ::Real, α::Real)
-    present_average_df = @chain df begin
+        present_average_df = @chain df begin
         @filter(t == 0)
+        @mutate(sum_c = c.* l, sum_E = E.*l)
         @summarize(
-            c = mean(c),
-            E = mean(E),
+            c = sum(sum_c) / sum(l),
+            E = sum(sum_E) / sum(l),
         )
     end
     present_average_c = present_average_df.c[1]

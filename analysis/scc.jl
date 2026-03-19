@@ -222,6 +222,8 @@ function apply_SCC_decomposition_formula(
             t = unique(t),
             welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
             welfare_loss_E = sum(∂_EW * marginal_damage_to_E),
+            welfare_loss_c_within_equal = sum(∂_cW_within_equal * marginal_damage_to_c),
+            welfare_loss_E_within_equal = sum(∂_EW_within_equal * marginal_damage_to_E),
             welfare_loss_c_across_equal = sum(∂_cW_across_equal * marginal_damage_to_c),
             welfare_loss_E_across_equal = sum(∂_EW_across_equal * marginal_damage_to_E),
         )
@@ -231,6 +233,10 @@ function apply_SCC_decomposition_formula(
                                            * sum($β^t * welfare_loss_c),
             present_cost_of_damages_to_E = 1 / $reference_marginal_utility
                                            * sum($β^t * welfare_loss_E),
+            present_cost_of_damages_to_c_within_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_c_within_equal),
+            present_cost_of_damages_to_E_within_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_E_within_equal),
             present_cost_of_damages_to_c_across_equal = 1 / $reference_marginal_utility
                                             * sum($β^t * welfare_loss_c_across_equal),
             present_cost_of_damages_to_E_across_equal = 1 / $reference_marginal_utility

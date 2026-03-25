@@ -367,6 +367,55 @@ function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.V
     return SCC_facet_plot
 end
 
+function plot_SCC_heatmap(
+    heatmap_df::DataFrame; cost_to="E", relative_to=nothing
+)::VegaLite.VLSpec
+
+    if relative_to |> isnothing
+        variable_to_plot = "Δ_SCC_$cost_to"
+        legend_format = " d"
+        legend_title = ["Change in the social",
+                        "cost of damages to $cost_to",
+                        "due to national inequality"]
+    else
+        variable_to_plot = "Δ_SCC_$(cost_to)_over_$relative_to"
+        legend_format = ".0%"
+        legend_title = ["Share of $relative_to due", "to national inequality"]
+    end
+
+    max_absolute_value = heatmap_df[!, variable_to_plot] .|> abs |> maximum
+
+    heatmap = heatmap_df |> @vlplot(
+            x="θ:o",
+            y={"η:o", scale={reverse=true}},
+    ) + @vlplot(
+        :rect,
+        color={
+            variable_to_plot,
+            scale={
+                scheme="blueorange",
+                domainMid=0,
+                domainMin=-max_absolute_value,
+                domainMax=max_absolute_value
+            },
+            legend={
+                title=legend_title,
+                format=legend_format,
+                gradientLength=300,
+                gradientThickness=20
+            }
+        },
+    ) + @vlplot(
+        mark={:rule, strokeWidth=1, strokeDash=(8, 8)},
+        x={datum=-1},
+        y={datum=2},
+        x2={datum=1},
+        y2={datum=0},
+        color={value="#888"}
+    )
+    return heatmap
+end
+
 """
     function get_SCC_interaction(
         η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real

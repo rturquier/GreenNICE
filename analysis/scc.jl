@@ -385,9 +385,18 @@ function plot_SCC_heatmap(
 
     max_absolute_value = heatmap_df[!, variable_to_plot] .|> abs |> maximum
 
+    diagonal_dashed_line = @vlplot(
+        mark={:rule, strokeWidth=1, strokeDash=(8, 8)},
+        x={datum=-1},
+        y={datum=2},
+        x2={datum=1},
+        y2={datum=0},
+        color={value="#888"}
+    )
+
     heatmap = heatmap_df |> @vlplot(
-            x="θ:o",
-            y={"η:o", scale={reverse=true}},
+        x="θ:o",
+        y={"η:o", scale={reverse=true}},
     ) + @vlplot(
         :rect,
         color={
@@ -405,14 +414,10 @@ function plot_SCC_heatmap(
                 gradientThickness=20
             }
         },
-    ) + @vlplot(
-        mark={:rule, strokeWidth=1, strokeDash=(8, 8)},
-        x={datum=-1},
-        y={datum=2},
-        x2={datum=1},
-        y2={datum=0},
-        color={value="#888"}
     )
+    if cost_to == "E"
+        heatmap += diagonal_dashed_line
+    end
     return heatmap
 end
 

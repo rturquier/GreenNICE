@@ -395,8 +395,8 @@ function plot_SCC_heatmap(
     )
 
     heatmap = heatmap_df |> @vlplot(
-        x="θ:o",
-        y={"η:o", scale={reverse=true}},
+        x={"θ:o", axis={title="Substitutability θ"}},
+        y={"η:o", axis={title="Inequality aversion η"}, scale={reverse=true}},
     ) + @vlplot(
         :rect,
         color={

@@ -158,7 +158,7 @@ heatmap_df = @chain begin
 end
 
 # %% Plot main heatmap
-Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; relative_to="SCC_E")
+Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC_E")
 Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/Δ_SCC_E_vs_SCC_E_heatmap.svg")
 
 # %% Plot additional heatmaps for the appendix

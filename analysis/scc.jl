@@ -394,11 +394,11 @@ function plot_SCC_heatmap(
         color={value="#888"}
     )
     star_mark = @vlplot(
-        mark={:point, shape="⋆"},
+        mark={:text, text="★", fontSize=15, xOffset=-6, color="#5B5B5B"},
         x={datum=0.5},
         y={datum=1.5}
     )
-    heatmap = heatmap_df |> @vlplot(
+    heatmap_base = heatmap_df |> @vlplot(
         x={"θ:o", axis={title="Substitutability θ"}},
         y={"η:o", axis={title="Inequality aversion η"}, scale={reverse=true}},
     ) + @vlplot(
@@ -420,7 +420,9 @@ function plot_SCC_heatmap(
         },
     )
     if cost_to == "E"
-        heatmap = heatmap + diagonal_dashed_line + star_mark
+        heatmap = heatmap_base + star_mark + diagonal_dashed_line
+    else
+        heatmap = heatmap_base + star_mark
     end
     return heatmap
 end

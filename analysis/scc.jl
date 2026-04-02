@@ -216,6 +216,10 @@ as `marginal_damage_to_E`.
 
 analysis_level == "global" computes the SCC decomposition at the global level, while
 analysis_level == "country" computes the SCC decomposition at the country level.
+
+Alternative scenarios are i) No within country inequality ("within_equal"),
+ii) No across country inequality ("across_equal") and iii) No natural capital inequality
+("E_equal"). These three scenarios build on top of each other.
 """
 function apply_SCC_decomposition_formula(
     prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real;
@@ -242,6 +246,8 @@ function apply_SCC_decomposition_formula(
             welfare_loss_E_within_equal = sum(∂_EW_within_equal * marginal_damage_to_E),
             welfare_loss_c_across_equal = sum(∂_cW_across_equal * marginal_damage_to_c),
             welfare_loss_E_across_equal = sum(∂_EW_across_equal * marginal_damage_to_E),
+            welfare_loss_c_E_equal = sum(∂_cW_E_equal * marginal_damage_to_c),
+            welfare_loss_E_E_equal = sum(∂_EW_E_equal * marginal_damage_to_E)
         )
         @filter(t >= 0)
         @summarize(
@@ -257,6 +263,10 @@ function apply_SCC_decomposition_formula(
                                             * sum($β^t * welfare_loss_c_across_equal),
             present_cost_of_damages_to_E_across_equal = 1 / $reference_marginal_utility
                                             * sum($β^t * welfare_loss_E_across_equal),
+            present_cost_of_damages_to_c_E_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_c_E_equal),
+            present_cost_of_damages_to_E_E_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_E_E_equal),
         )
     end
     return SCC_df

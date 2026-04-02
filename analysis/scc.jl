@@ -42,6 +42,8 @@ end
 
 function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :E_flow_percapita))
+    within_equal_consumption_df = getdataframe(mm.base, :quantile_recycle => :CPC_post)
+    equal_consumption_df = getdataframe(mm.base, :quantile_recycle => :CPC_post_global)
     population_df = getdataframe(mm.base, :welfare => :l)
     damages_df = @chain begin
         getdataframe(
@@ -57,11 +59,15 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     end
 
     clean_df = @eval @chain $base_df begin
+        @left_join($within_equal_consumption_df)
+        @left_join($equal_consumption_df)
         @left_join($population_df)
         @left_join($damages_df)
         @rename(
             year = time,
             c = qcpc_post_recycle,
+            c_within_equal = CPC_post,
+            c_across_equal = CPC_post_global,
             E = E_flow_percapita,
             marginal_damage_to_c = qcpc_damages,
         )
@@ -76,6 +82,8 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             marginal_damage_to_E = marginal_damage_to_E * 10^3,
             c = c * 10^3,
             E = E * 10^3,
+            c_within_equal = c_within_equal * 10^3,
+            c_across_equal = c_across_equal * 10^3,
             l = l * 10^3,
         )
     end
@@ -119,11 +127,12 @@ end
 
 
 function get_marginal_utility_at_present_average(df::DataFrame, η::Real, θ::Real, α::Real)
-    present_average_df = @chain df begin
+        present_average_df = @chain df begin
         @filter(t == 0)
+        @mutate(sum_c = c.* l, sum_E = E.*l)
         @summarize(
-            c = mean(c),
-            E = mean(E),
+            c = sum(sum_c) / sum(l),
+            E = sum(sum_E) / sum(l),
         )
     end
     present_average_c = present_average_df.c[1]
@@ -140,6 +149,30 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
         @mutate(
             ∂_cW = marginal_welfare_of_consumption(c, E, l, $η, $θ, $α),
             ∂_EW = marginal_welfare_of_environment(c, E, l, $η, $θ, $α),
+            ∂_cW_within_equal = marginal_welfare_of_consumption(c_within_equal,
+                                                                E,
+                                                                l,
+                                                                $η,
+                                                                $θ,
+                                                                $α),
+            ∂_EW_within_equal = marginal_welfare_of_environment(c_within_equal,
+                                                                E,
+                                                                l,
+                                                                $η,
+                                                                $θ,
+                                                                $α),
+            ∂_cW_across_equal = marginal_welfare_of_consumption(c_across_equal,
+                                                                E,
+                                                                l,
+                                                                $η,
+                                                                $θ,
+                                                                $α),
+            ∂_EW_across_equal = marginal_welfare_of_environment(c_across_equal,
+                                                                E,
+                                                                l,
+                                                                $η,
+                                                                $θ,
+                                                                $α),
         )
     end
     return prepared_df
@@ -189,6 +222,10 @@ function apply_SCC_decomposition_formula(
             t = unique(t),
             welfare_loss_c = sum(∂_cW * marginal_damage_to_c),
             welfare_loss_E = sum(∂_EW * marginal_damage_to_E),
+            welfare_loss_c_within_equal = sum(∂_cW_within_equal * marginal_damage_to_c),
+            welfare_loss_E_within_equal = sum(∂_EW_within_equal * marginal_damage_to_E),
+            welfare_loss_c_across_equal = sum(∂_cW_across_equal * marginal_damage_to_c),
+            welfare_loss_E_across_equal = sum(∂_EW_across_equal * marginal_damage_to_E),
         )
         @filter(t >= 0)
         @summarize(
@@ -196,6 +233,14 @@ function apply_SCC_decomposition_formula(
                                            * sum($β^t * welfare_loss_c),
             present_cost_of_damages_to_E = 1 / $reference_marginal_utility
                                            * sum($β^t * welfare_loss_E),
+            present_cost_of_damages_to_c_within_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_c_within_equal),
+            present_cost_of_damages_to_E_within_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_E_within_equal),
+            present_cost_of_damages_to_c_across_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_c_across_equal),
+            present_cost_of_damages_to_E_across_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_E_across_equal),
         )
     end
     return SCC_df

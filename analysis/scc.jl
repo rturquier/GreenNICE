@@ -177,6 +177,18 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
                                                                 $η,
                                                                 $θ,
                                                                 $α),
+            ∂_cW_E_equal = marginal_welfare_of_consumption(c_across_equal,
+                                                            E_equal,
+                                                            l,
+                                                            $η,
+                                                            $θ,
+                                                            $α),
+            ∂_EW_E_equal = marginal_welfare_of_environment(c_across_equal,
+                                                            E_equal,
+                                                            l,
+                                                            $η,
+                                                            $θ,
+                                                            $α),
         )
     end
     return prepared_df

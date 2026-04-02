@@ -373,7 +373,7 @@ function plot_SCC_heatmap(
 
     if relative_to |> isnothing
         variable_to_plot = "Δ_SCC_$cost_to"
-        legend_format = " d"
+        legend_format = " \$d"
         legend_title = ["Change in the social",
                         "cost of damages to $cost_to",
                         "due to national inequality"]

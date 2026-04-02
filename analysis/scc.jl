@@ -44,6 +44,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :E_flow_percapita))
     within_equal_consumption_df = getdataframe(mm.base, :quantile_recycle => :CPC_post)
     equal_consumption_df = getdataframe(mm.base, :quantile_recycle => :CPC_post_global)
+    equal_E_df = getdataframe(mm.base, :environment => :E_flow_equal)
     population_df = getdataframe(mm.base, :welfare => :l)
     damages_df = @chain begin
         getdataframe(
@@ -61,6 +62,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     clean_df = @eval @chain $base_df begin
         @left_join($within_equal_consumption_df)
         @left_join($equal_consumption_df)
+        @left_join($equal_E_df)
         @left_join($population_df)
         @left_join($damages_df)
         @rename(
@@ -69,6 +71,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             c_within_equal = CPC_post,
             c_across_equal = CPC_post_global,
             E = E_flow_percapita,
+            E_equal = E_flow_equal,
             marginal_damage_to_c = qcpc_damages,
         )
         @mutate(
@@ -84,6 +87,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             E = E * 10^3,
             c_within_equal = c_within_equal * 10^3,
             c_across_equal = c_across_equal * 10^3,
+            E_equal = E_equal * 10^3,
             l = l * 10^3,
         )
     end

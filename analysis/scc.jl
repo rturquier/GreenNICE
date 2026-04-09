@@ -394,7 +394,7 @@ function plot_SCC_heatmap(
         color={value="#888"}
     )
     star_mark = @vlplot(
-        mark={:text, text="★", fontSize=15, xOffset=-6, color="#5B5B5B"},
+        mark={:text, text="★", fontSize=15, xOffset=-14, color="#5B5B5B"},
         x={datum=0.5},
         y={datum=1.5}
     )

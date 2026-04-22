@@ -47,7 +47,7 @@ function get_country_id(df::DataFrame)::DataFrame
     return df_country
 end
 
-function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
+function plot_gini_vs_E_flow_0(df::DataFrame)::VegaLite.VLSpec
     plot = @vlplot(
         data = df,
         mark = :circle,

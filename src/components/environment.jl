@@ -21,6 +21,7 @@
     E_flow_country      = Variable(index=[time,country])                # Flow of natural capital per country (2017 million usd per year)
     E_flow_rwpp         = Variable(index=[time, regionwpp])             # Flow of natural capital per WPP region (2017 million usd per year)
     E_flow_global       = Variable(index=[time])                        # Flow of natural capital globally (2017 million usd per year)
+    E_flow_equal        = Variable(index=[time])                        # Flow of natural capital per capita assuming natural capital is equally distributed every year (2017 million usd per year)
 
     function run_timestep(p, v, d, t)
 
@@ -77,7 +78,7 @@
         end
 
         v.E_flow_global[t] = sum(v.E_flow_country[t,:])
-
+        v.E_flow_equal[t] = v.E_flow_global[t] / sum(p.l[t,:])
 
     end
 end #end component

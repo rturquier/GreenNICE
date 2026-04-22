@@ -44,6 +44,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     base_df = getdataframe(mm.base, :welfare => (:qcpc_post_recycle, :E_flow_percapita))
     within_equal_consumption_df = getdataframe(mm.base, :quantile_recycle => :CPC_post)
     equal_consumption_df = getdataframe(mm.base, :quantile_recycle => :CPC_post_global)
+    equal_E_df = getdataframe(mm.base, :environment => :E_flow_equal)
     population_df = getdataframe(mm.base, :welfare => :l)
     damages_df = @chain begin
         getdataframe(
@@ -61,6 +62,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
     clean_df = @eval @chain $base_df begin
         @left_join($within_equal_consumption_df)
         @left_join($equal_consumption_df)
+        @left_join($equal_E_df)
         @left_join($population_df)
         @left_join($damages_df)
         @rename(
@@ -69,6 +71,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             c_within_equal = CPC_post,
             c_across_equal = CPC_post_global,
             E = E_flow_percapita,
+            E_equal = E_flow_equal,
             marginal_damage_to_c = qcpc_damages,
         )
         @mutate(
@@ -84,6 +87,7 @@ function get_model_data(mm::MarginalModel, pulse_year::Int)::DataFrame
             E = E * 10^3,
             c_within_equal = c_within_equal * 10^3,
             c_across_equal = c_across_equal * 10^3,
+            E_equal = E_equal * 10^3,
             l = l * 10^3,
         )
     end
@@ -173,6 +177,18 @@ function prepare_df_for_SCC(df::DataFrame, η::Real, θ::Real, α::Real)::DataFr
                                                                 $η,
                                                                 $θ,
                                                                 $α),
+            ∂_cW_E_equal = marginal_welfare_of_consumption(c_across_equal,
+                                                            E_equal,
+                                                            l,
+                                                            $η,
+                                                            $θ,
+                                                            $α),
+            ∂_EW_E_equal = marginal_welfare_of_environment(c_across_equal,
+                                                            E_equal,
+                                                            l,
+                                                            $η,
+                                                            $θ,
+                                                            $α),
         )
     end
     return prepared_df
@@ -200,6 +216,10 @@ as `marginal_damage_to_E`.
 
 analysis_level == "global" computes the SCC decomposition at the global level, while
 analysis_level == "country" computes the SCC decomposition at the country level.
+
+Alternative scenarios are i) No within country inequality ("within_equal"),
+ii) No across country inequality ("across_equal") and iii) No natural capital inequality
+("E_equal"). These three scenarios build on top of each other.
 """
 function apply_SCC_decomposition_formula(
     prepared_df::DataFrame, reference_marginal_utility::Real, ρ::Real;
@@ -226,6 +246,8 @@ function apply_SCC_decomposition_formula(
             welfare_loss_E_within_equal = sum(∂_EW_within_equal * marginal_damage_to_E),
             welfare_loss_c_across_equal = sum(∂_cW_across_equal * marginal_damage_to_c),
             welfare_loss_E_across_equal = sum(∂_EW_across_equal * marginal_damage_to_E),
+            welfare_loss_c_E_equal = sum(∂_cW_E_equal * marginal_damage_to_c),
+            welfare_loss_E_E_equal = sum(∂_EW_E_equal * marginal_damage_to_E)
         )
         @filter(t >= 0)
         @summarize(
@@ -241,6 +263,10 @@ function apply_SCC_decomposition_formula(
                                             * sum($β^t * welfare_loss_c_across_equal),
             present_cost_of_damages_to_E_across_equal = 1 / $reference_marginal_utility
                                             * sum($β^t * welfare_loss_E_across_equal),
+            present_cost_of_damages_to_c_E_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_c_E_equal),
+            present_cost_of_damages_to_E_E_equal = 1 / $reference_marginal_utility
+                                            * sum($β^t * welfare_loss_E_E_equal),
         )
     end
     return SCC_df

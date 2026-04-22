@@ -81,7 +81,7 @@ SCC = SCC_c + SCC_E
 I_abs_interaction = sum(country_interaction_df.interaction)
 I_rel_interaction = I_abs_interaction ./ SCC_E * 100
 
-# ----- Map interaction effect at country levels -----
+# ----- Map interaction effect at country level -----
 # %% Absolute interaction map
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
 save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)

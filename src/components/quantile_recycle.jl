@@ -160,7 +160,7 @@ end
 
 
 """
-    adjust_inequality(consumption_shares::Vector, γ::Real)
+    adjust_inequality(consumption_shares::AbstractVector, γ::Real)
 
 Adjust income distribution in a given country and time by a given γ.
 
@@ -168,10 +168,11 @@ For γ = 1, there is no change. For γ = 0, the consumption of every quantile is
 average consumption.
 
 # Arguments
-- quantile_consumption_shares::Vector: consumption deciles in a given country and year
-- γ::Real: parameter that controls the degree of inequality.
+- `quantile_consumption_shares`: consumption deciles in a given
+  country and year
+- `γ`: parameter that controls the degree of inequality.
 """
-function adjust_inequality(quantile_consumption_shares::Vector, γ::Real)
+function adjust_inequality(quantile_consumption_shares::AbstractVector, γ::Real)
 
     average_consumption = mean(quantile_consumption_shares)
 
@@ -184,7 +185,7 @@ end
 
 
 """
-    rescale_distribution(income_shares::Vector, elasticity::Real)
+   rescale_distribution(income_shares::AbstractVector, elasticity::Real)
 
 Calculate quantile distribution shares for a country based on a provided elasticity.
 
@@ -197,11 +198,11 @@ It is used to calculate distributions of damages, CO₂ mitigation cost, or
 CO₂ tax burden, across a country's quantiles.
 
 # Arguments
-- income_shares::Vector: a vector of quantile income shares for a given country.
-- elasticity::Real: Income elasticity of climate damages, CO₂ mitigation costs,
+- `income_shares`: a vector of quantile income shares for a given country.
+- `elasticity`: Income elasticity of climate damages, CO₂ mitigation costs,
     CO₂ tax burdens, etc.
 """
-function rescale_distribution(income_shares::Vector, elasticity::Real)
+function rescale_distribution(income_shares::AbstractVector, elasticity::Real)
     scaled_shares = income_shares .^ elasticity
     updated_quantile_distribution = scaled_shares / sum(scaled_shares)
     return updated_quantile_distribution

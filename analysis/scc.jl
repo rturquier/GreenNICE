@@ -344,7 +344,7 @@ end
 
 """
     get_SCC_decomposition(
-        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real; kwargs...
     )::DataFrame
 
 Get SCC decomposition for a vector of γ values.
@@ -353,7 +353,7 @@ Apply `get_SCC_decomposition` for each value of γ provided in `γ_list`.
 Return a Dataframe with as many rows as values in `γ_list`.
 """
 function get_SCC_decomposition(
-    η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real; kwargs...
+    η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real; kwargs...
 )::DataFrame
     df_list = [get_SCC_decomposition(η, θ, α, γ, ρ; kwargs...) for γ in γ_list]
     concatenated_df = reduce(vcat, df_list)
@@ -363,13 +363,23 @@ end
 
 """
     get_SCC_decomposition(
-        η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+        η_list::AbstractVector,
+        θ_list::AbstractVector,
+        α::Real,
+        γ_list::AbstractVector,
+        ρ::Real;
+        kwargs...
     )::DataFrame
 
 Get SCC decomposition for an η × θ grid.
 """
 function get_SCC_decomposition(
-    η_list::Vector, θ_list::Vector, α::Real, γ_list::Vector, ρ::Real; kwargs...
+    η_list::AbstractVector,
+    θ_list::AbstractVector,
+    α::Real,
+    γ_list::AbstractVector,
+    ρ::Real;
+    kwargs...
 )::DataFrame
     η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
     df_list = [get_SCC_decomposition(η, θ, α, γ_list, ρ; kwargs...) for (η, θ) in η_θ_grid]
@@ -428,9 +438,69 @@ function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.V
     return SCC_facet_plot
 end
 
+function plot_SCC_heatmap(
+    heatmap_df::DataFrame; cost_to="E", relative_to=nothing
+)::VegaLite.VLSpec
+
+    if relative_to |> isnothing
+        variable_to_plot = "Δ_SCC_$cost_to"
+        legend_format = " \$d"
+        legend_title = ["Change in the social",
+                        "cost of damages to $cost_to",
+                        "due to national inequality"]
+    else
+        variable_to_plot = "Δ_SCC_$(cost_to)_over_$relative_to"
+        legend_format = ".0%"
+        legend_title = ["Share of $relative_to due", "to national inequality"]
+    end
+
+    max_absolute_value = heatmap_df[!, variable_to_plot] .|> abs |> maximum
+
+    diagonal_dashed_line = @vlplot(
+        mark={:rule, strokeWidth=1, strokeDash=(8, 8)},
+        x={datum=-1},
+        y={datum=2},
+        x2={datum=1},
+        y2={datum=0},
+        color={value="#888"}
+    )
+    star_mark = @vlplot(
+        mark={:text, text="★", fontSize=15, xOffset=-14, color="#5B5B5B"},
+        x={datum=0.5},
+        y={datum=1.5}
+    )
+    heatmap_base = heatmap_df |> @vlplot(
+        x={"θ:o", axis={title="Substitutability θ"}},
+        y={"η:o", axis={title="Inequality aversion η"}, scale={reverse=true}},
+    ) + @vlplot(
+        :rect,
+        color={
+            variable_to_plot,
+            scale={
+                scheme="blueorange",
+                domainMid=0,
+                domainMin=-max_absolute_value,
+                domainMax=max_absolute_value
+            },
+            legend={
+                title=legend_title,
+                format=legend_format,
+                gradientLength=300,
+                gradientThickness=20
+            }
+        },
+    )
+    if cost_to == "E"
+        heatmap = heatmap_base + star_mark + diagonal_dashed_line
+    else
+        heatmap = heatmap_base + star_mark
+    end
+    return heatmap
+end
+
 """
     function get_SCC_interaction(
-        η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real
+        η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real
     )::DataFrame
 
 Calculate interaction effect in absolute and relative terms at the country level.
@@ -448,7 +518,9 @@ Return a DataFrame with the following columns:
 - `interaction_pct`: Percentage interaction effect relative to `inequality_damage_E`.
 - `country_id`: Numeric country code for mapping purposes.
 """
-function get_SCC_interaction(η::Real, θ::Real, α::Real, γ_list::Vector, ρ::Real)::DataFrame
+function get_SCC_interaction(
+    η::Real, θ::Real, α::Real, γ_list::AbstractVector, ρ::Real
+)::DataFrame
     SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ;
                                                  analysis_level="country")
 
@@ -564,7 +636,7 @@ function map_SCC_decomposition_pct(interaction_df::DataFrame)
 end
 
 function get_SCC_vs_E(
-    E_multiplier_list::Vector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
+    E_multiplier_list::AbstractVector, η::Real, θ::Real, α::Real, ρ::Real; kwargs...
 )::DataFrame
     kwargs::Dict{Any, Any} = Dict(kwargs)  # avoids type errors when manipulating kwargs
     γ_list = [0., 1.]
@@ -712,7 +784,12 @@ function plot_SCC_vs_E(
 end
 
 function get_SCC_vs_E_θ_and_η(
-    E_multiplier_list::Vector, η_list::Vector, θ_list::Vector, α::Real, ρ::Real; kwargs...
+    E_multiplier_list::AbstractVector,
+    η_list::AbstractVector,
+    θ_list::AbstractVector,
+    α::Real,
+    ρ::Real;
+    kwargs...
 )::DataFrame
     η_θ_grid = Base.product(η_list, θ_list) |> collect |> vec
     df_list = [

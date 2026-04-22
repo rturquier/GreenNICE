@@ -112,8 +112,66 @@ facet_plot_E |> save("outputs/figures/facetted_SCC_E_vs_gamma.svg")
 facet_plot_c = facet_SCC(facet_df; cost_to="c")
 facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
 
+# ==== Heatmap ====
+# %% Set η × θ grid
+η_list = 0:0.1:2
+θ_list = -1:0.1:1
 
-# ====  Sensitivity to E =====
+# %% Run model on parameter grid (this can take a long time) and save results
+heatmap_df = get_SCC_decomposition(η_list, θ_list, α, [0, 1], ρ)
+write_csv(heatmap_df, "outputs/heatmap_df.csv")
+
+# %% Read
+heatmap_simulations_df = read_csv("outputs/heatmap_df.csv")
+
+# %% Prepare
+heatmap_df_γ0 = @chain heatmap_simulations_df begin
+    @filter(γ == 0)
+    @select(
+        η,
+        θ,
+        SCC_E_0 = present_cost_of_damages_to_E,
+        SCC_c_0 = present_cost_of_damages_to_c
+    )
+end
+
+heatmap_df_γ1 = @chain heatmap_simulations_df begin
+    @filter(γ == 1)
+    @select(
+        η,
+        θ,
+        SCC_E_1 = present_cost_of_damages_to_E,
+        SCC_c_1 = present_cost_of_damages_to_c
+    )
+end
+
+heatmap_df = @chain begin
+    @left_join(heatmap_df_γ0, heatmap_df_γ1)
+    @mutate(
+        Δ_SCC_E = SCC_E_1 - SCC_E_0,
+        Δ_SCC_c = SCC_c_1 - SCC_c_0,
+    )
+    @mutate(
+        Δ_SCC_E_over_SCC_E = Δ_SCC_E / SCC_E_1,
+        Δ_SCC_E_over_SCC = Δ_SCC_E / (SCC_E_1 + SCC_c_1),
+    )
+end
+
+# %% Plot main heatmap
+Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC_E")
+Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/Δ_SCC_E_vs_SCC_E_heatmap.svg")
+
+# %% Plot additional heatmaps for the appendix
+Δ_SCC_E_vs_SCC_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC")
+Δ_SCC_E_vs_SCC_heatmap |> save("outputs/figures/Δ_SCC_E_vs_SCC_heatmap.svg")
+
+Δ_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to=nothing)
+Δ_SCC_E_heatmap |> save("outputs/figures/Δ_SCC_E_heatmap.svg")
+
+Δ_SCC_c_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="c", relative_to=nothing)
+Δ_SCC_c_heatmap |> save("outputs/figures/Δ_SCC_c_heatmap.svg")
+
+# ====  Sensitivity to E ====
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 

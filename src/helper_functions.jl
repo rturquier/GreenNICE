@@ -119,7 +119,6 @@ function save_results(m::Model, output_directory::String; revenue_recycling::Boo
     save(joinpath(global_path, "global_gross_output.csv"),    			        getdataframe(m, :grosseconomy => :YGROSS_global))
     save(joinpath(global_path, "global_gtco2_emissions.csv"),                   getdataframe(m, :emissions =>:E_Global_gtco2))
     save(joinpath(global_path, "global_consumption_gini.csv"),                  getdataframe(m, :quantile_recycle =>:gini_cons_global))
-    save(joinpath(global_path, "global_consumption_EDE.csv"),                   getdataframe(m, :welfare => :cons_EDE_global))
     save(joinpath(global_path, "total_tax_revenue.csv"),                        getdataframe(m, :revenue_recycle => :total_tax_revenue))
     save(joinpath(global_path, "globally_recycled_tax_revenue.csv"),            getdataframe(m, :revenue_recycle => :global_revenue))
     save(joinpath(global_path, "global_CPC_post_recycle.csv"),                  getdataframe(m, :quantile_recycle => :CPC_post_global))
@@ -131,7 +130,6 @@ function save_results(m::Model, output_directory::String; revenue_recycling::Boo
     save(joinpath(regional_path, "regional_net_output_per_capita.csv"),         getdataframe(m, :neteconomy => :Y_pc_rwpp))
     save(joinpath(regional_path, "regional_consumption_per_capita_post_recycle.csv"), getdataframe(m, :quantile_recycle => :CPC_post_rwpp))
     save(joinpath(regional_path, "regional_consumption_gini.csv"),              getdataframe(m, :quantile_recycle =>:gini_cons_rwpp))
-    save(joinpath(regional_path, "regional_consumption_EDE.csv"),               getdataframe(m, :welfare => :cons_EDE_rwpp))
     save(joinpath(regional_path, "regional_welfare.csv"),                       getdataframe(m, :welfare => :welfare_rwpp))
 
     # Save Country Output.
@@ -153,7 +151,6 @@ function save_results(m::Model, output_directory::String; revenue_recycling::Boo
 
     save(joinpath(country_path, "consumption_per_capita_post_recycle.csv"), getdataframe(m, :quantile_recycle => :CPC_post))
     save(joinpath(country_path, "consumption_gini.csv"),                getdataframe(m, :quantile_recycle =>:gini_cons))
-    save(joinpath(country_path, "consumption_EDE.csv"),                 getdataframe(m, :welfare => :cons_EDE_country))
     save(joinpath(country_path, "country_welfare.csv"),                 getdataframe(m, :welfare => :welfare_country))
 
     # Save Quantile Output.

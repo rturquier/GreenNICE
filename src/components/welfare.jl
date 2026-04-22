@@ -10,9 +10,6 @@
     l                       = Parameter(index=[time, country])              # Population (thousands)
     mapcrwpp                = Parameter(index=[country])                    # Map from country index to wpp region index
 
-    cons_EDE_country        = Variable(index=[time, country])               # Country equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
-    cons_EDE_rwpp           = Variable(index=[time, regionwpp])             # Regional equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
-    cons_EDE_global         = Variable(index=[time])                        # Global equally distributed welfare equivalent consumption (thousand USD2017 per person per year)
     welfare_country         = Variable(index=[time, country])               # Country welfare
     welfare_rwpp            = Variable(index=[time, regionwpp])             # WPP region welfare
     welfare_global          = Variable(index=[time])                        # Global welfare
@@ -20,21 +17,10 @@
     α                       = Parameter()                                   # Environmental good weight in utility function
     θ                       = Parameter()                                   # Elasticity of substitution between consumption and environmental good
     E_flow_percapita        = Parameter(index=[time, country, quantile])    # Flow of non-market environmental good per capita (thousand USD2017 per person per year)
-    E_bar                   = Parameter()                                   # Average E_flow per capita in 2020 (thousand USD2017 per person)
 
     function run_timestep(p, v, d, t)
 
         for c in d.country
-            v.cons_EDE_country[t,c] = EDE(
-                p.qcpc_post_recycle[t,c,:],
-                p.E_flow_percapita[t,c,:],
-                p.E_bar,
-                p.η,
-                p.θ,
-                p.α,
-                p.nb_quantile
-            )
-
             v.welfare_country[t,c] = (
                 (p.l[t,c] / p.nb_quantile) * sum(utility.(
                     p.qcpc_post_recycle[t,c,:], p.E_flow_percapita[t,c,:], p.η, p.θ, p.α
@@ -44,32 +30,12 @@
 
         for rwpp in d.regionwpp
             country_indices = findall(x -> x == rwpp, p.mapcrwpp)
-
-            v.cons_EDE_rwpp[t,rwpp] = EDE_aggregated(
-                v.cons_EDE_country[t,country_indices],
-                p.E_bar,
-                p.η,
-                p.θ,
-                p.α,
-                p.l[t,country_indices]
-            )
             v.welfare_rwpp[t,rwpp] = sum(v.welfare_country[t,country_indices])
         end # region loop
 
-        v.cons_EDE_global[t] = EDE_aggregated(
-            v.cons_EDE_country[t,:],
-            p.E_bar,
-            p.η,
-            p.θ,
-            p.α,
-            p.l[t,:],
-        )
         v.welfare_global[t] = sum(v.welfare_country[t,:])
     end # timestep
 end
-
-
-
 
 """
     v(consumption::Real, environment::Real, θ::Real, α::Real)
@@ -96,7 +62,6 @@ function v(c::Real, E::Real, θ::Real, α::Real)
     return value
 end
 
-
 """
     utility(consumption::Real, environment::Real, η::Real, θ::Real, α::Real)
 
@@ -121,108 +86,4 @@ function utility(c::Real, E::Real, η::Real, θ::Real, α::Real)
 
     utility = φ(v(c, E, θ, α))
     return utility
-end
-
-
-"""
-    inverse_utility(u::Real, E::Real, η::Real, θ::Real, α::Real)
-
-Calculate the consumption that would give utility `u` and reference environment level `E`.
-"""
-function inverse_utility(u::Real, E::Real, η::Real, θ::Real, α::Real)
-    # inverse of CES function
-    if θ ≠ 0
-        # general case
-        v_inverse = x -> ((x^θ - α * E^θ) / (1 - α))^(1 / θ)
-    elseif θ == 0
-        # Cobb-Douglas special case
-        v_inverse = x -> (x / E^α)^(1 / (1 - α))
-    end
-
-    # inverse of concave transformation
-    if η ≠ 1
-        # CRRA general case
-        φ_inverse = x -> ((1 - η) * x)^(1 / (1 - η))
-    elseif η == 1
-        # logarithm special case
-        φ_inverse = x -> exp(x)
-    end
-
-    try
-        consumption = v_inverse(φ_inverse(u))
-        @assert utility(consumption, E, η, θ, α) ≈ u
-    catch
-        @debug """Inverse utility seems to be undefined for these parameters:
-                 utility = $u
-                 reference environment = $E
-                 η = $η, θ = $θ, α = $α.
-                 NaN returned."""
-        return NaN
-    end
-
-    consumption = v_inverse(φ_inverse(u))
-    return consumption
-end
-
-
-"""
-    EDE(
-        consumption::Vector,
-        environment::Union{Real,Vector},
-        baseline_environment::Real,
-        η::Real,
-        θ::Real,
-        α::Real,
-        nb_quantile::Int,
-    )
-
-Calculate Equally Distributed Equivalent (EDE) consumption at the country level.
-
-EDE consumption is the consumption level that would provide the same welfare if there were
-no inequalities, given a shared `baseline_environment` level of envrionmental consumption.
-"""
-function EDE(
-    consumption::Vector,
-    environment::Union{Real,Vector},
-    baseline_environment::Real,
-    η::Real,
-    θ::Real,
-    α::Real,
-    nb_quantile::Int,
-)
-    average_utility = (1 / nb_quantile) * sum(utility.(
-        consumption, environment, η, θ, α
-    ))
-    EDE = inverse_utility.(average_utility, baseline_environment, η, θ, α)
-    return EDE
-end
-
-
-"""
-    EDE_aggregated(
-        country_level_EDE::Vector,
-        baseline_environment::Real,
-        η::Real,
-        θ::Real,
-        α::Real,
-        population::Vector,
-    )
-
-Aggregate country-level EDE consumption.
-"""
-function EDE_aggregated(
-    country_level_EDE::Vector,
-    baseline_environment::Real,
-    η::Real,
-    θ::Real,
-    α::Real,
-    population::Vector,
-)
-    total_utility = sum(population .* utility.(
-        country_level_EDE, baseline_environment, η, θ, α
-    ))
-    total_population = sum(population)
-    average_utility = total_utility / total_population
-    aggregated_EDE = inverse_utility(average_utility, baseline_environment, η, θ, α)
-    return aggregated_EDE
 end

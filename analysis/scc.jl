@@ -398,9 +398,7 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     return combined_plot
 end
 
-function plot_SCCE_waterfall(csv_path::String)::VegaLite.VLSpec
-
-    df = CSV.read(csv_path, DataFrame)
+function plot_SCCE_waterfall(df::DataFrame)::VegaLite.VLSpec
 
     E_equal        = df.present_cost_of_damages_to_E_E_equal[1]
     E_across_equal = df.present_cost_of_damages_to_E_across_equal[1]

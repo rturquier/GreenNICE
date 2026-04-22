@@ -32,7 +32,6 @@ bottom3_ξ = first(sort(descriptives_df, :ξ, rev=false), 3)
 α = 0.1
 ρ = 0.001
 γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
-γ = 1.0
 
 # %% Get SCC decomposition and save results
 SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
@@ -44,7 +43,8 @@ decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
 decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 
 # %% Plot waterfall decomposition
-waterfall_plot = plot_SCCE_waterfall(SCC_decomposition_df)
+SCCE_waterfall_df = @filter(SCC_decomposition_df, γ == 1.)
+waterfall_plot = plot_SCCE_waterfall(SCCE_waterfall_df)
 waterfall_plot |> save("outputs/figures/SCC_E_waterfall.svg")
 
 # ==== Calculate interaction effect ====

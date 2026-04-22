@@ -87,17 +87,18 @@ absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
 save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
 
 # %%% Identify countries with highest and lowest interaction effects
-top3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=true), 3)
-bottom3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=false), 3)
+top3_abs_interaction = @chain country_interaction_df @arrange(desc(interaction)) first(3)
+bottom3_abs_interaction = @chain country_interaction_df @arrange(desc(interaction)) last(3)
 
 # %% Relative interaction map
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
 save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 
 # %%% Identify countries with highest and lowest relative interaction effects
-top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
-bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
-                                3)
+rel_interaction_sorted_df = @arrange(country_interaction_df, desc(interaction_pct))
+top3_rel_interaction = @chain rel_interaction_sorted_df first(3)
+bottom3_rel_interaction = @chain rel_interaction_sorted_df last(3)
+
 # ----- Heatmap -----
 # %% Set η × θ grid
 η_list = 0:0.1:2

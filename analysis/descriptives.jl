@@ -1,14 +1,4 @@
-using Mimi
-using TidierData
-using TidierFiles
-using VegaLite
-using Countries
-using VegaDatasets
-
-if !isdefined(Main, :GreenNICE)
-    include("../src/GreenNICE.jl")
-    using .GreenNICE
-end
+include("shared_packages.jl")
 
 function get_descriptives_df()::DataFrame
 

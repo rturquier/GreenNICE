@@ -398,6 +398,152 @@ function plot_SCC_decomposition(SCC_decomposition_df::DataFrame)::VegaLite.VLSpe
     return combined_plot
 end
 
+function plot_SCCE_waterfall(csv_path::String)::VegaLite.VLSpec
+
+    df = CSV.read(csv_path, DataFrame)
+
+    E_equal        = df.present_cost_of_damages_to_E_E_equal[1]
+    E_across_equal = df.present_cost_of_damages_to_E_across_equal[1]
+    E_within_equal = df.present_cost_of_damages_to_E_within_equal[1]
+    E_total        = df.present_cost_of_damages_to_E[1]
+
+    label_order = [
+        "No Inequality",
+        "A",
+        "B",
+        "C",
+        "Total"
+    ]
+
+    bar_df = DataFrame(
+        label     = label_order,
+        order     = 1:5,
+        bar_start = [0.0,    E_equal,        E_across_equal, E_within_equal, 0.0    ],
+        bar_end   = [E_equal, E_across_equal, E_within_equal, E_total,        E_total],
+        bar_type  = ["base", "increment", "increment", "increment", "total"],
+        bar_value = [
+            E_equal,
+            E_across_equal - E_equal,
+            E_within_equal - E_across_equal,
+            E_total - E_within_equal,
+            E_total
+        ]
+    )
+    bar_df.label_y     = (bar_df.bar_start .+ bar_df.bar_end) ./ 2
+    bar_df.value_str   = string.(round.(bar_df.bar_value, digits=2))
+    bar_df.description = ["No Inequality",
+                          "A = Unequal E Endowment",
+                          "B = Unequal Inter-Regional Consumption",
+                          "C = Unequal Intra-Regional Consumption",
+                          "Total"]
+
+    base_total_df = bar_df[bar_df.bar_type .!= "increment", :]
+    increment_df  = bar_df[bar_df.bar_type .== "increment", :]
+
+    connector_df = DataFrame(
+        from_label  = label_order[1:4],
+        from_order  = [1, 2, 3, 4],
+        to_label    = label_order[2:5],
+        to_order    = [2, 3, 4, 5],
+        y_val       = [E_equal, E_across_equal, E_within_equal, E_total]
+    )
+
+    plot = @vlplot(
+        width  = 620,
+        height = 320,
+        config = {
+            view       = {stroke = "transparent"},
+            background = "white",
+            font       = "sans-serif",
+            axis       = {
+                gridColor     = "#e8e8e8",
+                gridWidth     = 0.8,
+                domainColor   = "#cccccc",
+                tickColor     = "#cccccc",
+                labelColor    = "#444444",
+                titleColor    = "#444444",
+                labelFontSize = 14,
+                titleFontSize = 14
+            },
+            legend = {
+                labelFontSize = 12,
+                labelColor    = "#444444",
+                titleFontSize = 13,
+                titleColor    = "#444444",
+                orient        = "bottom",
+                direction     = "vertical",
+                labelLimit    = 500,
+                symbolSize    = 0
+            }
+        }
+    ) +
+    @vlplot(
+        data  = base_total_df,
+        mark  = {type = :bar, cornerRadiusEnd = 3},
+        x     = {
+            field = :label,
+            type  = "nominal",
+            scale = {domain = ["No Inequality", "A", "B", "C", "Total"]},
+            axis  = {title = "", labelAngle = 0, labelLimit = 220,
+                     domain = false, ticks = false, labelPadding = 8}
+        },
+        y     = {
+            field = :bar_start,
+            type  = "quantitative",
+            title = "Environmental SCC (\$ per ton CO₂)",
+            scale = {zero = true},
+            axis  = {domain = false, tickCount = 5, grid = true}
+        },
+        y2    = {field = :bar_end},
+        color = {value = "#8B4A6E"}
+    ) +
+    @vlplot(
+        data  = increment_df,
+        mark  = {type = :bar, cornerRadiusEnd = 3},
+        x     = {
+            field = :label,
+            type  = "nominal",
+            scale = {domain = ["No Inequality", "A", "B", "C", "Total"]},
+            axis  = {title = "", labelAngle = 0, labelLimit = 220,
+                     domain = false, ticks = false, labelPadding = 8}
+        },
+        y     = {
+            field = :bar_start,
+            type  = "quantitative",
+            title = "Environmental SCC (\$ per ton CO₂)",
+            scale = {zero = true},
+            axis  = {domain = false, tickCount = 5, grid = true}
+        },
+        y2    = {field = :bar_end},
+        color = {
+            field  = :description,
+            type   = "nominal",
+            scale  = {
+                domain = ["A = Unequal E Endowment",
+                          "B = Unequal Inter-Regional Consumption",
+                          "C = Unequal Intra-Regional Consumption"],
+                range  = ["#4A7C59", "#4A7C59", "#4A7C59"]
+            },
+            legend = {title = ""}
+        }
+    ) +
+    @vlplot(
+        data  = bar_df,
+        mark  = {type = :text, color = :white, fontWeight = :bold, fontSize = 13, dy = 0},
+        x     = {field = :label,   type = "nominal"},
+        y     = {field = :label_y, type = "quantitative"},
+        text  = {field = :value_str, type = "nominal"}
+    ) +
+    @vlplot(
+        data  = connector_df,
+        mark  = {type = :rule, strokeDash = [4, 4], color = "#333333", strokeWidth = 1.2},
+        x     = {field = :from_label, type = "nominal", bandPosition = 1},
+        x2    = {field = :to_label,   type = "nominal", bandPosition = 0},
+        y     = {field = :y_val, type = "quantitative"}
+    )
+
+    return plot
+end
 
 """
     facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec

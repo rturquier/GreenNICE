@@ -67,7 +67,7 @@ SCC_E_waterfall_df = @filter(SCC_decomposition_df, γ == 1.)
 waterfall_plot = plot_SCC_E_waterfall(SCC_E_waterfall_df)
 waterfall_plot |> save("outputs/figures/SCC_E_waterfall.svg")
 
-# ==== Calculate interaction effect ====
+# ----- Calculate interaction effect -----
 # %% Get data
 country_interaction_df = get_SCC_interaction(η, θ, α, [0.0, 1.0], ρ)
 decomposition_BAU = @filter(SCC_decomposition_df, γ == 1.)
@@ -81,7 +81,7 @@ SCC = SCC_c + SCC_E
 I_abs_interaction = sum(country_interaction_df.interaction)
 I_rel_interaction = I_abs_interaction ./ SCC_E * 100
 
-# ==== Map interaction effect at country levels ====
+# ----- Map interaction effect at country levels -----
 # %% Absolute interaction map
 absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
 save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
@@ -98,7 +98,7 @@ save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
 bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
                                 3)
-# ==== Heatmap ====
+# ----- Heatmap -----
 # %% Set η × θ grid
 η_list = 0:0.1:2
 θ_list = -1:0.1:1
@@ -127,7 +127,7 @@ heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 Δ_SCC_c_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="c", relative_to=nothing)
 Δ_SCC_c_heatmap |> save("outputs/figures/Δ_SCC_c_heatmap.svg")
 
-# ====  Sensitivity to E ====
+# -----  Sensitivity to E -----
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 
@@ -181,7 +181,7 @@ SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
 
-# ==== SCC vs θ, facetted by E and η ====
+# ----- SCC vs θ, facetted by E and η -----
 # %%  Set values for x-axis and E facets
 θ_axis = [θ for θ in -1:0.025:1]
 E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]

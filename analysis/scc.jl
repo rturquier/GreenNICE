@@ -546,35 +546,6 @@ function plot_SCC_E_waterfall(df::DataFrame)::VegaLite.VLSpec
     return plot
 end
 
-"""
-    facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
-
-Plot the social cost of carbon to environment or consumption for different η's and θ's.
-
-# Keyword arguments
-- `cost_to::String`: either "E" to plot the present social value of damages to the
-    environment, or "c" for damages to consumption.
-"""
-function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.VLSpec
-    y_name = "present_cost_of_damages_to_" * cost_to
-    y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
-    SCC_facet_plot = SCC_decomposition_df |> @vlplot(
-        :line,
-        x="γ:q",
-        y={
-            "$y_name:q",
-            axis={
-                title=y_title,
-                titlePadding=5,
-            }
-        },
-        column=:θ,
-        row={field=:η, sort={field=:η, order="descending"}},
-        resolve={scale={y="independent"}},
-    )
-    return SCC_facet_plot
-end
-
 function prepare_heatmap_df(heatmap_simulations_df)
     heatmap_df_γ0 = @chain heatmap_simulations_df begin
         @filter(γ == 0)
@@ -969,41 +940,6 @@ function get_SCC_vs_E_θ_and_η(
     ]
     concatenated_df = reduce(vcat, df_list)
     return concatenated_df
-end
-
-function plot_SCC_vs_θ_facetted_by_E_and_η(
-    SCC_vs_E_θ_and_η_df::DataFrame; cost_to::String="E"
-)::VegaLite.VLSpec
-    y_name = "present_cost_of_damages_to_" * cost_to
-    y_title = "SCC_" * cost_to * " (\$ / tCO₂ )"
-
-    plot =  SCC_vs_E_θ_and_η_df |>
-        @vlplot(
-            mark=:line,
-            # transform={filter={field="θ", range=[0, 1]}},
-            x="θ:q",
-            y={"$y_name:q", scale={type="linear"}, axis={title=y_title, titlePadding=5}},
-            color={
-                "γ:o",
-                scale={domain=[0, 1], range=["#C98ACF", "#850085"]},
-                legend=nothing,
-            },
-            shape={
-                "γ:o",
-                scale={domain=[1, 0], range=["diamond", "circle"]},
-                legend={
-                    labelExpr="'γ = ' + datum.value",
-                    labelFont="Serif",
-                    labelFontSize=12,
-                    symbolStrokeColor="transparent",
-                    symbolFillColor={expr="scale('color', datum.value)"}
-                },
-            },
-            column=:E_multiplier,
-            row={field=:η, sort={field=:η, order="descending"}},
-            resolve={scale={y="independent"}},
-        )
-    return plot
 end
 
 """

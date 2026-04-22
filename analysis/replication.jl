@@ -97,26 +97,6 @@ E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 # %% Get initial value of global E
 intial_global_E = E_flow_df.E_flow_global |> first
 
-# ==== Facet plot ====
-# %% Set η × θ grid
-η_list = [1, 1.5, 2]
-θ_list = [-0.42, 0.43, 0.90]
-
-# %% Run model on parameter grid (this can take a long time) and save results
-facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
-write_csv(facet_df, "outputs/facet_df.csv")
-
-# %% Read
-facet_df = read_csv("outputs/facet_df.csv")
-
-# %% Facet plot
-facet_plot_E = facet_SCC(facet_df; cost_to="E")
-facet_plot_E |> save("outputs/figures/facetted_SCC_E_vs_gamma.svg")
-
-# %% Facet plot for SCC_c
-facet_plot_c = facet_SCC(facet_df; cost_to="c")
-facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
-
 # ==== Heatmap ====
 # %% Set η × θ grid
 η_list = 0:0.1:2

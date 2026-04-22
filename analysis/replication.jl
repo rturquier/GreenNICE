@@ -43,8 +43,8 @@ decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
 decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
 
 # %% Plot waterfall decomposition
-SCCE_waterfall_df = @filter(SCC_decomposition_df, γ == 1.)
-waterfall_plot = plot_SCCE_waterfall(SCCE_waterfall_df)
+SCC_E_waterfall_df = @filter(SCC_decomposition_df, γ == 1.)
+waterfall_plot = plot_SCC_E_waterfall(SCC_E_waterfall_df)
 waterfall_plot |> save("outputs/figures/SCC_E_waterfall.svg")
 
 # ==== Calculate interaction effect ====

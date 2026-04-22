@@ -35,19 +35,6 @@ function get_descriptives_df()::DataFrame
     return df
 end
 
-function get_WPP_regions(df::DataFrame)::DataFrame
-
-    df_regions = @chain CSV.read("data/WPP_regions_country_list.csv", DataFrame) begin
-        @mutate(country = Symbol.(countrycode))
-        @mutate(WPP_region_name = Symbol.(WPP_region_name))
-        @select(-(:WPP_region_number, :countrycode))
-    end
-
-    df = @left_join(df, df_regions)
-
-    return df
-end
-
 function get_country_id(df::DataFrame)::DataFrame
 
     df_country = @chain begin
@@ -60,7 +47,7 @@ function get_country_id(df::DataFrame)::DataFrame
     return df_country
 end
 
-function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
+function plot_gini_vs_E_flow_0(df::DataFrame)::VegaLite.VLSpec
     plot = @vlplot(
         data = df,
         mark = :circle,
@@ -74,116 +61,6 @@ function plot_gini_E_stock0(df::DataFrame)::VegaLite.VLSpec
 
     return plot
 end
-
-function plot_theta_E_stock0(df::DataFrame)::VegaLite.VLSpec
-    plot = @vlplot(
-        data = df,
-        layer = [
-            {
-                mark = :point,
-                x = {field = :E_stock0_percapita,
-                     title = "Natural capital stock per capita (k USD)"},
-                y = {field = :θ_env,
-                     title = "Damage coefficient (1/°C)"}
-            },
-            {
-                transform = [
-                    {
-                        regression = :θ_env,
-                        on = :E_stock0_percapita
-                    }
-                ],
-                mark = { :line, color = "firebrick", opacity = 0.8 },
-                x = :E_stock0_percapita,
-                y = :θ_env
-            }
-        ]
-    )
-
-    return plot
-end
-
-function plot_E_stock_0_hconcat(df::DataFrame)::VegaLite.VLSpec
-
-    vconcat_plot= @vlplot(
-    data = df,
-    hconcat=[
-     {
-        layer = [
-            {
-                mark = :point,
-                x = {field = :E_stock0_percapita,
-                     title = "Natural capital stock per capita (k USD)",
-                     type = "quantitative"},
-                y = {field = :gini_cons,
-                     title = "Consumption gini index",
-                     type = "quantitative"}
-            },
-            {
-                transform = [
-                    {
-                        regression = :gini_cons,
-                        on = :E_stock0_percapita
-                    }
-                ],
-                mark = { :line, color = "firebrick", opacity = 0.8 },
-                x = :E_stock0_percapita,
-                y = :gini_cons
-            }
-        ]
-    },
-    {
-        layer = [
-            {
-                mark = :point ,
-                x = {field = :E_stock0_percapita,
-                     title = "Natural capital stock per capita (k USD)",
-                     type = "quantitative"},
-                y = {field = :θ_env,
-                     title = "Damage coefficient (1/ \u00B0C)",
-                     type = "quantitative"}
-            },
-            {
-                transform = [
-                    {
-                        regression = :θ_env,
-                        on = :E_stock0_percapita
-                    }
-                ],
-                mark = { :line, color = "firebrick", opacity = 0.8 },
-                x = :E_stock0_percapita,
-                y = :θ_env
-            }
-        ]
-    }
-    ]
-    )
-
-    return vconcat_plot
-end
-
-function plot_descriptive_coefficients(df::DataFrame)::VegaLite.VLSpec
-
-    df = get_WPP_regions(df)
-
-    circle_plot = @vlplot(
-        :circle,
-        data = df,
-        y = {field = :θ_env, title = "Damage coefficient (1/ °C)"},
-        x = {field = :gini_cons, title = "Consumption gini index"},
-        color = {field = :WPP_region_name,
-                 type = "nominal",
-                 title = "Region",
-                 legend = {orient = "right", columns = 2},
-                 scale = {scheme = "category20"}},
-        size = {field = :E_stock0_percapita,
-                title = ["Natural capital stock", "percapita (k USD)"],
-                legend = {orient = "right", direction = "horizontal" }}
-    )
-
-    return circle_plot
-end
-
 
 function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
 

@@ -16,7 +16,6 @@
 
     E_stock             = Variable(index=[time, country])               # Stock of Natural capital (2017 million usd)
     E_flow              = Variable(index=[time, country, quantile])     # Flow of natural capital (2017 million usd per quantile per year)
-    E_bar               = Variable()                                    # Average level of environment per capita at time 0 (thousand usd per capita)
     E_flow_percapita    = Variable(index=[time, country, quantile])     # Flow of natural capital per capita (2017 thousand usd per capita)
     E_flow_country      = Variable(index=[time,country])                # Flow of natural capital per country (2017 million usd per year)
     E_flow_rwpp         = Variable(index=[time, regionwpp])             # Flow of natural capital per WPP region (2017 million usd per year)
@@ -24,14 +23,9 @@
     E_flow_equal        = Variable(index=[time])                        # Flow of natural capital per capita assuming natural capital is equally distributed every year (2017 million usd per year)
 
     function run_timestep(p, v, d, t)
-
         E_discount_rate = 0.04
-
         stock_to_flow_factor = E_discount_rate / (1 - (1 + E_discount_rate)^(-100))
-
         E_stock0_percapita = (sum(p.E_stock0[:])) / sum(p.l[TimestepIndex(1), :])
-
-        v.E_bar = E_stock0_percapita * stock_to_flow_factor
 
         for c in d.country, q in d.quantile
 

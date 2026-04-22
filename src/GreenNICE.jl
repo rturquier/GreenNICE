@@ -145,7 +145,6 @@ function _connect_component_parameters!(m::Model)::Model
     connect_param!(m, :environment      => :LOCAL_DAM_ENV,      :damages            => :LOCAL_DAM_ENV)
     connect_param!(m, :environment      => :LOCAL_DAM_ENV_EQUAL,:damages            => :LOCAL_DAM_ENV_EQUAL)
 	connect_param!(m, :welfare 			=> :E_flow_percapita, 	:environment		=> :E_flow_percapita)
-	connect_param!(m, :welfare 			=> :E_bar, 				:environment		=> :E_bar)
 	connect_param!(m, :welfare 			=> :qcpc_post_recycle, 	:quantile_recycle	=> :qcpc_post_recycle)
 
     return m

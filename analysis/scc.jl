@@ -7,9 +7,10 @@ using XLSX  # to read Costanza et al. (2014) table S1
 using HTTP  # to get CPI data
 using JSON  # to get CPI data
 
-
-include("../src/GreenNICE.jl")
-using .GreenNICE
+if !isdefined(Main, :GreenNICE)
+    include("../src/GreenNICE.jl")
+    using .GreenNICE
+end
 
 include("../src/components/welfare.jl")
 

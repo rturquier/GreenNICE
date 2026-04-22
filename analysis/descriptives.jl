@@ -5,8 +5,10 @@ using VegaLite
 using Countries
 using VegaDatasets
 
-include("../src/GreenNICE.jl")
-using .GreenNICE
+if !isdefined(Main, :GreenNICE)
+    include("../src/GreenNICE.jl")
+    using .GreenNICE
+end
 
 function get_descriptives_df()::DataFrame
 

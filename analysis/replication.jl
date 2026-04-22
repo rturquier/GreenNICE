@@ -7,80 +7,15 @@ Pkg.instantiate()
 include("scc.jl")
 include("descriptives.jl")
 
-# %% Get descriptive figures
-descriptives_df = get_descriptives_df()
-
-initial_E_flow_map = map_E_percapita_country(descriptives_df)
-Gini_E_flow0_scatterplot = plot_gini_vs_E_flow_0(descriptives_df)
-ξ_map = map_damage_coefficient_country(descriptives_df)
-
-# %% Save figures
-save("outputs/maps/initial_E_flow_percapita.svg", initial_E_flow_map)
-save("outputs/figures/gini_E_flow0.svg", Gini_E_flow0_scatterplot)
-save("outputs/maps/initial_damage_coefficient_map.svg", ξ_map)
-
-# %% Get descriptive values
-top3_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita, rev=true), 3)
-bottom4_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita,
-                                        rev=false), 4)
-top3_ξ = first(sort(descriptives_df, :ξ, rev=true), 3)
-bottom3_ξ = first(sort(descriptives_df, :ξ, rev=false), 3)
-
+# ==== Descriptive information on the default run ====
 # %% Set default parameters
 η = 1.5
 θ = 0.43
 α = 0.1
 ρ = 0.001
-γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
 
-# %% Get SCC decomposition and save results
-SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
-write_csv(SCC_decomposition_df, "outputs/SCC_decomposition.csv")
-
-# %% Plot SCC decomposition
-SCC_decomposition_df = read_csv("outputs/SCC_decomposition.csv")
-decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
-decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
-
-# %% Plot waterfall decomposition
-SCC_E_waterfall_df = @filter(SCC_decomposition_df, γ == 1.)
-waterfall_plot = plot_SCC_E_waterfall(SCC_E_waterfall_df)
-waterfall_plot |> save("outputs/figures/SCC_E_waterfall.svg")
-
-# ==== Calculate interaction effect ====
-# %% Get data
-country_interaction_df = get_SCC_interaction(η, θ, α, [0.0, 1.0], ρ)
-decomposition_BAU = @filter(SCC_decomposition_df, γ == 1.)
-
-# %% Calculate SCC
-SCC_c = decomposition_BAU.present_cost_of_damages_to_c
-SCC_E = decomposition_BAU.present_cost_of_damages_to_E
-SCC = SCC_c + SCC_E
-
-# %% Calculate interaction effect (absolute and relative)
-I_abs_interaction = sum(country_interaction_df.interaction)
-I_rel_interaction = I_abs_interaction ./ SCC_E * 100
-
-# ==== Map interaction effect at country levels ====
-# %% Absolute interaction map
-absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
-save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
-
-# %%% Identify countries with highest and lowest interaction effects
-top3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=true), 3)
-bottom3_abs_interaction = first(sort(country_interaction_df, :interaction, rev=false), 3)
-
-# %% Relative interaction map
-relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
-save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
-
-# %%% Identify countries with highest and lowest relative interaction effects
-top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
-bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
-                                3)
-# ==== Descriptive information on the default run ====
 # %% Default run
-m = GreenNICE.create()
+m = GreenNICE.create(; parameters = Dict(:η => η, :θ => θ, :α => α))
 run(m)
 
 # %% Plot temperature trajectory in a default run
@@ -97,27 +32,74 @@ E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
 # %% Get initial value of global E
 intial_global_E = E_flow_df.E_flow_global |> first
 
-# ==== Facet plot ====
-# %% Set η × θ grid
-η_list = [1, 1.5, 2]
-θ_list = [-0.42, 0.43, 0.90]
+# %% Get descriptive figures
+descriptives_df = get_descriptives_df(m)
 
-# %% Run model on parameter grid (this can take a long time) and save results
-facet_df = get_SCC_decomposition(η_list, θ_list, α, γ_list, ρ)
-write_csv(facet_df, "outputs/facet_df.csv")
+initial_E_flow_map = map_E_percapita_country(descriptives_df)
+Gini_E_flow0_scatterplot = plot_gini_vs_E_flow_0(descriptives_df)
+ξ_map = map_damage_coefficient_country(descriptives_df)
 
-# %% Read
-facet_df = read_csv("outputs/facet_df.csv")
+# %% Save figures
+save("outputs/maps/initial_E_flow_percapita.svg", initial_E_flow_map)
+save("outputs/figures/gini_E_flow0.svg", Gini_E_flow0_scatterplot)
+save("outputs/maps/initial_damage_coefficient_map.svg", ξ_map)
 
-# %% Facet plot
-facet_plot_E = facet_SCC(facet_df; cost_to="E")
-facet_plot_E |> save("outputs/figures/facetted_SCC_E_vs_gamma.svg")
+# %% Get descriptive values
+top3_E_flow_percapita = @chain descriptives_df @arrange(desc(E_flow0_percapita)) first(3)
+bottom4_E_flow_percapita = @chain descriptives_df @arrange(desc(E_flow0_percapita)) last(4)
 
-# %% Facet plot for SCC_c
-facet_plot_c = facet_SCC(facet_df; cost_to="c")
-facet_plot_c |> save("outputs/figures/facetted_SCC_c_vs_gamma.svg")
+top3_ξ = @chain descriptives_df @arrange(desc(ξ)) first(3)
+bottom3_ξ = @chain descriptives_df @arrange(desc(ξ)) last(3)
 
-# ==== Heatmap ====
+# ==== Simulations ====
+# %% Get SCC decomposition and save results
+γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
+SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
+write_csv(SCC_decomposition_df, "outputs/SCC_decomposition.csv")
+
+# %% Plot SCC decomposition
+SCC_decomposition_df = read_csv("outputs/SCC_decomposition.csv")
+decomposition_plot = plot_SCC_decomposition(SCC_decomposition_df)
+decomposition_plot |> save("outputs/figures/SCC_decomposition.svg")
+
+# %% Plot waterfall decomposition
+SCC_E_waterfall_df = @filter(SCC_decomposition_df, γ == 1.)
+waterfall_plot = plot_SCC_E_waterfall(SCC_E_waterfall_df)
+waterfall_plot |> save("outputs/figures/SCC_E_waterfall.svg")
+
+# ----- Calculate interaction effect -----
+# %% Get data
+country_interaction_df = get_SCC_interaction(η, θ, α, [0.0, 1.0], ρ)
+decomposition_BAU = @filter(SCC_decomposition_df, γ == 1.)
+
+# %% Calculate SCC
+SCC_c = decomposition_BAU.present_cost_of_damages_to_c
+SCC_E = decomposition_BAU.present_cost_of_damages_to_E
+SCC = SCC_c + SCC_E
+
+# %% Calculate interaction effect (absolute and relative)
+I_abs_interaction = sum(country_interaction_df.interaction)
+I_rel_interaction = I_abs_interaction ./ SCC_E * 100
+
+# ----- Map interaction effect at country level -----
+# %% Absolute interaction map
+absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
+save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
+
+# %%% Identify countries with highest and lowest interaction effects
+top3_abs_interaction = @chain country_interaction_df @arrange(desc(interaction)) first(3)
+bottom3_abs_interaction = @chain country_interaction_df @arrange(desc(interaction)) last(3)
+
+# %% Relative interaction map
+relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
+save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
+
+# %%% Identify countries with highest and lowest relative interaction effects
+rel_interaction_sorted_df = @arrange(country_interaction_df, desc(interaction_pct))
+top3_rel_interaction = @chain rel_interaction_sorted_df first(3)
+bottom3_rel_interaction = @chain rel_interaction_sorted_df last(3)
+
+# ----- Heatmap -----
 # %% Set η × θ grid
 η_list = 0:0.1:2
 θ_list = -1:0.1:1
@@ -130,37 +112,7 @@ write_csv(heatmap_df, "outputs/heatmap_df.csv")
 heatmap_simulations_df = read_csv("outputs/heatmap_df.csv")
 
 # %% Prepare
-heatmap_df_γ0 = @chain heatmap_simulations_df begin
-    @filter(γ == 0)
-    @select(
-        η,
-        θ,
-        SCC_E_0 = present_cost_of_damages_to_E,
-        SCC_c_0 = present_cost_of_damages_to_c
-    )
-end
-
-heatmap_df_γ1 = @chain heatmap_simulations_df begin
-    @filter(γ == 1)
-    @select(
-        η,
-        θ,
-        SCC_E_1 = present_cost_of_damages_to_E,
-        SCC_c_1 = present_cost_of_damages_to_c
-    )
-end
-
-heatmap_df = @chain begin
-    @left_join(heatmap_df_γ0, heatmap_df_γ1)
-    @mutate(
-        Δ_SCC_E = SCC_E_1 - SCC_E_0,
-        Δ_SCC_c = SCC_c_1 - SCC_c_0,
-    )
-    @mutate(
-        Δ_SCC_E_over_SCC_E = Δ_SCC_E / SCC_E_1,
-        Δ_SCC_E_over_SCC = Δ_SCC_E / (SCC_E_1 + SCC_c_1),
-    )
-end
+heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 
 # %% Plot main heatmap
 Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC_E")
@@ -176,7 +128,7 @@ end
 Δ_SCC_c_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="c", relative_to=nothing)
 Δ_SCC_c_heatmap |> save("outputs/figures/Δ_SCC_c_heatmap.svg")
 
-# ====  Sensitivity to E ====
+# -----  Sensitivity to E -----
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 
@@ -229,19 +181,3 @@ SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 # %% Plot relative I vs E
 SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
-
-# ==== SCC vs θ, facetted by E and η ====
-# %%  Set values for x-axis and E facets
-θ_axis = [θ for θ in -1:0.025:1]
-E_facet_list = [1, costanza_forests_multiplier, costanza_total_multiplier]
-
-# %% Run and save
-SCC_vs_E_θ_and_η_df = get_SCC_vs_E_θ_and_η(E_facet_list, η_list, θ_axis, α, ρ)
-write_csv(SCC_vs_E_θ_and_η_df, "outputs/SCC_vs_E_θ_and_η.csv")
-
-# %% Read
-SCC_vs_E_θ_and_η_df = read_csv("outputs/SCC_vs_E_θ_and_η.csv")
-
-# %% Plot
-SCC_vs_θ_facetted_by_E_and_η = plot_SCC_vs_θ_facetted_by_E_and_η(SCC_vs_E_θ_and_η_df)
-SCC_vs_θ_facetted_by_E_and_η |> save("outputs/figures/SCC_vs_θ_facetted_by_E_and_η.svg")

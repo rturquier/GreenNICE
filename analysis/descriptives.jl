@@ -1,18 +1,6 @@
-using Mimi
-using TidierData
-using TidierFiles
-using VegaLite
-using Countries
-using VegaDatasets
+include("shared_packages.jl")
 
-include("../src/GreenNICE.jl")
-using .GreenNICE
-
-function get_descriptives_df()::DataFrame
-
-    m = GreenNICE.create()
-    run(m)
-
+function get_descriptives_df(m::Model)::DataFrame
     damage_coeficient = getdataframe(m, :damages, :ξ)
 
     E_flow0_percapita = @chain getdataframe(m, :environment, :E_flow_percapita) begin

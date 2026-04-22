@@ -7,8 +7,33 @@ Pkg.instantiate()
 include("scc.jl")
 include("descriptives.jl")
 
+# ==== Descriptive information on the default run ====
+# %% Set default parameters
+η = 1.5
+θ = 0.43
+α = 0.1
+ρ = 0.001
+
+# %% Default run
+m = GreenNICE.create(; parameters = Dict(:η => η, :θ => θ, :α => α))
+run(m)
+
+# %% Plot temperature trajectory in a default run
+temperature_plot = plot_temperature_trajectory(m)
+temperature_plot |> save("outputs/figures/temperature.svg")
+
+# %% Plot global flow of ecosystem services in default run
+E_flow_df = @chain begin
+    getdataframe(m, :environment => :E_flow_global)
+    @mutate(E_flow_global = E_flow_global * 10^6)  # convert million USD to USD
+end
+E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
+
+# %% Get initial value of global E
+intial_global_E = E_flow_df.E_flow_global |> first
+
 # %% Get descriptive figures
-descriptives_df = get_descriptives_df()
+descriptives_df = get_descriptives_df(m)
 
 initial_E_flow_map = map_E_percapita_country(descriptives_df)
 Gini_E_flow0_scatterplot = plot_gini_vs_E_flow_0(descriptives_df)
@@ -20,20 +45,15 @@ save("outputs/figures/gini_E_flow0.svg", Gini_E_flow0_scatterplot)
 save("outputs/maps/initial_damage_coefficient_map.svg", ξ_map)
 
 # %% Get descriptive values
-top3_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita, rev=true), 3)
-bottom4_E_flow_percapita = first(sort(descriptives_df, :E_flow0_percapita,
-                                        rev=false), 4)
-top3_ξ = first(sort(descriptives_df, :ξ, rev=true), 3)
-bottom3_ξ = first(sort(descriptives_df, :ξ, rev=false), 3)
+top3_E_flow_percapita = @chain descriptives_df @arrange(desc(E_flow0_percapita)) first(3)
+bottom4_E_flow_percapita = @chain descriptives_df @arrange(desc(E_flow0_percapita)) last(4)
 
-# %% Set default parameters
-η = 1.5
-θ = 0.43
-α = 0.1
-ρ = 0.001
-γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
+top3_ξ = @chain descriptives_df @arrange(desc(ξ)) first(3)
+bottom3_ξ = @chain descriptives_df @arrange(desc(ξ)) last(3)
 
+# ==== Simulations ====
 # %% Get SCC decomposition and save results
+γ_list = [0., 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 1.]
 SCC_decomposition_df = get_SCC_decomposition(η, θ, α, γ_list, ρ)
 write_csv(SCC_decomposition_df, "outputs/SCC_decomposition.csv")
 
@@ -78,25 +98,6 @@ save("outputs/maps/map_interaction_effect_pct.svg", relative_interaction_map)
 top3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=true), 3)
 bottom3_rel_interaction = first(sort(country_interaction_df, :interaction_pct, rev=false),
                                 3)
-# ==== Descriptive information on the default run ====
-# %% Default run
-m = GreenNICE.create()
-run(m)
-
-# %% Plot temperature trajectory in a default run
-temperature_plot = plot_temperature_trajectory(m)
-temperature_plot |> save("outputs/figures/temperature.svg")
-
-# %% Plot global flow of ecosystem services in default run
-E_flow_df = @chain begin
-    getdataframe(m, :environment => :E_flow_global)
-    @mutate(E_flow_global = E_flow_global * 10^6)  # convert million USD to USD
-end
-E_flow_df |> @vlplot(:line, :time, {:E_flow_global, scale={zero=false}})
-
-# %% Get initial value of global E
-intial_global_E = E_flow_df.E_flow_global |> first
-
 # ==== Heatmap ====
 # %% Set η × θ grid
 η_list = 0:0.1:2

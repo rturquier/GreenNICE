@@ -575,6 +575,41 @@ function facet_SCC(SCC_decomposition_df::DataFrame; cost_to::String)::VegaLite.V
     return SCC_facet_plot
 end
 
+function prepare_heatmap_df(heatmap_simulations_df)
+    heatmap_df_γ0 = @chain heatmap_simulations_df begin
+        @filter(γ == 0)
+        @select(
+            η,
+            θ,
+            SCC_E_0 = present_cost_of_damages_to_E,
+            SCC_c_0 = present_cost_of_damages_to_c
+        )
+    end
+
+    heatmap_df_γ1 = @chain heatmap_simulations_df begin
+        @filter(γ == 1)
+        @select(
+            η,
+            θ,
+            SCC_E_1 = present_cost_of_damages_to_E,
+            SCC_c_1 = present_cost_of_damages_to_c
+        )
+    end
+
+    heatmap_df = @chain begin
+        @left_join(heatmap_df_γ0, heatmap_df_γ1)
+        @mutate(
+            Δ_SCC_E = SCC_E_1 - SCC_E_0,
+            Δ_SCC_c = SCC_c_1 - SCC_c_0,
+        )
+        @mutate(
+            Δ_SCC_E_over_SCC_E = Δ_SCC_E / SCC_E_1,
+            Δ_SCC_E_over_SCC = Δ_SCC_E / (SCC_E_1 + SCC_c_1),
+        )
+    end
+    return heatmap_df
+end
+
 function plot_SCC_heatmap(
     heatmap_df::DataFrame; cost_to="E", relative_to=nothing
 )::VegaLite.VLSpec

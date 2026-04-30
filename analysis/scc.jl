@@ -1092,3 +1092,68 @@ function plot_relative_I_vs_E(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
     )
     return relative_I_vs_E_plot
 end
+
+function plot_SCC_E_shares_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
+
+    SCC_E_shares_sensitivity = @chain(SCC_vs_E_df,
+        @filter(γ .== 1.0),
+        @mutate(
+            intra_regional_inequality =
+                present_cost_of_damages_to_E_within_equal / present_cost_of_damages_to_E,
+            inter_regional_inequality =
+                present_cost_of_damages_to_E_across_equal / present_cost_of_damages_to_E,
+            E_inequality =
+                present_cost_of_damages_to_E_E_equal / present_cost_of_damages_to_E
+        ),
+        stack(
+            [:intra_regional_inequality, :inter_regional_inequality, :E_inequality],
+            variable_name = :inequality_type,
+        value_name = :share
+        ),
+        @mutate(inequality_type = replace(inequality_type,
+            "E_inequality"              => "A",
+            "inter_regional_inequality" => "B",
+            "intra_regional_inequality" => "C"
+            )
+        ),
+        select(:E_multiplier, :inequality_type, :share)
+    )
+
+    SCC_E_shares_sensitivity_plot = SCC_E_shares_sensitivity |> @vlplot(
+        mark = {:line, strokeWidth = 2},
+        x = {
+            field = :E_multiplier,
+            title = "E multiplier",
+            type = :quantitative,
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = false}
+        },
+        y = {
+            field = :share,
+            title = "Share of SCC_E",
+            type = :quantitative,
+            scale = {domainMin = 0.25},
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
+        },
+        color = {
+            field = :inequality_type,
+            title = "Inequality type",
+            scale = {scheme = "tableau10"},
+            legend = {
+                orient = "bottom",
+                direction = "horizontal",
+                labelFontSize = 11,
+                titleFontSize = 12,
+                titleOrient = "left"
+            }
+        },
+        width = 500,
+        height = 300,
+        config = {
+            background = "white",
+            view = {stroke = "transparent"}
+        }
+    )
+
+    return SCC_E_shares_sensitivity_plot
+
+end

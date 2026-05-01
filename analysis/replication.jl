@@ -99,12 +99,6 @@ rel_interaction_sorted_df = @arrange(country_interaction_df, desc(interaction_pc
 top3_rel_interaction = @chain rel_interaction_sorted_df first(3)
 bottom3_rel_interaction = @chain rel_interaction_sorted_df last(3)
 
-# %% Combine plots
-combined_interaction_plot = [absolute_interaction_map; relative_interaction_map]
-combined_interaction_plot.params["resolve"] = Dict(
-    "scale" => Dict("color" => "independent"))
-save("outputs/maps/map_interaction_combined.svg", combined_interaction_plot)
-
 # ----- Heatmap -----
 # %% Set η × θ grid
 η_list = 0:0.1:2

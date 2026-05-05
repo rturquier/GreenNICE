@@ -86,7 +86,7 @@ function map_E_percapita_country(df::DataFrame)::VegaLite.VLSpec
             condition = {
                 test = "datum.E_flow0_percapita != null",
                 field = "E_flow0_percapita",
-                title = "E per capita (USD)",
+                title = "E (USD)",
                 type = "quantitative",
                 scale = {
                     type = "threshold",

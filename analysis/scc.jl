@@ -1134,7 +1134,7 @@ function plot_SCC_E_shares_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
         },
         y = {
             field = :share,
-            title = "Share of SCC_E",
+            title = "Relative Interaction Effect (I%)",
             type = :quantitative,
             axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
         },

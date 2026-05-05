@@ -181,3 +181,7 @@ SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 # %% Plot relative I vs E
 SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
+
+# %% Plot shares of SCC_E components vs E
+SCC_E_shares_sensitivity_plot = plot_SCC_E_shares_sensitivity(SCC_vs_E_df)
+SCC_E_shares_sensitivity_plot |> save("outputs/figures/SCC_E_shares_sensitivity.svg")

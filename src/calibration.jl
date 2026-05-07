@@ -56,21 +56,21 @@ country_df = XLSX.openxlsx(file_path) do xf
     return df
 end
 
-# Filter data for the year 2020 and select columns of interest
-country_E_stock0 = filter(row -> row[:year] == 2020, country_df)
-
-country_E_stock0 = select(
-    country_E_stock0,
-    [:countrycode, :torn_real_forest_es1, :torn_real_forest_es2, :torn_real_forest_es3],
+country_E_stock0 = @chain(country_df,
+    @filter(year .== 2020),
+    select(:countrycode,
+        :torn_real_forest_es1,
+        :torn_real_forest_es2,
+        :torn_real_forest_es3,
+        :torn_real_renew
+    ),
+     transform([:torn_real_forest_es1, :torn_real_forest_es2, :torn_real_forest_es3] =>
+        (+) => :E_stock0),
+    rename(:torn_real_renew => :E_renewable_stock0),
+    select(:countrycode, :E_stock0, :E_renewable_stock0)
 )
 
-country_E_stock0[!, :E_stock0] =
-    country_E_stock0.torn_real_forest_es1 .+ country_E_stock0.torn_real_forest_es2 .+
-    country_E_stock0.torn_real_forest_es3
-
-country_E_stock0 = select(country_E_stock0, [:countrycode, :E_stock0])
-
-#1.3 Create a CSV file with initial natural capital values
+#1.3 Create a CSV file with initial natural capital and total renewable stock
 
 E_stock0 = CSVFiles.load(country_list_file_path) |> DataFrame
 
@@ -88,13 +88,15 @@ replacement_countries = Dict("ABW" => "MLT", "AFG" => "TJK", "BHS" => "JAM", "BR
                             "TLS" => "SLB", "TON" => "SLB", "TWN" => "KOR", "UZB" => "KAZ",
                             "VCT" => "SLB", "VUT" => "SLB", "WSM" => "SLB", "YEM" => "SAU")
 
-# Update the values of E_stock0 based on the replacement_countries dictionary
+# Update the values of E_stock0 and E_renewable_stock0 based on the replacement_countries dictionary
 for (country, replacement) in replacement_countries
     if country in E_stock0.countrycode
-        replacement_row = E_stock0[E_stock0.countrycode .== replacement, :E_stock0]
+        replacement_row = E_stock0[E_stock0.countrycode .== replacement, :]
         if !isempty(replacement_row)
-            replacement_value = replacement_row[1]
-            E_stock0[E_stock0.countrycode .== country, :E_stock0] .= replacement_value
+            E_stock0[E_stock0.countrycode .== country, :E_stock0] .=
+                replacement_row[1, :E_stock0]
+            E_stock0[E_stock0.countrycode .== country, :E_renewable_stock0] .=
+                replacement_row[1, :E_renewable_stock0]
         else
             println("No replacement value found for country: $replacement")
         end
@@ -107,6 +109,7 @@ E_stock0[E_stock0.countrycode .== "MAC", :E_stock0] .= 0
 # Adjust values to million USD (data is USD). This is consistent with K0 input.
 
 E_stock0.E_stock0 = E_stock0.E_stock0 ./ 1000000
+E_stock0.E_renewable_stock0 = E_stock0.E_renewable_stock0 ./ 1000000
 
 # Update to 2017 values. Consistent with Young-Brun et al.
 E_stock0.E_stock0 = E_stock0.E_stock0 .* 0.94

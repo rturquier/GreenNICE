@@ -1116,9 +1116,9 @@ function plot_SCC_E_shares_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
         value_name = :share
         ),
         @mutate(inequality_type = replace(inequality_type,
-            "E_inequality_share"              => "A",
-            "inter_regional_share" => "B",
-            "intra_regional_share" => "C"
+            "E_inequality_share"   => "Unequal E distribution",
+            "inter_regional_share" => "Inter-regional inequalities",
+            "intra_regional_share" => "Intra-regional inequalities"
             )
         ),
         select(:E_multiplier, :inequality_type, :share)
@@ -1140,8 +1140,14 @@ function plot_SCC_E_shares_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
         },
         color = {
             field = :inequality_type,
-            title = "Inequality type",
-            scale = {scheme = "tableau10"},
+            title = "",
+             scale = {
+                domain = ["Intra-regional inequalities",
+                    "Inter-regional inequalities",
+                    "Unequal E distribution"
+                    ],
+                range  = [COLOR_INTRA, COLOR_INTER, COLOR_E_INEQ]
+                },
             legend = {
                 orient = "bottom",
                 direction = "horizontal",
@@ -1159,5 +1165,145 @@ function plot_SCC_E_shares_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
     )
 
     return SCC_E_shares_sensitivity_plot
+
+end
+
+function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
+
+    SCC_E_cost_sensitivity = @chain(SCC_vs_E_df,
+        @filter(γ .== 1.0),
+        @mutate(
+            intra_regional =
+                present_cost_of_damages_to_E - present_cost_of_damages_to_E_within_equal,
+            inter_regional =
+                present_cost_of_damages_to_E_within_equal -
+                present_cost_of_damages_to_E_across_equal,
+            E_inequality =
+                present_cost_of_damages_to_E_across_equal -
+                    present_cost_of_damages_to_E_E_equal
+        ),
+        stack(
+            [:intra_regional, :inter_regional, :E_inequality],
+            variable_name = :inequality_type,
+        value_name = :interaction_effect
+        ),
+        @mutate(inequality_type = replace(inequality_type,
+            "intra_regional" => "Intra-regional inequalities",
+            "inter_regional" => "Inter-regional inequalities",
+            "E_inequality" => "Unequal E distribution"
+            )
+        ),
+        select(:E_multiplier, :inequality_type, :interaction_effect)
+    )
+
+    SCC_E_cost_sensitivity_plot = SCC_E_cost_sensitivity |> @vlplot(
+        mark = {:line, strokeWidth = 2},
+        x = {
+            field = :E_multiplier,
+            title = "E multiplier",
+            type = :quantitative,
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = false}
+        },
+        y = {
+            field = :interaction_effect,
+            title = "Interaction Effect (USD)",
+            type = :quantitative,
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
+        },
+        color = {
+            field = :inequality_type,
+            title = "",
+            scale = {
+                domain = ["Intra-regional inequalities",
+                    "Inter-regional inequalities",
+                    "Unequal E distribution"
+                    ],
+                range  = [COLOR_INTRA, COLOR_INTER, COLOR_E_INEQ]
+                },
+            legend = {
+                orient = "bottom",
+                direction = "horizontal",
+                labelFontSize = 11,
+                titleFontSize = 12,
+                titleOrient = "left"
+            }
+        },
+        width = 500,
+        height = 300,
+        config = {
+            background = "white",
+            view = {stroke = "transparent"}
+        }
+    )
+
+    return SCC_E_cost_sensitivity_plot
+
+end
+
+
+function plot_SCC_E_decomposition_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
+
+    SCC_E_decomposition_sensitivity = @chain(SCC_vs_E_df,
+        @filter(γ .== 1.0),
+        stack(
+            [:present_cost_of_damages_to_E,
+                :present_cost_of_damages_to_E_within_equal,
+                :present_cost_of_damages_to_E_across_equal,
+                :present_cost_of_damages_to_E_E_equal
+            ],
+            variable_name = :decomposition,
+        value_name = :cost
+        ),
+        @mutate(decomposition = replace(decomposition,
+    "present_cost_of_damages_to_E_within_equal" => "Intra-regional inequalities",
+    "present_cost_of_damages_to_E_across_equal" => "Inter-regional inequalities",
+    "present_cost_of_damages_to_E_E_equal"      => "Unequal E distribution",
+    "present_cost_of_damages_to_E"              => "SCC_E"
+        )
+        ),
+        select(:E_multiplier, :decomposition, :cost)
+    )
+
+    SCC_E_decomposition_sensitivity_plot = SCC_E_decomposition_sensitivity |> @vlplot(
+        mark = {:line, strokeWidth = 2},
+        x = {
+            field = :E_multiplier,
+            title = "E multiplier",
+            type = :quantitative,
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = false}
+        },
+        y = {
+            field = :cost,
+            title = "SCC_E (USD)",
+            type = :quantitative,
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
+        },
+        color = {
+            field = :decomposition,
+            title = "",
+            scale = {
+                domain = ["SCC_E",
+                    "Intra-regional inequalities",
+                    "Inter-regional inequalities",
+                    "Unequal E distribution"],
+                range  = [COLOR_SCC_E, COLOR_INTRA, COLOR_INTER, COLOR_E_INEQ]
+                },
+            legend = {
+                orient = "bottom",
+                direction = "horizontal",
+                labelFontSize = 11,
+                titleFontSize = 12,
+                titleOrient = "left"
+            }
+        },
+        width = 500,
+        height = 300,
+        config = {
+            background = "white",
+            view = {stroke = "transparent"}
+        }
+    )
+
+    return SCC_E_decomposition_sensitivity_plot
 
 end

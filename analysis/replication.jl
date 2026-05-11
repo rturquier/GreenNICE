@@ -129,6 +129,18 @@ heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 Δ_SCC_c_heatmap |> save("outputs/figures/Δ_SCC_c_heatmap.svg")
 
 # -----  Sensitivity to E -----
+# %% Get E as a share of total renewables stock for comparison
+CWON_stock_0 =DataFrame(load("data/E_stock0.csv",  header_exists=true))
+
+E_discount_rate = 0.04
+stock_to_flow_factor = E_discount_rate / (1 - (1 + E_discount_rate)^(-100))
+
+total_E_flow_0 = sum(CWON_stock_0.E_stock0) * stock_to_flow_factor
+total_renewable_flow_0 = sum(CWON_stock_0.E_renewable_stock0) * stock_to_flow_factor
+
+E_share =total_E_flow_0 / total_renewable_flow_0 * 100
+
+
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)
 costanza_forest_values = get_costanza_forest_values()
 
@@ -159,6 +171,19 @@ write_csv(SCC_vs_E_df, "outputs/SCC_vs_E.csv")
 # %% Read
 SCC_vs_E_df = read_csv("outputs/SCC_vs_E.csv")
 
+# %% Numbers for paper
+sensitivity_constanza_multiplier = @chain SCC_vs_E_df begin
+    @filter(E_multiplier == 1.0 ||
+            isapprox(E_multiplier, !!costanza_forests_multiplier) ||
+            isapprox(E_multiplier, !!costanza_total_multiplier))
+    @filter(γ == 1.)
+    select(:present_cost_of_damages_to_E,
+           :present_cost_of_damages_to_E_within_equal,
+           :present_cost_of_damages_to_E_across_equal,
+           :present_cost_of_damages_to_E_E_equal,
+           :E_multiplier)
+end
+
 # %% Plot SCC_E vs E
 vertical_rules = (
     vertical_rule(
@@ -183,5 +208,19 @@ SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
 
 # %% Plot shares of SCC_E components vs E
+# Set colors for plots
+const COLOR_INTRA    = "#4e79a7"
+const COLOR_INTER    = "#f28e2b"
+const COLOR_E_INEQ   = "#76b7b2"
+const COLOR_SCC_E    = "#e15759"
+# Relative interaction effect
 SCC_E_shares_sensitivity_plot = plot_SCC_E_shares_sensitivity(SCC_vs_E_df)
 SCC_E_shares_sensitivity_plot |> save("outputs/figures/SCC_E_shares_sensitivity.svg")
+#Interaction effect
+SCC_E_interaction_sensitivity_plot = plot_interaction_effect_sensitivity(SCC_vs_E_df)
+SCC_E_interaction_sensitivity_plot |> save(
+                                    "outputs/figures/SCC_E_interaction_sensitivity.svg")
+#SCC_E decomposition
+SCC_E_decomposition_sensitivity_plot = plot_SCC_E_decomposition_sensitivity(SCC_vs_E_df)
+SCC_E_decomposition_sensitivity_plot |> save(
+                                    "outputs/figures/SCC_E_decomposition_sensitivity.svg")

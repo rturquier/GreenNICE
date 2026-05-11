@@ -1206,7 +1206,7 @@ function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.V
         },
         y = {
             field = :interaction_effect,
-            title = "Interaction Effect (USD)",
+            title = "Interaction Effect (\$ per ton CO₂)",
             type = :quantitative,
             axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
         },
@@ -1274,7 +1274,7 @@ function plot_SCC_E_decomposition_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.
         },
         y = {
             field = :cost,
-            title = "SCC_E (USD)",
+            title = "\$ per ton CO₂",
             type = :quantitative,
             axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
         },
@@ -1287,7 +1287,7 @@ function plot_SCC_E_decomposition_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.
                     "Inter-regional inequalities",
                     "Unequal E distribution"],
                 range  = [COLOR_SCC_E, COLOR_INTRA, COLOR_INTER, COLOR_E_INEQ]
-                },
+            },
             legend = {
                 orient = "bottom",
                 direction = "horizontal",

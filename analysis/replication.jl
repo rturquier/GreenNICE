@@ -114,19 +114,32 @@ heatmap_simulations_df = read_csv("outputs/heatmap_df.csv")
 # %% Prepare
 heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 
+# %% Get numbers for paper
+min_relative_interaction_effect = minimum(heatmap_df.Δ_SCC_E_over_SCC_E) * 100
+max_relative_interaction_effect = maximum(heatmap_df.Δ_SCC_E_over_SCC_E) *100
+
+min_interaction_effect_c = minimum(heatmap_df.Δ_SCC_c)
+max_interaction_effect_c = maximum(heatmap_df.Δ_SCC_c)
+
+min_interaction_effect_E = minimum(heatmap_df.Δ_SCC_E)
+max_interaction_effect_E = maximum(heatmap_df.Δ_SCC_E)
+
+min_relative_interaction_effect_E_vs_SCC = minimum(heatmap_df.Δ_SCC_E_over_SCC) * 100
+max_relative_interaction_effect_E_vs_SCC = maximum(heatmap_df.Δ_SCC_E_over_SCC) * 100
+
 # %% Plot main heatmap
 Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC_E")
-Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/Δ_SCC_E_vs_SCC_E_heatmap.svg")
+Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/rel_I_SCC_E_vs_SCC_E_heatmap.svg")
 
 # %% Plot additional heatmaps for the appendix
 Δ_SCC_E_vs_SCC_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC")
-Δ_SCC_E_vs_SCC_heatmap |> save("outputs/figures/Δ_SCC_E_vs_SCC_heatmap.svg")
+Δ_SCC_E_vs_SCC_heatmap |> save("outputs/figures/rel_I_SCC_E_vs_SCC_heatmap.svg")
 
 Δ_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to=nothing)
-Δ_SCC_E_heatmap |> save("outputs/figures/Δ_SCC_E_heatmap.svg")
+Δ_SCC_E_heatmap |> save("outputs/figures/I_SCC_E_heatmap.svg")
 
 Δ_SCC_c_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="c", relative_to=nothing)
-Δ_SCC_c_heatmap |> save("outputs/figures/Δ_SCC_c_heatmap.svg")
+Δ_SCC_c_heatmap |> save("outputs/figures/I_SCC_c_heatmap.svg")
 
 # -----  Sensitivity to E -----
 # %% Get E as a share of total renewables stock for comparison
@@ -207,7 +220,7 @@ SCC_c_vs_E_plot |> save("outputs/figures/SCC_c_vs_E.svg")
 SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
 
-# %% Plot shares of SCC_E components vs E
+# %% Plot sensitivity of I, T%
 # Set colors for plots
 const COLOR_INTRA    = "#4e79a7"
 const COLOR_INTER    = "#f28e2b"
@@ -215,12 +228,12 @@ const COLOR_E_INEQ   = "#76b7b2"
 const COLOR_SCC_E    = "#e15759"
 # Relative interaction effect
 SCC_E_shares_sensitivity_plot = plot_SCC_E_shares_sensitivity(SCC_vs_E_df)
-SCC_E_shares_sensitivity_plot |> save("outputs/figures/SCC_E_shares_sensitivity.svg")
+SCC_E_shares_sensitivity_plot |> save("outputs/figures/sensitivity_relative_I.svg")
 #Interaction effect
 SCC_E_interaction_sensitivity_plot = plot_interaction_effect_sensitivity(SCC_vs_E_df)
 SCC_E_interaction_sensitivity_plot |> save(
-                                    "outputs/figures/SCC_E_interaction_sensitivity.svg")
+                                    "outputs/figures/sensitivity_I.svg")
 #SCC_E decomposition
 SCC_E_decomposition_sensitivity_plot = plot_SCC_E_decomposition_sensitivity(SCC_vs_E_df)
 SCC_E_decomposition_sensitivity_plot |> save(
-                                    "outputs/figures/SCC_E_decomposition_sensitivity.svg")
+                                    "outputs/figures/sensitivity_SCC_E_decomposition.svg")

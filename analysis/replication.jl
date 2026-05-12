@@ -115,6 +115,8 @@ heatmap_simulations_df = read_csv("outputs/heatmap_df.csv")
 heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 
 # %% Get numbers for paper
+max_relative_interaction_effect = maximum(heatmap_df.Δ_SCC_E_over_SCC_E) * 100
+
 min_relative_interaction_effect = minimum(heatmap_df.Δ_SCC_E_over_SCC_E) * 100
 max_relative_interaction_effect = maximum(heatmap_df.Δ_SCC_E_over_SCC_E) *100
 

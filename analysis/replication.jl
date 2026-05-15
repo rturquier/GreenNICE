@@ -223,19 +223,13 @@ SCC_rel_I_vs_E_plot = plot_relative_I_vs_E(SCC_vs_E_df)
 SCC_rel_I_vs_E_plot |> save("outputs/figures/relative_I_vs_E.svg")
 
 # %% Plot sensitivity of I, T%
-# Set colors for plots
-const COLOR_INTRA    = "#4e79a7"
-const COLOR_INTER    = "#f28e2b"
-const COLOR_E_INEQ   = "#76b7b2"
-const COLOR_SCC_E    = "#e15759"
+
 # Relative interaction effect
-SCC_E_shares_sensitivity_plot = plot_SCC_E_shares_sensitivity(SCC_vs_E_df)
-SCC_E_shares_sensitivity_plot |> save("outputs/figures/sensitivity_relative_I.svg")
-#Interaction effect
-SCC_E_interaction_sensitivity_plot = plot_interaction_effect_sensitivity(SCC_vs_E_df)
+SCC_E_interaction_sensitivity_plot = plot_relative_interaction_effect_sensitivity(SCC_vs_E_df)
 SCC_E_interaction_sensitivity_plot |> save(
-                                    "outputs/figures/sensitivity_I.svg")
-#SCC_E decomposition
-SCC_E_decomposition_sensitivity_plot = plot_SCC_E_decomposition_sensitivity(SCC_vs_E_df)
+                                    "outputs/figures/sensitivity_relative_I_SCC_E.svg")
+
+#Interaction effect
+SCC_E_decomposition_sensitivity_plot = plot_interaction_effect_sensitivity(SCC_vs_E_df)
 SCC_E_decomposition_sensitivity_plot |> save(
-                                    "outputs/figures/sensitivity_SCC_E_decomposition.svg")
+                                    "outputs/figures/sensitivity_I_SCC_E.svg")

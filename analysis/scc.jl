@@ -431,7 +431,12 @@ function plot_SCC_E_waterfall(df::DataFrame)::VegaLite.VLSpec
         ]
     )
     bar_df.label_y = (bar_df.bar_start .+ bar_df.bar_end) ./ 2
-    bar_df.value_str = string.(round.(bar_df.bar_value, digits=2))
+    bar_df.value_str = [
+        row.bar_type != "total" ?
+            string(round(row.bar_value / E_total * 100, digits=2)) * "%" :
+            string(round(row.bar_value, digits=2))
+        for row in eachrow(bar_df)
+    ]
     bar_df.description = ["No Inequality",
                           "A = Unequal E Endowment",
                           "B = Unequal Inter-Regional Consumption",
@@ -440,6 +445,9 @@ function plot_SCC_E_waterfall(df::DataFrame)::VegaLite.VLSpec
 
     base_total_df = bar_df[bar_df.bar_type .!= "increment", :]
     increment_df = bar_df[bar_df.bar_type .== "increment", :]
+
+    label_pct_df   = bar_df[bar_df.bar_type .!= "total", :]
+    label_total_df = bar_df[bar_df.bar_type .== "total", :]
 
     connector_df = DataFrame(
         from_label = label_order[1:4],
@@ -529,7 +537,14 @@ function plot_SCC_E_waterfall(df::DataFrame)::VegaLite.VLSpec
         }
     ) +
     @vlplot(
-        data = bar_df,
+        data = label_pct_df,
+        mark = {type = :text, color = :white, fontSize = 13, dy = 0},
+        x = {field = :label,   type = "nominal"},
+        y = {field = :label_y, type = "quantitative"},
+        text = {field = :value_str, type = "nominal"}
+    ) +
+    @vlplot(
+        data = label_total_df,
         mark = {type = :text, color = :white, fontWeight = :bold, fontSize = 13, dy = 0},
         x = {field = :label,   type = "nominal"},
         y = {field = :label_y, type = "quantitative"},

@@ -1110,17 +1110,27 @@ end
 
 function plot_relative_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
 
-    SCC_E_cost_sensitivity = @chain(SCC_vs_E_df,
+    SCC_E_rel_I_sensitivity = @chain(SCC_vs_E_df,
         @filter(γ .== 1.0),
         @mutate(
             total          = present_cost_of_damages_to_E,
-            no_inequality  = present_cost_of_damages_to_E_E_equal / present_cost_of_damages_to_E * 100,
-            E_inequality   = (present_cost_of_damages_to_E_across_equal -
-                                present_cost_of_damages_to_E_E_equal) / present_cost_of_damages_to_E * 100,
-            inter_regional = (present_cost_of_damages_to_E_within_equal -
-                                present_cost_of_damages_to_E_across_equal) / present_cost_of_damages_to_E * 100,
-            intra_regional = (present_cost_of_damages_to_E -
-                                present_cost_of_damages_to_E_within_equal) / present_cost_of_damages_to_E * 100
+            no_inequality  = present_cost_of_damages_to_E_E_equal /
+                                present_cost_of_damages_to_E * 100,
+            E_inequality   = (
+                                present_cost_of_damages_to_E_across_equal -
+                                present_cost_of_damages_to_E_E_equal
+                            ) /
+                                present_cost_of_damages_to_E * 100,
+            inter_regional = (
+                                present_cost_of_damages_to_E_within_equal -
+                                present_cost_of_damages_to_E_across_equal
+                            ) /
+                                present_cost_of_damages_to_E * 100,
+            intra_regional = (
+                                present_cost_of_damages_to_E -
+                                present_cost_of_damages_to_E_within_equal
+                            ) /
+                                present_cost_of_damages_to_E * 100
         ),
         stack(
             [:no_inequality, :E_inequality, :inter_regional, :intra_regional],
@@ -1134,12 +1144,18 @@ function plot_relative_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::V
             "intra_regional" => "Intra-regional inequalities"
         )),
         @mutate(stack_order = ifelse(inequality_type == "No Inequality", 1,
-                              ifelse(inequality_type == "Unequal E distribution", 2,
-                              ifelse(inequality_type == "Inter-regional inequalities", 3, 4)))),
+                                ifelse(inequality_type == "Unequal E distribution", 2,
+                                    ifelse(inequality_type == "Inter-regional inequalities",
+                                                                3,
+                                                                4
+                                            )
+                                        )
+                                    )
+                ),
         select(:E_multiplier, :inequality_type, :pct, :stack_order)
     )
 
-    SCC_E_cost_sensitivity_plot = SCC_E_cost_sensitivity |> @vlplot(
+    SCC_E_rel_I_sensitivity_plot = SCC_E_rel_I_sensitivity |> @vlplot(
         mark = {:area},
         x = {
             field = :E_multiplier,
@@ -1182,13 +1198,13 @@ function plot_relative_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::V
         }
     )
 
-    return SCC_E_cost_sensitivity_plot
+    return SCC_E_rel_I_sensitivity_plot
 
 end
 
 function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.VLSpec
 
-    SCC_E_cost_sensitivity = @chain(SCC_vs_E_df,
+    SCC_E_I_sensitivity = @chain(SCC_vs_E_df,
         @filter(γ .== 1.0),
         @mutate(
             no_inequality  = present_cost_of_damages_to_E_E_equal,
@@ -1211,12 +1227,18 @@ function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.V
             "intra_regional" => "Intra-regional inequalities"
         )),
         @mutate(stack_order = ifelse(inequality_type == "No Inequality", 1,
-                              ifelse(inequality_type == "Unequal E distribution", 2,
-                              ifelse(inequality_type == "Inter-regional inequalities", 3, 4)))),
+                                ifelse(inequality_type == "Unequal E distribution", 2,
+                                    ifelse(inequality_type == "Inter-regional inequalities",
+                                                                3,
+                                                                4
+                                            )
+                                        )
+                                    )
+                ),
         select(:E_multiplier, :inequality_type, :cost, :stack_order)
     )
 
-    SCC_E_cost_sensitivity_plot = SCC_E_cost_sensitivity |> @vlplot(
+    SCC_E_I_sensitivity_plot = SCC_E_I_sensitivity |> @vlplot(
         mark = {:area},
         x = {
             field = :E_multiplier,
@@ -1259,6 +1281,6 @@ function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.V
         }
     )
 
-    return SCC_E_cost_sensitivity_plot
+    return SCC_E_I_sensitivity_plot
 
 end

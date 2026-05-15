@@ -1188,31 +1188,34 @@ function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.V
     SCC_E_cost_sensitivity = @chain(SCC_vs_E_df,
         @filter(γ .== 1.0),
         @mutate(
-            intra_regional =
-                present_cost_of_damages_to_E - present_cost_of_damages_to_E_within_equal,
-            inter_regional =
-                present_cost_of_damages_to_E_within_equal -
-                present_cost_of_damages_to_E_across_equal,
-            E_inequality =
-                present_cost_of_damages_to_E_across_equal -
-                    present_cost_of_damages_to_E_E_equal
+            total          = present_cost_of_damages_to_E,
+            no_inequality  = present_cost_of_damages_to_E_E_equal / present_cost_of_damages_to_E * 100,
+            E_inequality   = (present_cost_of_damages_to_E_across_equal -
+                                present_cost_of_damages_to_E_E_equal) / present_cost_of_damages_to_E * 100,
+            inter_regional = (present_cost_of_damages_to_E_within_equal -
+                                present_cost_of_damages_to_E_across_equal) / present_cost_of_damages_to_E * 100,
+            intra_regional = (present_cost_of_damages_to_E -
+                                present_cost_of_damages_to_E_within_equal) / present_cost_of_damages_to_E * 100
         ),
         stack(
-            [:intra_regional, :inter_regional, :E_inequality],
+            [:no_inequality, :E_inequality, :inter_regional, :intra_regional],
             variable_name = :inequality_type,
-        value_name = :interaction_effect
+            value_name    = :pct
         ),
         @mutate(inequality_type = replace(inequality_type,
-            "intra_regional" => "Intra-regional inequalities",
+            "no_inequality"  => "No Inequality",
+            "E_inequality"   => "Unequal E distribution",
             "inter_regional" => "Inter-regional inequalities",
-            "E_inequality" => "Unequal E distribution"
-            )
-        ),
-        select(:E_multiplier, :inequality_type, :interaction_effect)
+            "intra_regional" => "Intra-regional inequalities"
+        )),
+        @mutate(stack_order = ifelse(inequality_type == "No Inequality", 1,
+                              ifelse(inequality_type == "Unequal E distribution", 2,
+                              ifelse(inequality_type == "Inter-regional inequalities", 3, 4)))),
+        select(:E_multiplier, :inequality_type, :pct, :stack_order)
     )
 
     SCC_E_cost_sensitivity_plot = SCC_E_cost_sensitivity |> @vlplot(
-        mark = {:line, strokeWidth = 2},
+        mark = {:area},
         x = {
             field = :E_multiplier,
             title = "E multiplier",
@@ -1220,21 +1223,23 @@ function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.V
             axis = {labelFontSize = 11, titleFontSize = 13, grid = false}
         },
         y = {
-            field = :interaction_effect,
-            title = "Interaction Effect (\$ per ton CO₂)",
+            field = :pct,
+            title = "Share of SCC_E (%)",
             type = :quantitative,
-            axis = {labelFontSize = 11, titleFontSize = 13, grid = true, gridDash = [4, 4]}
+            stack = true,
+            axis = {labelFontSize = 11, titleFontSize = 13, grid = false}
         },
         color = {
             field = :inequality_type,
             title = "",
             scale = {
-                domain = ["Intra-regional inequalities",
+                domain = ["No Inequality",
+                    "Unequal E distribution",
                     "Inter-regional inequalities",
-                    "Unequal E distribution"
-                    ],
-                range  = [COLOR_INTRA, COLOR_INTER, COLOR_E_INEQ]
-                },
+                    "Intra-regional inequalities"
+                ],
+                range = ["#d4d4d4", "#f4a582", "#d6604d", "#8b1a1a"]
+            },
             legend = {
                 orient = "bottom",
                 direction = "horizontal",
@@ -1243,6 +1248,7 @@ function plot_interaction_effect_sensitivity(SCC_vs_E_df::DataFrame)::VegaLite.V
                 titleOrient = "left"
             }
         },
+        order = {field = :stack_order, type = :quantitative},
         width = 500,
         height = 300,
         config = {

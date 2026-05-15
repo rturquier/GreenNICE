@@ -131,17 +131,17 @@ max_relative_interaction_effect_E_vs_SCC = maximum(heatmap_df.Δ_SCC_E_over_SCC)
 
 # %% Plot main heatmap
 Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC_E")
-Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/rel_I_SCC_E_vs_SCC_E_heatmap.svg")
+Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/Delta_SCC_E_vs_SCC_E_heatmap.svg")
 
 # %% Plot additional heatmaps for the appendix
 Δ_SCC_E_vs_SCC_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC")
-Δ_SCC_E_vs_SCC_heatmap |> save("outputs/figures/rel_I_SCC_E_vs_SCC_heatmap.svg")
+Δ_SCC_E_vs_SCC_heatmap |> save("outputs/figures/Delta_SCC_E_vs_SCC_heatmap.svg")
 
 Δ_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to=nothing)
-Δ_SCC_E_heatmap |> save("outputs/figures/I_SCC_E_heatmap.svg")
+Δ_SCC_E_heatmap |> save("outputs/figures/Delta_SCC_E_heatmap.svg")
 
 Δ_SCC_c_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="c", relative_to=nothing)
-Δ_SCC_c_heatmap |> save("outputs/figures/I_SCC_c_heatmap.svg")
+Δ_SCC_c_heatmap |> save("outputs/figures/Delta_SCC_c_heatmap.svg")
 
 # -----  Sensitivity to E -----
 # %% Get E as a share of total renewables stock for comparison

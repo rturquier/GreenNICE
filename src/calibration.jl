@@ -27,10 +27,8 @@ CSVFiles.save(country_list_file_path, DataFrame(; countrycode=countries))
 
 #1.1 Download excel file from the World Bank
 
-file_url =
-    "https://datacatalogfiles.worldbank.org/ddh-published/0042066/DR0084043/" *
-    "CWON%202024%20Country%20Tool%2010082024.xlsx?versionId=2024-10-23T12:54:29.3317026Z"
-
+file_url  = "https://datacatalogapi.worldbank.org/ddhxext/" *
+            "ResourceDownload?resource_unique_id=DR0084043"
 file_path = "data/CWON_2024.xlsx"
 
 HTTP.download(file_url, file_path)

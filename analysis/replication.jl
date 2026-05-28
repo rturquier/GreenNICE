@@ -117,6 +117,7 @@ heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 # %% Plot main heatmap
 Δ_SCC_E_vs_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC_E")
 Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/Delta_SCC_E_vs_SCC_E_heatmap.svg")
+add_svg_rectangle!("Delta_SCC_E_vs_SCC_E_heatmap.svg")
 
 # %% Plot additional heatmaps for the appendix
 Δ_SCC_E_vs_SCC_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to="SCC")

@@ -80,8 +80,8 @@ SCC_E = decomposition_BAU.present_cost_of_damages_to_E
 SCC = SCC_c + SCC_E
 
 # %% Calculate interaction effect (absolute and relative)
-I_abs_interaction = sum(country_interaction_df.interaction)
-I_rel_interaction = I_abs_interaction ./ SCC_E * 100
+I_interaction = sum(country_interaction_df.interaction)
+I_rel_interaction = I_interaction ./ SCC_E * 100
 
 # ----- Map interaction effect at country level -----
 # %%  Interaction map

@@ -4,8 +4,10 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 
 # %% Include
+# include("calibration.jl")  # Run this file if you are running the code for the first time.
 include("scc.jl")
 include("descriptives.jl")
+
 
 # ==== Descriptive information on the default run ====
 # %% Set default parameters

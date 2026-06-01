@@ -119,10 +119,13 @@ heatmap_df = prepare_heatmap_df(heatmap_simulations_df)
 Δ_SCC_E_vs_SCC_E_heatmap |> save("outputs/figures/Delta_SCC_E_vs_SCC_E_heatmap.svg")
 add_svg_rectangle!("Delta_SCC_E_vs_SCC_E_heatmap.svg")
 
-# %% Plot additional heatmap for the appendix
+# %% Plot additional heatmaps for the appendix
 Δ_SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; cost_to="E", relative_to=nothing)
 Δ_SCC_E_heatmap |> save("outputs/figures/Delta_SCC_E_heatmap.svg")
 add_svg_rectangle!("Delta_SCC_E_heatmap.svg")
+
+SCC_E_heatmap = plot_SCC_heatmap(heatmap_df; variable_to_plot="SCC_E_1")
+SCC_E_heatmap |> save("outputs/figures/SCC_E_heatmap.svg")
 
 # -----  Sensitivity to E -----
 # %% Get the annual flow of material forest ecosystem services from Costanza et al. (2014)

@@ -583,16 +583,18 @@ function prepare_heatmap_df(heatmap_simulations_df)
 end
 
 function plot_SCC_heatmap(
-    heatmap_df::DataFrame; cost_to="E", relative_to=nothing
+    heatmap_df::DataFrame; variable_to_plot = "", cost_to="E", relative_to=nothing
 )::VegaLite.VLSpec
-
-    if relative_to |> isnothing
+    if variable_to_plot == "SCC_E_1"
+        legend_format = " \$d"
+        legend_title = ["SCC_E"]
+    elseif relative_to |> isnothing
         variable_to_plot = "Δ_SCC_$cost_to"
         legend_format = " \$d"
         legend_title = ["Change in the social",
                         "cost of damages to $cost_to",
                         "due to national inequality"]
-    else
+    elseif variable_to_plot |> isempty
         variable_to_plot = "Δ_SCC_$(cost_to)_over_$relative_to"
         legend_format = ".0%"
         legend_title = ["Share of $relative_to due", "to national inequality"]

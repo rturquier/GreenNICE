@@ -3,6 +3,7 @@ include("shared_packages.jl")
 using XLSX  # to read Costanza et al. (2014) table S1
 using HTTP  # to get CPI data
 using JSON  # to get CPI data
+using EzXML  # to add_svg_rectangle
 
 include("../src/components/welfare.jl")
 
@@ -582,16 +583,18 @@ function prepare_heatmap_df(heatmap_simulations_df)
 end
 
 function plot_SCC_heatmap(
-    heatmap_df::DataFrame; cost_to="E", relative_to=nothing
+    heatmap_df::DataFrame; variable_to_plot = "", cost_to="E", relative_to=nothing
 )::VegaLite.VLSpec
-
-    if relative_to |> isnothing
+    if variable_to_plot == "SCC_E_1"
+        legend_format = " \$d"
+        legend_title = ["SCC_E"]
+    elseif relative_to |> isnothing
         variable_to_plot = "Δ_SCC_$cost_to"
         legend_format = " \$d"
         legend_title = ["Change in the social",
                         "cost of damages to $cost_to",
                         "due to national inequality"]
-    else
+    elseif variable_to_plot |> isempty
         variable_to_plot = "Δ_SCC_$(cost_to)_over_$relative_to"
         legend_format = ".0%"
         legend_title = ["Share of $relative_to due", "to national inequality"]
@@ -639,6 +642,28 @@ function plot_SCC_heatmap(
         heatmap = heatmap_base + star_mark
     end
     return heatmap
+end
+
+function add_svg_rectangle!(svg_file_name)
+    svg_file_path = "outputs/figures/$svg_file_name"
+    doc = readxml(svg_file_path)
+    root = doc.root
+
+    rectangle_string = """<rect
+        style="fill:none; stroke:#000000; stroke-width:1.955; stroke-linecap:butt;
+               stroke-linejoin:miter; stroke-miterlimit:1.4; stroke-dasharray:1.955, 3.91;
+               stroke-dashoffset:5.4739997; stroke-opacity:1"
+        id="rect1453"
+        width="263.50217"
+        height="197.67216"
+        x="166.63148"
+        y="15.437807" />"""
+    rectangle_node = parsexml(rectangle_string).root
+    unlink!(rectangle_node)
+    link!(root, rectangle_node)
+
+    write(svg_file_path, doc)
+    return nothing
 end
 
 """

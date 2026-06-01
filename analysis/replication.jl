@@ -80,17 +80,17 @@ SCC_E = decomposition_BAU.present_cost_of_damages_to_E
 SCC = SCC_c + SCC_E
 
 # %% Calculate interaction effect (absolute and relative)
-I_abs_interaction = sum(country_interaction_df.interaction)
-I_rel_interaction = I_abs_interaction ./ SCC_E * 100
+I_interaction = sum(country_interaction_df.interaction)
+I_rel_interaction = I_interaction ./ SCC_E * 100
 
 # ----- Map interaction effect at country level -----
-# %% Absolute interaction map
-absolute_interaction_map = map_SCC_decomposition_level(country_interaction_df)
-save("outputs/maps/map_interaction_effect_abs.svg", absolute_interaction_map)
+# %%  Interaction map
+interaction_map = map_SCC_decomposition_level(country_interaction_df)
+save("outputs/maps/map_interaction_effect.svg", interaction_map)
 
 # %%% Identify countries with highest and lowest interaction effects
-top3_abs_interaction = @chain country_interaction_df @arrange(desc(interaction)) first(3)
-bottom3_abs_interaction = @chain country_interaction_df @arrange(desc(interaction)) last(3)
+top3_interaction = @chain country_interaction_df @arrange(desc(interaction)) first(3)
+bottom3_interaction = @chain country_interaction_df @arrange(desc(interaction)) last(3)
 
 # %% Relative interaction map
 relative_interaction_map = map_SCC_decomposition_pct(country_interaction_df)
